@@ -101,18 +101,49 @@
   </section>
 
   <!-- FLOATING TALKING AVATAR -->
-  <div class="fixed bottom-6 right-6 z-50 flex items-end gap-3 cursor-pointer" onclick="document.getElementById('neeraj-audio').play()">
-    <div class="glass p-4 rounded-2xl rounded-br-none shadow-2xl max-w-xs">
-      <p class="text-sm">Hi, I'm Neeraj. I'll help you diagnose your career and grow faster.</p>
-    </div>
-    <img src="neeraj-original.jpg" class="w-20 h-20 rounded-full border-4 border-green-400 object-cover shadow-2xl"/>
-    <audio id="neeraj-audio" src="neeraj-welcome.ogg"></audio>
+<div id="neeraj-avatar" class="fixed bottom-6 right-6 z-50 flex items-end gap-3 cursor-pointer" 
+     onclick="playNeeraj()">
+  
+  <div id="neeraj-bubble" class="glass p-4 rounded-2xl rounded-br-none shadow-2xl max-w-xs hidden">
+    <p class="text-sm">Hi, I'm Neeraj Kapil. I'll help you diagnose your career and grow faster.</p>
   </div>
 
-  <footer class="text-center text-gray-500 text-sm py-8 border-t border-gray-800">
-    © 2026 w3me.in | AI Career Coach by Neeraj Kapil
-  </footer>
+  <video id="neeraj-video" src="neeraj-speaking.mp4" class="w-20 h-20 rounded-full border-4 border-green-400 object-cover shadow-2xl" muted loop playsinline></video>
+  <audio id="neeraj-audio" src="neeraj-welcome.ogg"></audio>
+</div>
 
-  <script>lucide.createIcons();</script>
+<script>
+function playNeeraj() {
+  const video = document.getElementById('neeraj-video');
+  const audio = document.getElementById('neeraj-audio');
+  const bubble = document.getElementById('neeraj-bubble');
+  
+  video.currentTime = 0;
+  audio.currentTime = 0;
+  bubble.classList.remove('hidden');
+  
+  video.play();
+  audio.play();
+  
+  // Hide bubble after audio ends
+  audio.onended = () => bubble.classList.add('hidden');
+}
+
+// AUTO PLAY ON SIGN IN / PAGE LOAD
+window.addEventListener('load', () => {
+  // Browsers block autoplay with sound. So we try muted first, then play audio on user interaction
+  const video = document.getElementById('neeraj-video');
+  video.play(); // video can autoplay muted
+  
+  // Try to play audio after 1.5s. If blocked, show a "Click to hear me" prompt
+  setTimeout(() => {
+    const audio = document.getElementById('neeraj-audio');
+    audio.play().catch(() => {
+      document.getElementById('neeraj-bubble').innerHTML = '<p class="text-sm">Click me to hear me 👋</p>';
+      document.getElementById('neeraj-bubble').classList.remove('hidden');
+    });
+  }, 1500);
+});
+</script>
 </body>
 </html>
