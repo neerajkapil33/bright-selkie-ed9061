@@ -1,165 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>W3M - WhatsWrongWithMe? | AI Career Intelligence</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
-  <style>
-    html { scroll-behavior: smooth; }
-    body { 
-      background: #050B18; 
-      background-image: url('wa_image_9162805426871347043');
-      background-size: cover;
-      background-attachment: fixed;
-      background-position: center;
-    }
-   .gradient-text { background: linear-gradient(90deg, #8B5CF6, #00D4FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-   .glass { background: rgba(5,11,24,0.7); backdrop-filter: blur(16px); border: 1px solid rgba(139,92,246,0.2); }
-   .btn-purple { background: linear-gradient(90deg, #8B5CF6, #6366F1); }
-   .nav-link.active { background: rgba(139,92,246,0.2); border-radius: 8px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>W3M - WhatsWrongWithMe? | Neeraj Kapil</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://assets.calendly.com/assets/external/widget.js" async></script>
+<style>
+body{background:#050B18;color:white;font-family:sans-serif}
+.gradient-text{background:linear-gradient(90deg,#8B5CF6,#00D4FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.glass{background:rgba(5,11,24,0.8);backdrop-filter:blur(16px);border:1px solid rgba(139,92,246,0.2)}
+.btn{background:linear-gradient(90deg,#8B5CF6,#6366F1)}
+</style>
 </head>
-<body class="text-white font-sans">
+<body>
+<nav class="fixed top-0 w-full glass p-4 flex justify-between">
+<h1 class="text-2xl font-bold"><span class="gradient-text">W3M</span></h1>
+<div><button onclick="alert('Login coming soon')" class="glass px-4 py-2 rounded-full">Login</button></div>
+</nav>
 
-  <!-- NAV WITH LOGIN/LOGOUT -->
-  <nav class="fixed top-0 w-full glass z-50">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-      <h1 class="text-2xl font-bold"><span class="gradient-text">W3M</span> <span class="text-xs">WhatsWrongWithMe?</span></h1>
-      <div class="hidden md:flex gap-6 text-sm">
-        <a href="#home" class="nav-link px-3 py-2 hover:text-purple-400">Home</a>
-        <a href="#dashboard" class="nav-link px-3 py-2 hover:text-purple-400">Dashboard</a>
-        <a href="#assessment" class="nav-link px-3 py-2 hover:text-purple-400">Assessments</a>
-        <a href="#ats" class="nav-link px-3 py-2 hover:text-purple-400">Resume ATS</a>
-        <a href="#portfolio" class="nav-link px-3 py-2 hover:text-purple-400">Portfolio</a>
-        <a href="#coach" class="nav-link px-3 py-2 hover:text-purple-400">Coach</a>
-      </div>
-      <div id="authArea">
-        <button onclick="showLogin()" class="glass px-5 py-2 rounded-full">Login</button>
-      </div>
-    </div>
-  </nav>
+<section class="pt-32 px-6 text-center">
+<h1 class="text-5xl font-bold">Transform Your Career.<br><span class="gradient-text">Elevate Your Potential.</span></h1>
+<p class="mt-4 text-gray-400">AI Career Assessment + ATS Resume + 1:1 Coaching with Neeraj</p>
+<div class="mt-8 flex gap-4 justify-center">
+<a href="#assessment" class="btn px-8 py-4 rounded-full font-bold">Start Assessment</a>
+<a href="" onclick="Calendly.initPopupWidget({url: 'https://calendly.com/recreationeeraj'});return false;" class="glass px-8 py-4 rounded-full">Book Coaching</a>
+</div>
+</section>
 
-  <!-- HERO -->
-  <section id="home" class="pt-32 pb-20 px-6 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center min-h-screen">
-    <div>
-      <div class="glass px-4 py-2 rounded-full w-fit text-sm text-purple-400">AI-POWERED CAREER INTELLIGENCE</div>
-      <h1 class="text-5xl font-bold mt-6">Transform Your Career. <br><span class="gradient-text">Elevate Your Potential.</span></h1>
-      <p class="text-gray-400 mt-6">Personalized insights, AI-driven assessments, and expert coaching to help you grow, lead, and make an impact.</p>
-      <div class="mt-8 flex gap-4">
-        <a href="#assessment" class="btn-purple px-8 py-4 rounded-full font-bold">Start Your Assessment →</a>
-        <a href="" onclick="Calendly.initPopupWidget({url: 'https://calendly.com/recreationeeraj'});return false;" class="glass px-8 py-4 rounded-full font-bold">📅 Book a Coaching Session</a>
-      </div>
-      <p class="text-green-400 text-sm mt-4">✓ First Assessment is FREE</p>
-    </div>
-    <div class="glass rounded-3xl p-6">
-      <h3 class="font-bold text-xl">Neeraj Kapil</h3>
-      <p class="text-sm text-gray-400">Career Coach & Advisor</p>
-      <ul class="text-sm mt-4 space-y-2">
-        <li>Talent Acquisition Leader</li>
-        <li>HR Transformation Expert</li>
-        <li>Global Team Builder</li>
-      </ul>
-    </div>
-  </section>
+<section id="assessment" class="py-20 px-6 max-w-3xl mx-auto">
+<div class="glass p-8 rounded-3xl">
+<h2 class="text-3xl font-bold">AI Career Diagnostic</h2>
+<select id="func" class="w-full bg-black border-purple-400 rounded p-3 mt-4">
+<option>Technology</option><option>Sales</option><option>Leadership</option>
+</select>
+<button onclick="alert('Score: 72/100. Strength: Communication. Gap: Certification. Plan: Coursera + LinkedIn Learning')" class="btn w-full py-4 rounded-full mt-4">Get Report</button>
+</div>
+</section>
 
-  <!-- DASHBOARD -->
-  <section id="dashboard" class="py-20 px-6">
-    <div class="max-w-7xl mx-auto glass rounded-3xl p-10">
-      <h2 class="text-3xl font-bold">Your AI-Powered Career Dashboard</h2>
-      <div class="grid md:grid-cols-4 gap-6 mt-8">
-        <div class="glass p-6 rounded-2xl"><h4 class="text-3xl font-bold text-purple-400">50K+</h4><p>Professionals Transformed</p></div>
-        <div class="glass p-6 rounded-2xl"><h4 class="text-3xl font-bold text-purple-400">95%</h4><p>Report Accuracy</p></div>
-        <div class="glass p-6 rounded-2xl"><h4 class="text-3xl font-bold text-purple-400">500+</h4><p>Global Companies</p></div>
-        <div class="glass p-6 rounded-2xl"><h4 class="text-3xl font-bold text-purple-400">120+</h4><p>Countries Covered</p></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ATS RESUME SCREENING -->
-  <section id="ats" class="py-20 px-6">
-    <div class="max-w-4xl mx-auto glass rounded-3xl p-10">
-      <h2 class="text-3xl font-bold">Resume & ATS Score</h2>
-      <p class="text-gray-400">Upload PDF. Get ATS score, keyword gaps, and AI rewrite suggestions.</p>
-      <input type="file" id="resumeFile" accept=".pdf,.docx" class="mt-6 w-full bg-[#050B18] border border-purple-400/30 rounded-lg p-3">
-      <button onclick="scanATS()" class="mt-4 btn-purple px-6 py-3 rounded-full font-bold">Scan Resume</button>
-      <div id="atsResult" class="mt-6 hidden"></div>
-    </div>
-  </section>
-
-  <!-- PORTFOLIO BUILDER -->
-  <section id="portfolio" class="py-20 px-6">
-    <div class="max-w-4xl mx-auto glass rounded-3xl p-10">
-      <h2 class="text-3xl font-bold">Build Your Portfolio</h2>
-      <input id="portName" placeholder="Your Name" class="w-full bg-[#050B18] border-purple-400/30 rounded-lg p-3 mt-4">
-      <textarea id="portAbout" placeholder="About You" class="w-full bg-[#050B18] border-purple-400/30 rounded-lg p-3 mt-4"></textarea>
-      <button onclick="savePortfolio()" class="mt-4 btn-purple px-6 py-3 rounded-full font-bold">Save Portfolio</button>
-      <p class="text-sm text-gray-400 mt-2">Saved to your browser. Login to sync to cloud.</p>
-    </div>
-  </section>
-
-  <!-- AI ASSESSMENT - FROM PREVIOUS CODE -->
-  <section id="assessment" class="py-20 px-6">
-    <div class="max-w-5xl mx-auto glass rounded-3xl p-10">
-      <h2 class="text-3xl font-bold">AI Career Diagnostic</h2>
-      <!-- paste your dropdown + MCQ code here from last message -->
-    </div>
-  </section>
-
-  <!-- LOGIN MODAL -->
-  <div id="loginModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50">
-    <div class="glass p-10 rounded-3xl w-[400px]">
-      <h3 class="text-2xl font-bold">Login to W3M</h3>
-      <input id="email" placeholder="Email" class="w-full bg-[#050B18] border-purple-400/30 rounded-lg p-3 mt-4">
-      <input id="password" type="password" placeholder="Password" class="w-full bg-[#050B18] border-purple-400/30 rounded-lg p-3 mt-4">
-      <button onclick="login()" class="w-full btn-purple py-3 rounded-full font-bold mt-4">Login</button>
-      <button onclick="signup()" class="w-full glass py-3 rounded-full font-bold mt-2">Create New Profile</button>
-      <button onclick="hideLogin()" class="text-sm mt-4">Cancel</button>
-    </div>
-  </div>
-
-  <!-- FLOATING AI COACH -->
-  <div class="fixed bottom-6 right-6 cursor-pointer" onclick="playVoice()">
-    <img src="wa_image_9162805426871347043" class="w-20 h-20 rounded-full border-4 border-purple-400 object-cover"/>
-    <audio id="voice" src="neeraj-welcome.ogg"></audio>
-  </div>
-
-<script>
-// SIMPLE LOGIN WITH LOCALSTORAGE - LATER REPLACE WITH OAUTH
-function showLogin() { document.getElementById('loginModal').classList.remove('hidden'); document.getElementById('loginModal').classList.add('flex'); }
-function hideLogin() { document.getElementById('loginModal').classList.add('hidden'); }
-function login() {
-  localStorage.setItem('user', document.getElementById('email').value);
-  document.getElementById('authArea').innerHTML = `<span>${localStorage.getItem('user')}</span> <button onclick="logout()" class="glass px-4 py-2 rounded-full ml-2">Logout</button>`;
-  hideLogin();
-}
-function signup() { alert('Profile Created! Now Login'); }
-function logout() { localStorage.removeItem('user'); location.reload(); }
-
-// ATS SCANNER DEMO
-function scanATS() {
-  document.getElementById('atsResult').classList.remove('hidden');
-  document.getElementById('atsResult').innerHTML = `
-    <div class="glass p-4 rounded-xl"><b>ATS Score: 68/100</b></div>
-    <div class="glass p-4 rounded-xl mt-2"><b>Missing Keywords:</b> Leadership, SQL, KPI</div>
-    <div class="glass p-4 rounded-xl mt-2"><b>AI Suggestion:</b> Add 3 bullet points with metrics</div>
-  `;
-}
-
-// PORTFOLIO
-function savePortfolio() {
-  localStorage.setItem('portfolio', JSON.stringify({name: portName.value, about: portAbout.value}));
-  alert('Portfolio Saved!');
-}
-
-// VOICE
-function playVoice() { document.getElementById('voice').play(); }
-
-// AUTO LOGIN IF USER EXISTS
-if(localStorage.getItem('user')) {
-  document.getElementById('authArea').innerHTML = `<span>${localStorage.getItem('user')}</span> <button onclick="logout()" class="glass px-4 py-2 rounded-full ml-2">Logout</button>`;
-}
-</script>
-</body>
-</html>
+<div class="fixed bottom-6 right-6 cursor-pointer" onclick="document.getElementById('v').play()">
+<img src="https://via.placeholder.com/80" class="w-20 h-20 rounded-full border-4 border-purple-400"/>
+<audio id="v" src="neeraj-welcome.ogg"></audio>
+</div>
+</body></html>
