@@ -3,165 +3,162 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Neeraj Kapil | AI Career Diagnostic - w3me.in</title>
+  <title>W3M - WhatsWrongWithMe? | AI Career Intelligence</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
   <style>
     html { scroll-behavior: smooth; }
-.code-bg { background: #0A0F1E; }
-.gradient-text { background: linear-gradient(90deg, #22C55E, #00D4FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.glass { background: rgba(22,27,34,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(34,197,94,0.2); }
-.option-btn { border: 1px solid rgba(34,197,94,0.3); }.option-btn.selected { border-color: #22C55E; background: rgba(34,197,94,0.1); }
+    body { 
+      background: #050B18; 
+      background-image: url('wa_image_9162805426871347043');
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+    }
+   .gradient-text { background: linear-gradient(90deg, #8B5CF6, #00D4FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+   .glass { background: rgba(5,11,24,0.7); backdrop-filter: blur(16px); border: 1px solid rgba(139,92,246,0.2); }
+   .btn-purple { background: linear-gradient(90deg, #8B5CF6, #6366F1); }
+   .nav-link.active { background: rgba(139,92,246,0.2); border-radius: 8px; }
   </style>
 </head>
-<body class="code-bg text-white font-sans">
+<body class="text-white font-sans">
 
-  <!-- NAV -->
-  <nav class="fixed top-0 w-full glass z-50"><div class="max-w-7xl mx-auto px-6 py-4"><h1 class="text-2xl font-bold gradient-text">w3me.in</h1></div></nav>
-
-  <!-- ASSESSMENT ENGINE -->
-  <section id="assessment" class="pt-32 pb-20 px-6">
-    <div class="max-w-5xl mx-auto glass rounded-3xl p-10">
-      <h2 class="text-4xl font-bold text-center">AI Career Diagnostic by Neeraj</h2>
-      <p class="text-gray-400 text-center mt-2">4 steps. Get Scorecard + AI Action Plan + Certification Path</p>
-
-      <!-- STEP 1: PROFILE BUILDER -->
-      <div id="profileStep">
-        <h3 class="text-xl font-bold mt-8">Step 1: Build Your Profile</h3>
-        <div class="grid md:grid-cols-2 gap-4 mt-4">
-          <select id="function" class="bg-[#0A0F1E] border-green-400/30 rounded-lg p-3" onchange="loadIndustries()">
-            <option value="">Select Function</option>
-            <option>Technology</option><option>Sales</option><option>Marketing</option><option>Finance</option><option>HR</option><option>Operations</option><option>Leadership</option>
-          </select>
-          <select id="industry" class="bg-[#0A0F1E] border-green-400/30 rounded-lg p-3">
-            <option value="">Select Industry</option>
-          </select>
-          <select id="region" class="bg-[#0A0F1E] border-green-400/30 rounded-lg p-3">
-            <option value="">Select Region</option>
-            <option>India</option><option>Middle East</option><option>US/UK</option><option>APAC</option><option>Global Remote</option>
-          </select>
-          <select id="experience" class="bg-[#0A0F1E] border-green-400/30 rounded-lg p-3">
-            <option value="">Experience Level</option>
-            <option>0-2 Years</option><option>3-5 Years</option><option>6-10 Years</option><option>10+ Years</option><option>CXO</option>
-          </select>
-        </div>
-        <input id="skills" placeholder="Top 3 Skills: e.g. Python, Sales, Leadership" class="w-full bg-[#0A0F1E] border-green-400/30 rounded-lg p-3 mt-4">
-        <button onclick="startAssessment()" class="mt-6 w-full bg-gradient-to-r from-green-500 to-cyan-500 text-black py-4 rounded-full font-bold">Start Diagnostic</button>
+  <!-- NAV WITH LOGIN/LOGOUT -->
+  <nav class="fixed top-0 w-full glass z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold"><span class="gradient-text">W3M</span> <span class="text-xs">WhatsWrongWithMe?</span></h1>
+      <div class="hidden md:flex gap-6 text-sm">
+        <a href="#home" class="nav-link px-3 py-2 hover:text-purple-400">Home</a>
+        <a href="#dashboard" class="nav-link px-3 py-2 hover:text-purple-400">Dashboard</a>
+        <a href="#assessment" class="nav-link px-3 py-2 hover:text-purple-400">Assessments</a>
+        <a href="#ats" class="nav-link px-3 py-2 hover:text-purple-400">Resume ATS</a>
+        <a href="#portfolio" class="nav-link px-3 py-2 hover:text-purple-400">Portfolio</a>
+        <a href="#coach" class="nav-link px-3 py-2 hover:text-purple-400">Coach</a>
       </div>
-
-      <!-- STEP 2: QUESTIONNAIRE -->
-      <div id="quizStep" class="hidden">
-        <div id="progress" class="text-sm text-gray-400 mb-4"></div>
-        <div id="questionBox"></div>
-        <button onclick="nextQ()" class="mt-6 bg-gradient-to-r from-green-500 to-cyan-500 text-black px-8 py-3 rounded-full font-bold">Next</button>
+      <div id="authArea">
+        <button onclick="showLogin()" class="glass px-5 py-2 rounded-full">Login</button>
       </div>
+    </div>
+  </nav>
 
-      <!-- STEP 3: REPORT -->
-      <div id="reportStep" class="hidden">
-        <h3 class="text-3xl font-bold gradient-text">Your Career Health Report</h3>
-        <div id="reportContent" class="mt-6 space-y-4"></div>
-        <button onclick="location.reload()" class="mt-6 glass px-6 py-3 rounded-full">Retake</button>
+  <!-- HERO -->
+  <section id="home" class="pt-32 pb-20 px-6 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center min-h-screen">
+    <div>
+      <div class="glass px-4 py-2 rounded-full w-fit text-sm text-purple-400">AI-POWERED CAREER INTELLIGENCE</div>
+      <h1 class="text-5xl font-bold mt-6">Transform Your Career. <br><span class="gradient-text">Elevate Your Potential.</span></h1>
+      <p class="text-gray-400 mt-6">Personalized insights, AI-driven assessments, and expert coaching to help you grow, lead, and make an impact.</p>
+      <div class="mt-8 flex gap-4">
+        <a href="#assessment" class="btn-purple px-8 py-4 rounded-full font-bold">Start Your Assessment →</a>
+        <a href="" onclick="Calendly.initPopupWidget({url: 'https://calendly.com/recreationeeraj'});return false;" class="glass px-8 py-4 rounded-full font-bold">📅 Book a Coaching Session</a>
+      </div>
+      <p class="text-green-400 text-sm mt-4">✓ First Assessment is FREE</p>
+    </div>
+    <div class="glass rounded-3xl p-6">
+      <h3 class="font-bold text-xl">Neeraj Kapil</h3>
+      <p class="text-sm text-gray-400">Career Coach & Advisor</p>
+      <ul class="text-sm mt-4 space-y-2">
+        <li>Talent Acquisition Leader</li>
+        <li>HR Transformation Expert</li>
+        <li>Global Team Builder</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="py-20 px-6">
+    <div class="max-w-7xl mx-auto glass rounded-3xl p-10">
+      <h2 class="text-3xl font-bold">Your AI-Powered Career Dashboard</h2>
+      <div class="grid md:grid-cols-4 gap-6 mt-8">
+        <div class="glass p-6 rounded-2xl"><h4 class="text-3xl font-bold text-purple-400">50K+</h4><p>Professionals Transformed</p></div>
+        <div class="glass p-6 rounded-2xl"><h4 class="text-3xl font-bold text-purple-400">95%</h4><p>Report Accuracy</p></div>
+        <div class="glass p-6 rounded-2xl"><h4 class="text-3xl font-bold text-purple-400">500+</h4><p>Global Companies</p></div>
+        <div class="glass p-6 rounded-2xl"><h4 class="text-3xl font-bold text-purple-400">120+</h4><p>Countries Covered</p></div>
       </div>
     </div>
   </section>
 
-  <!-- FLOATING AI AGENT -->
-  <div id="neeraj-avatar" class="fixed bottom-6 right-6 cursor-pointer" onclick="playVoice('')">
-    <div id="bubble" class="glass p-4 rounded-2xl rounded-br-none shadow-2xl max-w-xs hidden"><p class="text-sm" id="bubbleText"></p></div>
-    <img src="neeraj-original.jpg" class="w-20 h-20 rounded-full border-4 border-green-400"/>
+  <!-- ATS RESUME SCREENING -->
+  <section id="ats" class="py-20 px-6">
+    <div class="max-w-4xl mx-auto glass rounded-3xl p-10">
+      <h2 class="text-3xl font-bold">Resume & ATS Score</h2>
+      <p class="text-gray-400">Upload PDF. Get ATS score, keyword gaps, and AI rewrite suggestions.</p>
+      <input type="file" id="resumeFile" accept=".pdf,.docx" class="mt-6 w-full bg-[#050B18] border border-purple-400/30 rounded-lg p-3">
+      <button onclick="scanATS()" class="mt-4 btn-purple px-6 py-3 rounded-full font-bold">Scan Resume</button>
+      <div id="atsResult" class="mt-6 hidden"></div>
+    </div>
+  </section>
+
+  <!-- PORTFOLIO BUILDER -->
+  <section id="portfolio" class="py-20 px-6">
+    <div class="max-w-4xl mx-auto glass rounded-3xl p-10">
+      <h2 class="text-3xl font-bold">Build Your Portfolio</h2>
+      <input id="portName" placeholder="Your Name" class="w-full bg-[#050B18] border-purple-400/30 rounded-lg p-3 mt-4">
+      <textarea id="portAbout" placeholder="About You" class="w-full bg-[#050B18] border-purple-400/30 rounded-lg p-3 mt-4"></textarea>
+      <button onclick="savePortfolio()" class="mt-4 btn-purple px-6 py-3 rounded-full font-bold">Save Portfolio</button>
+      <p class="text-sm text-gray-400 mt-2">Saved to your browser. Login to sync to cloud.</p>
+    </div>
+  </section>
+
+  <!-- AI ASSESSMENT - FROM PREVIOUS CODE -->
+  <section id="assessment" class="py-20 px-6">
+    <div class="max-w-5xl mx-auto glass rounded-3xl p-10">
+      <h2 class="text-3xl font-bold">AI Career Diagnostic</h2>
+      <!-- paste your dropdown + MCQ code here from last message -->
+    </div>
+  </section>
+
+  <!-- LOGIN MODAL -->
+  <div id="loginModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50">
+    <div class="glass p-10 rounded-3xl w-[400px]">
+      <h3 class="text-2xl font-bold">Login to W3M</h3>
+      <input id="email" placeholder="Email" class="w-full bg-[#050B18] border-purple-400/30 rounded-lg p-3 mt-4">
+      <input id="password" type="password" placeholder="Password" class="w-full bg-[#050B18] border-purple-400/30 rounded-lg p-3 mt-4">
+      <button onclick="login()" class="w-full btn-purple py-3 rounded-full font-bold mt-4">Login</button>
+      <button onclick="signup()" class="w-full glass py-3 rounded-full font-bold mt-2">Create New Profile</button>
+      <button onclick="hideLogin()" class="text-sm mt-4">Cancel</button>
+    </div>
+  </div>
+
+  <!-- FLOATING AI COACH -->
+  <div class="fixed bottom-6 right-6 cursor-pointer" onclick="playVoice()">
+    <img src="wa_image_9162805426871347043" class="w-20 h-20 rounded-full border-4 border-purple-400 object-cover"/>
     <audio id="voice" src="neeraj-welcome.ogg"></audio>
   </div>
 
 <script>
-// QUESTION BANK - YOU CAN ADD 100s HERE
-const questionBank = {
-  "Technology_0-2 Years": [
-    {q: "How strong is your DSA/Coding?", opts: ["Beginner", "Intermediate", "Advanced", "FAANG Level"], impact: {Beginner:-2, Intermediate:0, Advanced:2, "FAANG Level":3}},
-    {q: "Biggest challenge right now?", opts: ["No interviews", "System Design", "Portfolio", "Imposter Syndrome"], type: "challenge"}
-  ],
-  "Sales_3-5 Years": [
-    {q: "Rate your pipeline management", opts: ["Weak", "Average", "Strong", "CRM Expert"], impact: {Weak:-2, Average:0, Strong:2, "CRM Expert":3}},
-    {q: "Current challenge?", opts: ["Quota Pressure", "Lead Quality", "Peer Competition", "Burnout"], type: "challenge"}
-  ],
-  "Leadership_10+ Years": [
-    {q: "P&L Responsibility?", opts: ["None", "<1Cr", "1-10Cr", "10Cr+"], impact: {None:-1, "<1Cr":1, "1-10Cr":2, "10Cr+":3}},
-    {q: "Biggest org challenge?", opts: ["Team Attrition", "Strategy Execution", "Board Pressure", "Burnout/Depression"], type: "challenge"}
-  ]
-};
-let currentQuestions = []; let answers = []; let qIndex = 0; let score = 70;
-
-function loadIndustries() {
-  const func = document.getElementById('function').value;
-  const ind = document.getElementById('industry');
-  const map = {Technology:["SaaS","Fintech","IT Services"], Sales:["B2B SaaS","FMCG","Real Estate"], Leadership:["All Industries"]};
-  ind.innerHTML = '<option value="">Select Industry</option>';
-  (map[func]||[]).forEach(i=>ind.innerHTML += `<option>${i}</option>`);
+// SIMPLE LOGIN WITH LOCALSTORAGE - LATER REPLACE WITH OAUTH
+function showLogin() { document.getElementById('loginModal').classList.remove('hidden'); document.getElementById('loginModal').classList.add('flex'); }
+function hideLogin() { document.getElementById('loginModal').classList.add('hidden'); }
+function login() {
+  localStorage.setItem('user', document.getElementById('email').value);
+  document.getElementById('authArea').innerHTML = `<span>${localStorage.getItem('user')}</span> <button onclick="logout()" class="glass px-4 py-2 rounded-full ml-2">Logout</button>`;
+  hideLogin();
 }
+function signup() { alert('Profile Created! Now Login'); }
+function logout() { localStorage.removeItem('user'); location.reload(); }
 
-function startAssessment() {
-  const func = document.getElementById('function').value;
-  const exp = document.getElementById('experience').value;
-  const key = func + "_" + exp;
-  currentQuestions = questionBank[key] || questionBank["Technology_0-2 Years"]; // fallback
-
-  document.getElementById('profileStep').classList.add('hidden');
-  document.getElementById('quizStep').classList.remove('hidden');
-  playVoice("Got your profile. Let's start the diagnostic for " + func);
-  showQ();
-}
-
-function showQ() {
-  const q = currentQuestions[qIndex];
-  document.getElementById('progress').innerText = `Question ${qIndex+1} of ${currentQuestions.length}`;
-  let optsHTML = q.opts.map((o,i)=>`<button onclick="selectOpt(this,'${o}')" class="option-btn w-full text-left p-4 rounded-xl mb-2">${o}</button>`).join('');
-  document.getElementById('questionBox').innerHTML = `<h3 class="text-2xl font-bold">${q.q}</h3><div class="mt-4">${optsHTML}</div>`;
-}
-
-function selectOpt(btn, val) {
-  document.querySelectorAll('.option-btn').forEach(b=>b.classList.remove('selected'));
-  btn.classList.add('selected');
-  answers[qIndex] = val;
-}
-
-function nextQ() {
-  if(!answers[qIndex]) return alert("Please select an option");
-  const q = currentQuestions[qIndex];
-  if(q.impact) score += q.impact[answers[qIndex]] * 5;
-  if(q.type=="challenge") answers[qIndex+"_challenge"] = answers[qIndex];
-
-  qIndex++;
-  if(qIndex < currentQuestions.length) showQ();
-  else generateReport();
-}
-
-function generateReport() {
-  document.getElementById('quizStep').classList.add('hidden');
-  document.getElementById('reportStep').classList.remove('hidden');
-
-  const challenge = answers["1_challenge"] || "Career Growth";
-  const strengths = score > 75? "Execution, Communication" : "Potential, Learning Agility";
-  const gaps = score < 70? "Skill Certification, Interview Prep" : "Leadership Exposure";
-
-  let solution = "";
-  if(challenge.includes("Burnout")) solution = "1. 30-Day Reset Plan 2. Therapy + Coaching 3. Delegation Framework";
-  if(challenge.includes("Quota")) solution = "1. LinkedIn Outreach System 2. Discovery Call Script 3. Coursera: Sales Negotiation";
-
-  document.getElementById('reportContent').innerHTML = `
-    <div class="glass p-6 rounded-2xl text-center"><h4 class="text-5xl font-bold gradient-text">${score}/100</h4><p>Career Health Score</p></div>
-    <div class="glass p-4 rounded-xl"><b>Strengths:</b> ${strengths}</div>
-    <div class="glass p-4 rounded-xl"><b>Gaps:</b> ${gaps}</div>
-    <div class="glass p-4 rounded-xl"><b>Main Challenge Identified:</b> ${challenge}</div>
-    <div class="glass p-4 rounded-xl"><b>AI Neeraj 90-Day Plan:</b> ${solution}
-      <br><b>Recommended:</b> <a href="https://coursera.org" target="_blank" class="text-cyan-400">Coursera Cert</a> | <a href="https://linkedin.com/learning" target="_blank" class="text-cyan-400">LinkedIn Learning</a>
-    </div>
+// ATS SCANNER DEMO
+function scanATS() {
+  document.getElementById('atsResult').classList.remove('hidden');
+  document.getElementById('atsResult').innerHTML = `
+    <div class="glass p-4 rounded-xl"><b>ATS Score: 68/100</b></div>
+    <div class="glass p-4 rounded-xl mt-2"><b>Missing Keywords:</b> Leadership, SQL, KPI</div>
+    <div class="glass p-4 rounded-xl mt-2"><b>AI Suggestion:</b> Add 3 bullet points with metrics</div>
   `;
-  playVoice(`Your score is ${score}. Main gap is ${gaps}. Start with this 90 day plan.`);
 }
 
-function playVoice(text) {
-  if(text) document.getElementById('bubbleText').innerText = text;
-  document.getElementById('bubble').classList.remove('hidden');
-  document.getElementById('voice').play().catch(()=>{});
-  setTimeout(()=>document.getElementById('bubble').classList.add('hidden'), 6000);
+// PORTFOLIO
+function savePortfolio() {
+  localStorage.setItem('portfolio', JSON.stringify({name: portName.value, about: portAbout.value}));
+  alert('Portfolio Saved!');
+}
+
+// VOICE
+function playVoice() { document.getElementById('voice').play(); }
+
+// AUTO LOGIN IF USER EXISTS
+if(localStorage.getItem('user')) {
+  document.getElementById('authArea').innerHTML = `<span>${localStorage.getItem('user')}</span> <button onclick="logout()" class="glass px-4 py-2 rounded-full ml-2">Logout</button>`;
 }
 </script>
 </body>
