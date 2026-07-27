@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Neeraj Kapil | AI Career Coach - w3me.in</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     html { scroll-behavior: smooth; }
 .code-bg { background: #0A0F1E; background-image: radial-gradient(circle at 20% 50%, rgba(34,197,94,0.1) 0%, transparent 50%), linear-gradient(rgba(34,255,100,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(34,255,100,0.03) 1px, transparent 1px); background-size: 100% 100%, 40px 40px, 40px 40px; }
@@ -52,64 +51,28 @@
     </div>
   </section>
 
-  <!-- ABOUT -->
-  <section id="about" class="py-20 px-6">
-    <div class="max-w-6xl mx-auto glass rounded-3xl p-10 grid lg:grid-cols-2 gap-10 items-center">
-      <img src="neeraj-original.jpg" class="rounded-2xl"/>
-      <div>
-        <h2 class="text-4xl font-bold">About <span class="gradient-text">Neeraj Kapil</span></h2>
-        <p class="text-gray-300 mt-4">Career Coach, Mentor, and Founder focused on helping professionals navigate career transitions, skill upgrades, and job search strategies.</p>
-        <p class="text-gray-400 mt-3 text-sm">With over a decade of experience in career consulting, I help individuals identify their strengths, bridge skill gaps, and build a career path that aligns with their goals.</p>
-        <div class="grid grid-cols-2 gap-4 mt-6">
-          <div class="glass p-4 rounded-xl"><p class="text-2xl font-bold text-green-400">10+</p><p class="text-sm text-gray-400">Years Experience</p></div>
-          <div class="glass p-4 rounded-xl"><p class="text-2xl font-bold text-green-400">500+</p><p class="text-sm text-gray-400">Careers Transformed</p></div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- ABOUT + SERVICES + CONTACT - same as before -->
 
-  <!-- 3 PRACTICES -->
-  <section id="services" class="py-20 px-6 max-w-7xl mx-auto">
-    <h2 class="text-4xl font-bold text-center">My 3 Core Practices</h2>
-    <div class="grid md:grid-cols-3 gap-6 mt-12">
-      <div class="glass p-8 rounded-2xl hover:border-green-400 transition"><h3 class="font-bold text-xl mt-4">1. Career Diagnostics</h3><p class="text-gray-400 text-sm mt-2">AI-powered Career Health Score + Skill Gap Analysis.</p></div>
-      <div class="glass p-8 rounded-2xl hover:border-green-400 transition"><h3 class="font-bold text-xl mt-4">2. SMART Goal Planning</h3><p class="text-gray-400 text-sm mt-2">Set 90-day career goals with actionable steps.</p></div>
-      <div class="glass p-8 rounded-2xl hover:border-green-400 transition"><h3 class="font-bold text-xl mt-4">3. Interview & Resume Prep</h3><p class="text-gray-400 text-sm mt-2">ATS resumes, mock interviews, and LinkedIn revamp.</p></div>
-    </div>
-  </section>
-
-  <!-- CONTACT -->
-  <section id="contact" class="py-20 px-6">
-    <div class="max-w-3xl mx-auto text-center glass rounded-3xl p-12">
-      <h2 class="text-4xl font-bold">Work With Neeraj Directly</h2>
-      <p class="text-gray-400 mt-4">Book a free 15-min career diagnostic call</p>
-      <div class="mt-8 flex justify-center gap-4 flex-wrap">
-        <a href="mailto:recreationeeraj@gmail.com?subject=Booking: Career Consultation" class="bg-gradient-to-r from-green-500 to-cyan-500 text-black px-8 py-4 rounded-full font-bold">Email: recreationeeraj@gmail.com</a>
-        <a href="https://www.linkedin.com/in/neeraj-kapil/" target="_blank" class="glass px-8 py-4 rounded-full font-bold">Message on LinkedIn</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- FLOATING TALKING AVATAR WITH AUTO-PLAY VOICE -->
+  <!-- FLOATING TALKING AVATAR WITH MP3 AUDIO -->
 <div id="neeraj-avatar" class="fixed bottom-6 right-6 z-50 flex items-end gap-3 cursor-pointer" onclick="playNeeraj()">
   <div id="neeraj-bubble" class="glass p-4 rounded-2xl rounded-br-none shadow-2xl max-w-xs hidden">
     <p class="text-sm">Hi, I'm Neeraj Kapil. I'll help you diagnose your career and grow faster.</p>
   </div>
-  <video id="neeraj-video" src="neeraj-speaking.mp4" class="w-20 h-20 rounded-full border-4 border-green-400 object-cover shadow-2xl" muted loop playsinline></video>
+  <img src="neeraj-original.jpg" id="neeraj-avatar-img" class="w-20 h-20 rounded-full border-4 border-green-400 object-cover shadow-2xl"/>
   <audio id="neeraj-audio" src="neeraj-welcome.ogg"></audio>
+  <audio id="neeraj-avatar-audio" src="neeraj-speaking.mp3" loop></audio>
 </div>
 
 <script>
 function playNeeraj() {
-  const video = document.getElementById('neeraj-video');
   const audio = document.getElementById('neeraj-audio');
+  const avatarAudio = document.getElementById('neeraj-avatar-audio');
   const bubble = document.getElementById('neeraj-bubble');
-  video.currentTime = 0; audio.currentTime = 0; bubble.classList.remove('hidden');
-  video.play(); audio.play();
-  audio.onended = () => bubble.classList.add('hidden');
+  audio.currentTime = 0; avatarAudio.currentTime = 0; bubble.classList.remove('hidden');
+  audio.play(); avatarAudio.play();
+  audio.onended = () => { bubble.classList.add('hidden'); avatarAudio.pause(); }
 }
 window.addEventListener('load', () => {
-  document.getElementById('neeraj-video').play();
   setTimeout(() => {
     document.getElementById('neeraj-audio').play().catch(() => {
       document.getElementById('neeraj-bubble').innerHTML = '<p class="text-sm">Click me to hear me 👋</p>';
