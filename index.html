@@ -8,9 +8,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     html { scroll-behavior: smooth; }
- .code-bg { background: #0A0F1E; background-image: radial-gradient(circle at 20% 50%, rgba(34,197,94,0.1) 0%, transparent 50%), linear-gradient(rgba(34,255,100,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(34,255,100,0.03) 1px, transparent 1px); background-size: 100% 100%, 40px 40px, 40px 40px; }
- .gradient-text { background: linear-gradient(90deg, #22C55E, #00D4FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
- .glass { background: rgba(22,27,34,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(34,197,94,0.2); }
+.code-bg { background: #0A0F1E; background-image: radial-gradient(circle at 20% 50%, rgba(34,197,94,0.1) 0%, transparent 50%), linear-gradient(rgba(34,255,100,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(34,255,100,0.03) 1px, transparent 1px); background-size: 100% 100%, 40px 40px, 40px 40px; }
+.gradient-text { background: linear-gradient(90deg, #22C55E, #00D4FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.glass { background: rgba(22,27,34,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(34,197,94,0.2); }
   @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }.float { animation: float 5s ease-in-out infinite; }
   </style>
 </head>
@@ -46,8 +46,8 @@
     <div class="relative flex justify-center float">
       <img src="neeraj-original.jpg" class="relative rounded-3xl shadow-2xl border-2 border-green-400 w-[400px]"/>
       <div class="absolute -bottom-8 glass rounded-2xl p-4 flex items-center gap-3 shadow-2xl">
-        <video src="neeraj-speaking.mp4" autoplay loop muted playsinline class="w-12 h-12 rounded-full"></video>
-        <p class="text-xs text-green-400">Neeraj is speaking...</p>
+        <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+        <p class="text-xs text-green-400">AI Coach Online</p>
       </div>
     </div>
   </section>
@@ -59,12 +59,11 @@
       <div>
         <h2 class="text-4xl font-bold">About <span class="gradient-text">Neeraj Kapil</span></h2>
         <p class="text-gray-300 mt-4">Career Coach, Mentor, and Founder focused on helping professionals navigate career transitions, skill upgrades, and job search strategies.</p>
-        <p class="text-gray-400 mt-3 text-sm">With over a decade of experience in career consulting, I help individuals identify their strengths, bridge skill gaps, and build a career path that aligns with their goals. Specializing in Career Diagnostics, Resume Building, Interview Preparation, and Personal Branding on LinkedIn.</p>
+        <p class="text-gray-400 mt-3 text-sm">With over a decade of experience in career consulting, I help individuals identify their strengths, bridge skill gaps, and build a career path that aligns with their goals.</p>
         <div class="grid grid-cols-2 gap-4 mt-6">
           <div class="glass p-4 rounded-xl"><p class="text-2xl font-bold text-green-400">10+</p><p class="text-sm text-gray-400">Years Experience</p></div>
           <div class="glass p-4 rounded-xl"><p class="text-2xl font-bold text-green-400">500+</p><p class="text-sm text-gray-400">Careers Transformed</p></div>
         </div>
-        <a href="https://www.linkedin.com/in/neeraj-kapil/" target="_blank" class="mt-6 inline-flex items-center gap-2 bg-blue-600 px-6 py-3 rounded-full font-bold">View LinkedIn Profile</a>
       </div>
     </div>
   </section>
@@ -73,18 +72,9 @@
   <section id="services" class="py-20 px-6 max-w-7xl mx-auto">
     <h2 class="text-4xl font-bold text-center">My 3 Core Practices</h2>
     <div class="grid md:grid-cols-3 gap-6 mt-12">
-      <div class="glass p-8 rounded-2xl hover:border-green-400 transition">
-        <h3 class="font-bold text-xl mt-4">1. Career Diagnostics</h3>
-        <p class="text-gray-400 text-sm mt-2">AI-powered Career Health Score + Skill Gap Analysis. Know exactly where you stand.</p>
-      </div>
-      <div class="glass p-8 rounded-2xl hover:border-green-400 transition">
-        <h3 class="font-bold text-xl mt-4">2. SMART Goal Planning</h3>
-        <p class="text-gray-400 text-sm mt-2">Set 90-day career goals with actionable steps. Weekly check-ins with AI Neeraj.</p>
-      </div>
-      <div class="glass p-8 rounded-2xl hover:border-green-400 transition">
-        <h3 class="font-bold text-xl mt-4">3. Interview & Resume Prep</h3>
-        <p class="text-gray-400 text-sm mt-2">ATS resumes, mock interviews, and LinkedIn profile revamp to get you hired.</p>
-      </div>
+      <div class="glass p-8 rounded-2xl hover:border-green-400 transition"><h3 class="font-bold text-xl mt-4">1. Career Diagnostics</h3><p class="text-gray-400 text-sm mt-2">AI-powered Career Health Score + Skill Gap Analysis.</p></div>
+      <div class="glass p-8 rounded-2xl hover:border-green-400 transition"><h3 class="font-bold text-xl mt-4">2. SMART Goal Planning</h3><p class="text-gray-400 text-sm mt-2">Set 90-day career goals with actionable steps.</p></div>
+      <div class="glass p-8 rounded-2xl hover:border-green-400 transition"><h3 class="font-bold text-xl mt-4">3. Interview & Resume Prep</h3><p class="text-gray-400 text-sm mt-2">ATS resumes, mock interviews, and LinkedIn revamp.</p></div>
     </div>
   </section>
 
@@ -100,14 +90,11 @@
     </div>
   </section>
 
-  <!-- FLOATING TALKING AVATAR -->
-<div id="neeraj-avatar" class="fixed bottom-6 right-6 z-50 flex items-end gap-3 cursor-pointer" 
-     onclick="playNeeraj()">
-  
+  <!-- FLOATING TALKING AVATAR WITH AUTO-PLAY VOICE -->
+<div id="neeraj-avatar" class="fixed bottom-6 right-6 z-50 flex items-end gap-3 cursor-pointer" onclick="playNeeraj()">
   <div id="neeraj-bubble" class="glass p-4 rounded-2xl rounded-br-none shadow-2xl max-w-xs hidden">
     <p class="text-sm">Hi, I'm Neeraj Kapil. I'll help you diagnose your career and grow faster.</p>
   </div>
-
   <video id="neeraj-video" src="neeraj-speaking.mp4" class="w-20 h-20 rounded-full border-4 border-green-400 object-cover shadow-2xl" muted loop playsinline></video>
   <audio id="neeraj-audio" src="neeraj-welcome.ogg"></audio>
 </div>
@@ -117,28 +104,14 @@ function playNeeraj() {
   const video = document.getElementById('neeraj-video');
   const audio = document.getElementById('neeraj-audio');
   const bubble = document.getElementById('neeraj-bubble');
-  
-  video.currentTime = 0;
-  audio.currentTime = 0;
-  bubble.classList.remove('hidden');
-  
-  video.play();
-  audio.play();
-  
-  // Hide bubble after audio ends
+  video.currentTime = 0; audio.currentTime = 0; bubble.classList.remove('hidden');
+  video.play(); audio.play();
   audio.onended = () => bubble.classList.add('hidden');
 }
-
-// AUTO PLAY ON SIGN IN / PAGE LOAD
 window.addEventListener('load', () => {
-  // Browsers block autoplay with sound. So we try muted first, then play audio on user interaction
-  const video = document.getElementById('neeraj-video');
-  video.play(); // video can autoplay muted
-  
-  // Try to play audio after 1.5s. If blocked, show a "Click to hear me" prompt
+  document.getElementById('neeraj-video').play();
   setTimeout(() => {
-    const audio = document.getElementById('neeraj-audio');
-    audio.play().catch(() => {
+    document.getElementById('neeraj-audio').play().catch(() => {
       document.getElementById('neeraj-bubble').innerHTML = '<p class="text-sm">Click me to hear me 👋</p>';
       document.getElementById('neeraj-bubble').classList.remove('hidden');
     });
