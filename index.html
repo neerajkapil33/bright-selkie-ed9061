@@ -3,115 +3,151 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WHAT'S WRONG WITH ME? - Career Diagnostic | Neeraj Kapil</title>
+<title>What's Wrong With Me? | W3M - AI Career Coach Neeraj Kapil</title>
+<meta name="description" content="Premium AI Career Diagnostics by Neeraj Kapil. ATS, Assessment, Skill Gap, LinkedIn Review.">
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://assets.calendly.com/assets/external/widget.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  body{
-    background: url('wa_image_6304604136676627239') center/cover no-repeat fixed;
-    font-family: 'Poppins', sans-serif;
-  }
-  .btn-3d { box-shadow: 0 4px 0 #d4a017, 0 6px 10px rgba(0,0,0,0.2); transition: all 0.1s; }
-  .btn-3d:active { transform: translateY(4px); box-shadow: 0 0px 0 #d4a017; }
-  .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); border-radius: 20px; }
-  .burnout-gauge { background: conic-gradient(from 180deg, #FBBF24 0% 75%, #F87171 75% 100%); }
+  :root{--bg:#050B18; --card:#0A1223; --accent:#8B5CF6; --accent2:#06B6D4}
+  body{background:var(--bg); color:#E5E7EB; font-family:Inter, system-ui; overflow-x:hidden}
+
+  /* MOVING 3D BALL BACKGROUND */
+ .bg-orb{position:fixed; border-radius:50%; filter:blur(120px); opacity:0.4; z-index:0}
+ .orb1{width:500px; height:500px; background:radial-gradient(circle, #8B5CF6, transparent); top:-200px; left:-200px; animation:float1 20s infinite ease-in-out}
+ .orb2{width:400px; height:400px; background:radial-gradient(circle, #06B6D4, transparent); bottom:-150px; right:-150px; animation:float2 18s infinite ease-in-out}
+ .orb3{width:300px; height:300px; background:radial-gradient(circle, #EC4899, transparent); top:40%; left:50%; animation:float3 22s infinite ease-in-out}
+  @keyframes float1{0%,100%{transform:translate(0,0)} 50%{transform:translate(100px, 100px)}}
+  @keyframes float2{0%,100%{transform:translate(0,0)} 50%{transform:translate(-100px, -80px)}}
+  @keyframes float3{0%,100%{transform:translate(-50%,-50%)} 50%{transform:translate(-30%,-70%)}}
+
+ .gradient-text{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+ .glass{background:rgba(10,18,35,0.55);backdrop-filter:blur(20px);border:1px solid rgba(139,92,246,0.15); position:relative; z-index:10}
+ .btn{background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:all 0.3s}
+ .btn:hover{transform:translateY(-2px); box-shadow:0 10px 30px rgba(139,92,246,0.4)}
+
+  /* VOICE ORB */
+ .voice-orb{width:100px; height:100px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #8B5CF6, #06B6D4); box-shadow:0 0 60px rgba(139,92,246,0.7); animation:pulse 2s infinite; cursor:pointer}
+ .voice-orb.listening{animation:pulse 0.4s infinite; box-shadow:0 0 80px rgba(6,182,212,1)}
+  @keyframes pulse{0%,100%{transform:scale(1)} 50%{transform:scale(1.15)}}
 </style>
 </head>
-<body class="min-h-screen p-6">
+<body>
 
-<!-- TOP BAR -->
-<div class="text-center glass-card p-3 max-w-6xl mx-auto mb-6">
-  <h1 class="text-2xl md:text-3xl font-bold text-[#1E3A8A]">WHAT'S WRONG WITH ME? - CAREER DIAGNOSTIC</h1>
-</div>
+<!-- MOVING BACKGROUND BALLS -->
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+<div class="bg-orb orb3"></div>
 
-<!-- MAIN DASHBOARD -->
-<div class="max-w-7xl mx-auto grid lg:grid-cols-4 gap-6">
-
-  <!-- LEFT COLUMN -->
-  <div class="space-y-4">
-    <button onclick="startDiagnostic()" class="btn-3d w-full glass-card p-8 text-center bg-[#FCD34D]">
-      <div class="text-4xl mb-2">?</div>
-      <h2 class="text-xl font-bold">START DIAGNOSTIC NOW</h2>
-    </button>
-    <button onclick="alert('Feature coming')" class="glass-card p-4 flex items-center gap-3 btn-3d"><span>🔍</span> Job Search History</button>
-    <button onclick="alert('Feature coming')" class="glass-card p-4 flex items-center gap-3 btn-3d"><span>👤</span> Interview Feedback</button>
-    <button onclick="showSkillsGap()" class="glass-card p-4 flex items-center gap-3 btn-3d"><span>📈</span> Skills Gap Analysis</button>
-  </div>
-
-  <!-- CENTER COLUMN -->
-  <div class="lg:col-span-2 space-y-6">
-    
-    <!-- DIAGNOSTIC DASHBOARD -->
-    <div class="glass-card p-6">
-      <h2 class="text-2xl font-bold text-[#1E3A8A] text-center mb-4">DIAGNOSTIC DASHBOARD</h2>
-      <div class="grid md:grid-cols-2 gap-6 items-center">
-        <div class="text-center">
-          <p class="font-bold">Burnout Meter</p>
-          <div class="w-40 h-40 mx-auto rounded-full burnout-gauge flex items-center justify-center mt-2">
-            <div class="w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center">
-              <span class="text-red-500 font-bold text-sm">HIGH BURNOUT</span>
-              <span class="text-3xl font-bold" id="burnoutScore">75%</span>
-            </div>
-          </div>
-        </div>
-        <div class="space-y-2 text-sm">
-          <p>● <b>Overall Burnout Score</b></p>
-          <p>● <b>Role Mismatch Probability</b></p>
-          <p>● <b>Passion Gap Index</b></p>
-          <p>● <b>Culture Conflict Level</b></p>
-        </div>
-      </div>
+<!-- NAV -->
+<nav class="fixed top-0 w-full glass z-50">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <h1 class="text-2xl font-bold gradient-text">W3M</h1>
+    <div class="hidden md:flex gap-8 text-sm">
+      <a href="#home" class="hover:text-purple-400">Home</a>
+      <a href="#assessment" class="hover:text-purple-400">Assessment</a>
+      <a href="#dashboard" class="hover:text-purple-400">Dashboard</a>
+      <a href="#learning" class="hover:text-purple-400">Learning</a>
     </div>
-
-    <!-- SKILL ALIGNMENT -->
-    <div class="glass-card p-6">
-      <h3 class="font-bold text-lg mb-4">Skill Alignment</h3>
-      <input type="range" min="0" max="100" value="80" class="w-full accent-yellow-500">
-      <div class="flex justify-between text-xs mt-2">
-        <span>💻 Coding</span><span>📊 Data Analysis</span><span>🏆 Leadership</span>
-      </div>
-    </div>
-
-    <!-- WORKPLACE CULTURE PULSE -->
-    <div class="glass-card p-4">
-      <h3 class="font-bold text-center mb-2">WORKPLACE CULTURE PULSE</h3>
-      <div class="flex justify-around text-sm">
-        <span>👥 Team</span><span>🤝 Values</span><span>🏢 Management</span>
-      </div>
-    </div>
+    <button onclick="Calendly.initPopupWidget({url: 'https://calendly.com/recreationeeraj'})" class="btn px-6 py-2 rounded-lg text-sm font-bold">Book Coach</button>
   </div>
+</nav>
 
-  <!-- RIGHT COLUMN -->
-  <div class="space-y-4">
-    <button onclick="alert('Settings')" class="btn-3d w-full glass-card p-4 flex items-center gap-3 bg-[#FCD34D]"><span>⚙️</span> Diagnostic Settings</button>
-    <button onclick="alert('Settings')" class="glass-card p-4 flex items-center gap-3 btn-3d"><span>📅</span> Diagnostic Settings</button>
-    <button onclick="bookCoach()" class="btn-3d w-full glass-card p-8 text-center">
-      <div class="flex justify-center gap-2 text-3xl mb-2">💬</div>
-      <h2 class="text-xl font-bold">CONNECT WITH A COACH</h2>
-    </button>
+<!-- HERO WITH W3M -->
+<section id="home" class="pt-40 pb-20 px-6 text-center relative z-10">
+  <div>
+    <h1 class="text-6xl md:text-8xl font-black gradient-text">What's Wrong With Me?</h1>
+    <p class="text-2xl text-gray-300 mt-4">W3M - AI Career Diagnostics Platform</p>
+    <p class="max-w-2xl mx-auto mt-6 text-gray-400">Stop guessing. Get data-driven career insights, ATS scores, and personalized coaching from AI-Neeraj Kapil</p>
+    <button onclick="document.getElementById('assessment').scrollIntoView({behavior:'smooth'})" class="btn mt-8 px-10 py-4 rounded-xl font-bold text-lg">Start Free Diagnostic →</button>
   </div>
-</div>
+</section>
 
-<!-- FLOATING AI VOICE -->
-<div class="fixed bottom-6 right-6 cursor-pointer" onclick="playVoice()">
-  <img src="wa_image_6304604136676627239" class="w-20 h-20 rounded-full border-4 border-yellow-400 object-cover"/>
-  <audio id="voice" src="neeraj-welcome.ogg"></audio>
-</div>
+<!-- AI COACH WITH VOICE ORB -->
+<section class="py-20 px-6 max-w-4xl mx-auto relative z-10">
+  <div class="glass rounded-3xl p-10 text-center">
+    <h2 class="text-3xl font-bold">Talk to AI Coach Neeraj</h2>
+    <p class="text-gray-400 mt-2">Click the orb and ask anything about your career</p>
 
+    <!-- 3D VOICE ORB -->
+    <div class="flex justify-center mt-8">
+      <div id="voiceOrb" class="voice-orb" onclick="toggleVoice()"></div>
+    </div>
+    <p id="status" class="mt-4 text-sm text-gray-400">Click to Start Talking</p>
+
+    <!-- CHAT WINDOW -->
+    <div id="chatBox" class="glass rounded-2xl p-4 mt-6 h-60 overflow-y-auto text-left hidden"></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="py-20 px-6 max-w-7xl mx-auto relative z-10">
+  <h2 class="text-4xl font-bold text-center mb-12">Everything You Need To Win</h2>
+  <div class="grid md:grid-cols-3 gap-6">
+    <div class="glass rounded-2xl p-8"><h3 class="text-2xl font-bold">📄 ATS Resume Analysis</h3><p class="text-gray-400 mt-2">Get 0-100 score + exact keywords to add</p></div>
+    <div class="glass rounded-2xl p-8"><h3 class="text-2xl font-bold">🧠 Career Assessment</h3><p class="text-gray-400 mt-2">15 min adaptive test to find root cause</p></div>
+    <div class="glass rounded-2xl p-8"><h3 class="text-2xl font-bold">💼 LinkedIn Review</h3><p class="text-gray-400 mt-2">AI review your profile for recruiter appeal</p></div>
+    <div class="glass rounded-2xl p-8"><h3 class="text-2xl font-bold">📊 Skill Gap Analysis</h3><p class="text-gray-400 mt-2">Compare you vs target job description</p></div>
+    <div class="glass rounded-2xl p-8"><h3 class="text-2xl font-bold">📈 Career Dashboard</h3><p class="text-gray-400 mt-2">Track progress, scores, applications</p></div>
+    <div class="glass rounded-2xl p-8"><h3 class="text-2xl font-bold">🎓 Learning Path</h3><p class="text-gray-400 mt-2">Personalized courses to close gaps</p></div>
+  </div>
+</section>
+
+<!-- ASSESSMENT -->
+<section id="assessment" class="py-20 px-6 max-w-4xl mx-auto relative z-10">
+  <div class="glass rounded-3xl p-10">
+    <h2 class="text-3xl font-bold text-center">AI Career Diagnostic</h2>
+    <select class="w-full bg-black/40 border-purple-500/30 rounded-lg p-3 mt-6">
+      <option>Select Target Function</option><option>Technology</option><option>Sales</option><option>Leadership</option>
+    </select>
+    <button onclick="generateReport()" class="btn w-full py-4 rounded-xl font-bold mt-4">Generate My Report</button>
+    <div id="report" class="mt-6 hidden"></div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="py-20 px-6 max-w-7xl mx-auto relative z-10">
+  <h2 class="text-4xl font-bold text-center mb-12">Your Career Dashboard</h2>
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="glass rounded-2xl p-6"><h3 class="font-bold mb-4">Skill Radar</h3><canvas id="radarChart"></canvas></div>
+    <div class="glass rounded-2xl p-6"><h3 class="font-bold mb-4">Overall Score</h3><div class="text-6xl font-black gradient-text text-center mt-12">72/100</div></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="py-12 px-6 border-t border-gray-800 text-center text-gray-400 relative z-10">
+  <p>© 2026 W3M by Neeraj Kapil. Premium AI Career Diagnostics.</p>
+</footer>
+
+<script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 <script>
-function startDiagnostic(){
-  alert("Step 1: Select Function\nStep 2: 5 MCQ Questions\nStep 3: Get Burnout + Skills Report");
-  playVoice("Welcome. Let's start your career diagnostic now.");
+// VOICE ORB LOGIC
+const orb = document.getElementById('voiceOrb');
+const status = document.getElementById('status');
+const chatBox = document.getElementById('chatBox');
+let listening = false;
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
+
+recognition.onstart = () => { orb.classList.add('listening'); status.innerText = "Listening..."; chatBox.classList.remove('hidden'); }
+recognition.onresult = (e) => {
+  const transcript = e.results[0][0].transcript;
+  addMessage("You", transcript);
+  getAIResponse(transcript);
 }
-function showSkillsGap(){
-  alert("Gap Found: Data Analysis, Leadership\nSolution: Coursera + LinkedIn Learning");
+recognition.onend = () => { orb.classList.remove('listening'); status.innerText = "Click to Ask"; }
+
+function toggleVoice(){ listening? recognition.stop() : recognition.start(); listening =!listening; }
+function addMessage(sender, text){ chatBox.innerHTML += `<p class="mb-2"><b class="gradient-text">${sender}:</b> ${text}</p>`; chatBox.scrollTop = chatBox.scrollHeight; }
+function getAIResponse(question){ const reply = `For "${question}", I recommend updating your LinkedIn and upskilling in 1 key area this month.`; addMessage("Neeraj AI", reply); speak(reply); }
+function speak(text){ const u = new SpeechSynthesisUtterance(text); speechSynthesis.speak(u); }
+
+// REPORT + CHART
+function generateReport(){
+  document.getElementById('report').classList.remove('hidden');
+  document.getElementById('report').innerHTML=`<div class="glass p-6 rounded-2xl"><h3 class="text-3xl font-bold gradient-text">Score: 72/100</h3><p class="mt-2">Strength: Communication</p><p>Gap: ATS Keywords, SQL</p></div>`;
 }
-function bookCoach(){
-  Calendly.initPopupWidget({url: 'https://calendly.com/recreationeeraj'});
-}
-function playVoice(msg){
-  document.getElementById('voice').play().catch(()=>{});
-}
+new Chart(document.getElementById('radarChart'), {type:'radar', data:{labels:['Resume','Interview','Skills','Network','ATS'], datasets:[{label:'You', data:[70,65,60,50,72], backgroundColor:'rgba(139,92,246,0.2)', borderColor:'#8B5CF6'}]}})
 </script>
 </body>
 </html>
