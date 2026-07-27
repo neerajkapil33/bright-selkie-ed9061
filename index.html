@@ -3,43 +3,115 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>W3M - WhatsWrongWithMe? | Neeraj Kapil</title>
+<title>WHAT'S WRONG WITH ME? - Career Diagnostic | Neeraj Kapil</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 <style>
-body{background:#050B18;color:white;font-family:sans-serif}
-.gradient-text{background:linear-gradient(90deg,#8B5CF6,#00D4FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.glass{background:rgba(5,11,24,0.8);backdrop-filter:blur(16px);border:1px solid rgba(139,92,246,0.2)}
-.btn{background:linear-gradient(90deg,#8B5CF6,#6366F1)}
+  body{
+    background: url('wa_image_6304604136676627239') center/cover no-repeat fixed;
+    font-family: 'Poppins', sans-serif;
+  }
+  .btn-3d { box-shadow: 0 4px 0 #d4a017, 0 6px 10px rgba(0,0,0,0.2); transition: all 0.1s; }
+  .btn-3d:active { transform: translateY(4px); box-shadow: 0 0px 0 #d4a017; }
+  .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); border-radius: 20px; }
+  .burnout-gauge { background: conic-gradient(from 180deg, #FBBF24 0% 75%, #F87171 75% 100%); }
 </style>
 </head>
-<body>
-<nav class="fixed top-0 w-full glass p-4 flex justify-between">
-<h1 class="text-2xl font-bold"><span class="gradient-text">W3M</span></h1>
-<div><button onclick="alert('Login coming soon')" class="glass px-4 py-2 rounded-full">Login</button></div>
-</nav>
+<body class="min-h-screen p-6">
 
-<section class="pt-32 px-6 text-center">
-<h1 class="text-5xl font-bold">Transform Your Career.<br><span class="gradient-text">Elevate Your Potential.</span></h1>
-<p class="mt-4 text-gray-400">AI Career Assessment + ATS Resume + 1:1 Coaching with Neeraj</p>
-<div class="mt-8 flex gap-4 justify-center">
-<a href="#assessment" class="btn px-8 py-4 rounded-full font-bold">Start Assessment</a>
-<a href="" onclick="Calendly.initPopupWidget({url: 'https://calendly.com/recreationeeraj'});return false;" class="glass px-8 py-4 rounded-full">Book Coaching</a>
+<!-- TOP BAR -->
+<div class="text-center glass-card p-3 max-w-6xl mx-auto mb-6">
+  <h1 class="text-2xl md:text-3xl font-bold text-[#1E3A8A]">WHAT'S WRONG WITH ME? - CAREER DIAGNOSTIC</h1>
 </div>
-</section>
 
-<section id="assessment" class="py-20 px-6 max-w-3xl mx-auto">
-<div class="glass p-8 rounded-3xl">
-<h2 class="text-3xl font-bold">AI Career Diagnostic</h2>
-<select id="func" class="w-full bg-black border-purple-400 rounded p-3 mt-4">
-<option>Technology</option><option>Sales</option><option>Leadership</option>
-</select>
-<button onclick="alert('Score: 72/100. Strength: Communication. Gap: Certification. Plan: Coursera + LinkedIn Learning')" class="btn w-full py-4 rounded-full mt-4">Get Report</button>
-</div>
-</section>
+<!-- MAIN DASHBOARD -->
+<div class="max-w-7xl mx-auto grid lg:grid-cols-4 gap-6">
 
-<div class="fixed bottom-6 right-6 cursor-pointer" onclick="document.getElementById('v').play()">
-<img src="https://via.placeholder.com/80" class="w-20 h-20 rounded-full border-4 border-purple-400"/>
-<audio id="v" src="neeraj-welcome.ogg"></audio>
+  <!-- LEFT COLUMN -->
+  <div class="space-y-4">
+    <button onclick="startDiagnostic()" class="btn-3d w-full glass-card p-8 text-center bg-[#FCD34D]">
+      <div class="text-4xl mb-2">?</div>
+      <h2 class="text-xl font-bold">START DIAGNOSTIC NOW</h2>
+    </button>
+    <button onclick="alert('Feature coming')" class="glass-card p-4 flex items-center gap-3 btn-3d"><span>🔍</span> Job Search History</button>
+    <button onclick="alert('Feature coming')" class="glass-card p-4 flex items-center gap-3 btn-3d"><span>👤</span> Interview Feedback</button>
+    <button onclick="showSkillsGap()" class="glass-card p-4 flex items-center gap-3 btn-3d"><span>📈</span> Skills Gap Analysis</button>
+  </div>
+
+  <!-- CENTER COLUMN -->
+  <div class="lg:col-span-2 space-y-6">
+    
+    <!-- DIAGNOSTIC DASHBOARD -->
+    <div class="glass-card p-6">
+      <h2 class="text-2xl font-bold text-[#1E3A8A] text-center mb-4">DIAGNOSTIC DASHBOARD</h2>
+      <div class="grid md:grid-cols-2 gap-6 items-center">
+        <div class="text-center">
+          <p class="font-bold">Burnout Meter</p>
+          <div class="w-40 h-40 mx-auto rounded-full burnout-gauge flex items-center justify-center mt-2">
+            <div class="w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center">
+              <span class="text-red-500 font-bold text-sm">HIGH BURNOUT</span>
+              <span class="text-3xl font-bold" id="burnoutScore">75%</span>
+            </div>
+          </div>
+        </div>
+        <div class="space-y-2 text-sm">
+          <p>● <b>Overall Burnout Score</b></p>
+          <p>● <b>Role Mismatch Probability</b></p>
+          <p>● <b>Passion Gap Index</b></p>
+          <p>● <b>Culture Conflict Level</b></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SKILL ALIGNMENT -->
+    <div class="glass-card p-6">
+      <h3 class="font-bold text-lg mb-4">Skill Alignment</h3>
+      <input type="range" min="0" max="100" value="80" class="w-full accent-yellow-500">
+      <div class="flex justify-between text-xs mt-2">
+        <span>💻 Coding</span><span>📊 Data Analysis</span><span>🏆 Leadership</span>
+      </div>
+    </div>
+
+    <!-- WORKPLACE CULTURE PULSE -->
+    <div class="glass-card p-4">
+      <h3 class="font-bold text-center mb-2">WORKPLACE CULTURE PULSE</h3>
+      <div class="flex justify-around text-sm">
+        <span>👥 Team</span><span>🤝 Values</span><span>🏢 Management</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="space-y-4">
+    <button onclick="alert('Settings')" class="btn-3d w-full glass-card p-4 flex items-center gap-3 bg-[#FCD34D]"><span>⚙️</span> Diagnostic Settings</button>
+    <button onclick="alert('Settings')" class="glass-card p-4 flex items-center gap-3 btn-3d"><span>📅</span> Diagnostic Settings</button>
+    <button onclick="bookCoach()" class="btn-3d w-full glass-card p-8 text-center">
+      <div class="flex justify-center gap-2 text-3xl mb-2">💬</div>
+      <h2 class="text-xl font-bold">CONNECT WITH A COACH</h2>
+    </button>
+  </div>
 </div>
-</body></html>
+
+<!-- FLOATING AI VOICE -->
+<div class="fixed bottom-6 right-6 cursor-pointer" onclick="playVoice()">
+  <img src="wa_image_6304604136676627239" class="w-20 h-20 rounded-full border-4 border-yellow-400 object-cover"/>
+  <audio id="voice" src="neeraj-welcome.ogg"></audio>
+</div>
+
+<script>
+function startDiagnostic(){
+  alert("Step 1: Select Function\nStep 2: 5 MCQ Questions\nStep 3: Get Burnout + Skills Report");
+  playVoice("Welcome. Let's start your career diagnostic now.");
+}
+function showSkillsGap(){
+  alert("Gap Found: Data Analysis, Leadership\nSolution: Coursera + LinkedIn Learning");
+}
+function bookCoach(){
+  Calendly.initPopupWidget({url: 'https://calendly.com/recreationeeraj'});
+}
+function playVoice(msg){
+  document.getElementById('voice').play().catch(()=>{});
+}
+</script>
+</body>
+</html>
