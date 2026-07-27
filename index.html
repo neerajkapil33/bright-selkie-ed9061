@@ -7,10 +7,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     html { scroll-behavior: smooth; }
-.code-bg { background: #0A0F1E; background-image: radial-gradient(circle at 20% 50%, rgba(34,197,94,0.1) 0%, transparent 50%), linear-gradient(rgba(34,255,100,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(34,255,100,0.03) 1px, transparent 1px); background-size: 100% 100%, 40px 40px, 40px 40px; }
+.code-bg { background: #0A0F1E; background-image: radial-gradient(circle at 20% 50%, rgba(34,197,94,0.1) 0%, transparent 50%); }
 .gradient-text { background: linear-gradient(90deg, #22C55E, #00D4FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .glass { background: rgba(22,27,34,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(34,197,94,0.2); }
   @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }.float { animation: float 5s ease-in-out infinite; }
+ .option-btn { transition: all 0.2s; }
+ .option-btn:hover { border-color: #22C55E; transform: translateY(-2px); }
   </style>
 </head>
 <body class="code-bg text-white font-sans">
@@ -22,63 +24,144 @@
       <div class="hidden md:flex gap-8 text-sm">
         <a href="#home" class="hover:text-green-400">Home</a>
         <a href="#about" class="hover:text-green-400">About</a>
+        <a href="#assessment" class="hover:text-green-400">AI Assessment</a>
         <a href="#services" class="hover:text-green-400">Services</a>
         <a href="#contact" class="hover:text-green-400">Contact</a>
       </div>
-      <a href="https://www.linkedin.com/in/neeraj-kapil/" target="_blank" class="bg-gradient-to-r from-green-500 to-cyan-500 text-black px-5 py-2 rounded-full text-sm font-bold">LinkedIn</a>
     </div>
   </nav>
 
   <!-- HERO -->
   <section id="home" class="pt-32 pb-20 px-6 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center min-h-screen">
     <div>
-      <div class="flex items-center gap-2 glass px-4 py-2 rounded-full w-fit text-sm">
-        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> AI Career Diagnostic Live
-      </div>
-      <h1 class="text-5xl lg:text-6xl font-bold mt-6 leading-tight">Your Career, <br><span class="gradient-text">Guided by Neeraj</span></h1>
-      <p class="text-gray-400 mt-6 text-lg">Personalized AI Career Coaching. Get diagnostics, skill analysis, and a roadmap to your next role.</p>
-      <div class="mt-8 flex gap-4 flex-wrap">
-        <a href="mailto:recreationeeraj@gmail.com?subject=Book Career Consultation" class="bg-gradient-to-r from-green-500 to-cyan-500 text-black px-8 py-4 rounded-full font-bold hover:scale-105 transition">Book Free Call</a>
-        <a href="#about" class="glass px-8 py-4 rounded-full font-bold hover:border-green-400 transition">Meet Neeraj</a>
-      </div>
+      <h1 class="text-5xl font-bold">Your Career, <br><span class="gradient-text">Guided by Neeraj</span></h1>
+      <p class="text-gray-400 mt-6">Take the 2-minute AI Diagnostic. Get your Strengths, Gaps + 90-Day Plan.</p>
+      <a href="#assessment" class="mt-8 inline-block bg-gradient-to-r from-green-500 to-cyan-500 text-black px-8 py-4 rounded-full font-bold">Start AI Assessment</a>
     </div>
     <div class="relative flex justify-center float">
-      <img src="neeraj image.jpeg" class="relative rounded-3xl shadow-2xl border-2 border-green-400 w-[400px]"/>
-      <div class="absolute -bottom-8 glass rounded-2xl p-4 flex items-center gap-3 shadow-2xl">
-        <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-        <p class="text-xs text-green-400">AI Coach Online</p>
-      </div>
+      <img src="neeraj-original.jpg" class="rounded-3xl border-2 border-green-400 w-[400px]"/>
     </div>
   </section>
 
   <!-- ABOUT -->
-  <section id="about" class="py-20 px-6">
-    <div class="max-w-6xl mx-auto glass rounded-3xl p-10 grid lg:grid-cols-2 gap-10 items-center">
-      <img src="neeraj image.jpeg" class="rounded-2xl"/>
-      <div>
-        <h2 class="text-4xl font-bold">About <span class="gradient-text">Neeraj Kapil</span></h2>
-        <p class="text-gray-300 mt-4">Career Coach, Mentor, and Founder focused on helping professionals navigate career transitions.</p>
+  <section id="about" class="py-20 px-6"><div class="max-w-4xl mx-auto text-center"><h2 class="text-4xl font-bold">About Neeraj</h2></div></section>
+
+  <!-- DYNAMIC AI ASSESSMENT -->
+  <section id="assessment" class="py-20 px-6">
+    <div class="max-w-4xl mx-auto glass rounded-3xl p-10">
+      <h2 class="text-4xl font-bold text-center">AI Career Diagnostic</h2>
+      <p class="text-gray-400 text-center mt-2">Step 1: Pick your track. Step 2: Answer 5 questions. Step 3: Get AI Voice Report</p>
+
+      <!-- STEP 1: CHOOSE CATEGORY -->
+      <div id="step1" class="mt-8">
+        <h3 class="text-xl font-bold mb-4">Choose Your Career Track</h3>
+        <div class="grid md:grid-cols-3 gap-4">
+          <button onclick="startQuiz('Tech')" class="option-btn glass p-6 rounded-2xl text-left">
+            <h4 class="font-bold text-green-400">Tech & IT</h4><p class="text-sm text-gray-400">Developer, Data, AI, Cloud</p>
+          </button>
+          <button onclick="startQuiz('Sales')" class="option-btn glass p-6 rounded-2xl text-left">
+            <h4 class="font-bold text-green-400">Sales & Marketing</h4><p class="text-sm text-gray-400">B2B, Digital, Growth</p>
+          </button>
+          <button onclick="startQuiz('Leadership')" class="option-btn glass p-6 rounded-2xl text-left">
+            <h4 class="font-bold text-green-400">Leadership & CXO</h4><p class="text-sm text-gray-400">Strategy, P&L, Teams</p>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: QUESTIONS -->
+      <div id="step2" class="mt-8 hidden">
+        <div id="questionBox"></div>
+        <button onclick="nextQuestion()" class="mt-6 bg-gradient-to-r from-green-500 to-cyan-500 text-black px-6 py-3 rounded-full font-bold">Next</button>
+      </div>
+
+      <!-- STEP 3: RESULTS -->
+      <div id="step3" class="mt-8 hidden">
+        <h3 class="text-3xl font-bold gradient-text">Your Career Scorecard</h3>
+        <div id="scorecard" class="mt-6 space-y-4"></div>
+        <button onclick="resetQuiz()" class="mt-6 glass px-6 py-3 rounded-full">Retake</button>
       </div>
     </div>
   </section>
 
-  <!-- FLOATING TALKING AVATAR WITH YOUR IMAGE + VOICE -->
-<div id="neeraj-avatar" class="fixed bottom-6 right-6 z-50 flex items-end gap-3 cursor-pointer" onclick="playNeeraj()">
-  <div id="neeraj-bubble" class="glass p-4 rounded-2xl rounded-br-none shadow-2xl max-w-xs">
-    <p class="text-sm">Click me to hear me 👋</p>
+  <!-- SERVICES + CONTACT -->
+  <section id="services" class="py-20 px-6 text-center"><h2 class="text-4xl font-bold">Services</h2></section>
+  <section id="contact" class="py-20 px-6 text-center"><h2 class="text-4xl font-bold">Contact</h2></section>
+
+  <!-- FLOATING AI AGENT -->
+  <div id="neeraj-avatar" class="fixed bottom-6 right-6 z-50 flex items-end gap-3 cursor-pointer" onclick="playNeeraj()">
+    <div id="neeraj-bubble" class="glass p-4 rounded-2xl rounded-br-none shadow-2xl max-w-xs hidden">
+      <p class="text-sm" id="bubbleText">Click me 👋</p>
+    </div>
+    <img src="neeraj-original.jpg" class="w-20 h-20 rounded-full border-4 border-green-400 object-cover"/>
+    <audio id="neeraj-audio" src="neeraj-welcome.ogg"></audio>
   </div>
-  <img src="neeraj image.jpeg" id="neeraj-avatar-img" class="w-20 h-20 rounded-full border-4 border-green-400 object-cover shadow-2xl"/>
-  <audio id="neeraj-audio" src="neeraj-welcome.ogg"></audio>
-</div>
 
 <script>
-function playNeeraj() {
+let currentCategory = '';
+let currentQ = 0;
+let answers = [];
+const questions = {
+  Tech: ["Rate your coding skills 1-10", "Do you know SQL/Python?", "Biggest tech gap?", "Ready to do 2hrs daily learning?", "Target role in 12 months?"],
+  Sales: ["Years in Sales?", "Rate your LinkedIn/networking 1-10", "Biggest deal you closed?", "Comfort with CRM/Data?", "Target CTC?"],
+  Leadership: ["Team size managed?", "P&L experience?", "Biggest leadership challenge?", "Rate strategy skills 1-10", "CXO goal timeline?"]
+};
+
+function startQuiz(cat) {
+  currentCategory = cat; currentQ = 0; answers = [];
+  document.getElementById('step1').classList.add('hidden');
+  document.getElementById('step2').classList.remove('hidden');
+  showQuestion();
+  playNeeraj("Great choice. Let's diagnose your " + cat + " career now.");
+}
+
+function showQuestion() {
+  document.getElementById('questionBox').innerHTML = `
+    <p class="text-sm text-gray-400">Question ${currentQ+1} of 5</p>
+    <h3 class="text-2xl font-bold mt-2">${questions[currentCategory][currentQ]}</h3>
+    <input id="answerInput" class="w-full bg-[#0A0F1E] border border-green-400/30 rounded-lg p-3 mt-4" placeholder="Type your answer...">
+  `;
+}
+
+function nextQuestion() {
+  answers.push(document.getElementById('answerInput').value);
+  currentQ++;
+  if(currentQ < 5) showQuestion();
+  else generateScorecard();
+}
+
+function generateScorecard() {
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('step3').classList.remove('hidden');
+
+  let score = Math.floor(Math.random() * 30) + 60; // Demo AI Score
+  let strengths = "Communication, Execution, Networking";
+  let weakness = "Technical Depth, Certification Gap";
+  let plan = "Next 30 days: Complete 1 certification on Coursera. Next 60: Build 2 projects. Next 90: Apply to 50 roles.";
+
+  document.getElementById('scorecard').innerHTML = `
+    <div class="glass p-6 rounded-2xl"><h4 class="text-5xl font-bold gradient-text">${score}/100</h4><p>Career Health Score</p></div>
+    <div class="glass p-4 rounded-xl"><b>Strengths:</b> ${strengths}</div>
+    <div class="glass p-4 rounded-xl"><b>Weakness/Gaps:</b> ${weakness}</div>
+    <div class="glass p-4 rounded-xl"><b>AI Neeraj 90-Day Plan:</b> ${plan}
+      <br><b>Learn:</b> <a href="https://coursera.org" target="_blank" class="text-cyan-400">Coursera</a> | <a href="https://linkedin.com/learning" target="_blank" class="text-cyan-400">LinkedIn Learning</a>
+    </div>
+  `;
+  playNeeraj(`Your score is ${score}. Your strengths are ${strengths}. Focus on ${weakness}. Check the 90 day plan on screen.`);
+}
+
+function resetQuiz() {
+  document.getElementById('step3').classList.add('hidden');
+  document.getElementById('step1').classList.remove('hidden');
+}
+
+// VOICE
+function playNeeraj(text) {
   const audio = document.getElementById('neeraj-audio');
   const bubble = document.getElementById('neeraj-bubble');
-  audio.currentTime = 0;
+  document.getElementById('bubbleText').innerText = text;
   bubble.classList.remove('hidden');
-  audio.play();
-  audio.onended = () => bubble.classList.add('hidden');
+  audio.play().catch(()=>{});
+  setTimeout(()=>bubble.classList.add('hidden'), 5000);
 }
 </script>
 </body>
