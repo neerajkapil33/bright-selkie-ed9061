@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>What's Wrong With Me? — Career Diagnostic & AI Coaching</title>
+  <title>What's Wrong With Me? — Career Diagnostic Platform</title>
   <style>
-    /* Reset and Core Variables */
+    /* Global Reset & Theme Variables */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -13,292 +13,396 @@
     }
     
     :root {
-      --bg-dark: #070d19;
-      --card-bg: #0d172a;
+      --bg-gradient: radial-gradient(circle at top, #0c1527 0%, #050914 100%);
+      --card-bg: rgba(13, 23, 42, 0.6);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-orange: #f97316;
       --accent-blue: #60a5fa;
       --text-main: #ffffff;
       --text-muted: #94a3b8;
-      --line-color: rgba(255, 255, 255, 0.05);
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg-dark);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #060a16;
       color: var(--text-main);
-      overflow-x: hidden;
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 20px;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
     }
 
-    /* Main Frame Container mimicking the reference dashboard */
-    .dashboard-frame {
+    /* Main Container Frame */
+    .dashboard-container {
       width: 100%;
-      max-width: 1200px;
-      background-color: #091124;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      max-width: 1000px;
+      background: var(--bg-gradient);
+      border: 1px solid var(--card-border);
       border-radius: 24px;
-      padding: 24px 40px 60px 40px;
+      padding: 32px 48px 48px 48px;
       position: relative;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
     }
 
-    /* Top Navigation Bar */
+    /* Navigation Bar */
     .navbar {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      margin-bottom: 40px;
+      align-items: center;
+      margin-bottom: 32px;
     }
 
-    .brand-group {
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+
+    .brand-meta {
       display: flex;
       flex-direction: column;
     }
 
     .brand-title {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 700;
       letter-spacing: -0.5px;
     }
 
     .brand-subtitle {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       color: #fbbf24;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-top: 2px;
+      letter-spacing: 1.5px;
+      margin-top: 1px;
     }
 
-    .nav-links {
+    .nav-menu {
       display: flex;
+      gap: 24px;
       align-items: center;
-      gap: 32px;
     }
 
-    .nav-links a {
+    .nav-menu a {
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-size: 0.75rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      transition: color 0.2s ease;
+      letter-spacing: 1px;
+      transition: color 0.2s;
     }
 
-    .nav-links a:hover, .nav-links a.active {
+    .nav-menu a:hover, .nav-menu a.active {
       color: var(--text-main);
     }
 
-    .nav-links a.ai-coach {
+    .nav-menu a.ai-coach {
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .nav-links a.ai-coach::before {
+    .nav-menu a.ai-coach::before {
       content: '';
-      display: inline-block;
       width: 6px;
       height: 6px;
-      background-color: #ef4444;
+      background: #ef4444;
       border-radius: 50%;
+      display: inline-block;
     }
 
-    /* Central Interactive Globe Section */
-    .hero-visual {
+    /* Moving 3D Globe Implementation */
+    .globe-viewport {
       display: flex;
       justify-content: center;
-      align-items: center;
-      margin: 40px 0;
+      margin-bottom: 24px;
     }
 
-    .globe-container {
-      width: 320px;
-      height: 320px;
+    .globe-ring {
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      border: 2px solid rgba(96, 165, 250, 0.3);
-      padding: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle, rgba(96,165,250,0.05) 0%, transparent 70%);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      padding: 6px;
+      background: radial-gradient(circle, rgba(96,165,250,0.08) 0%, transparent 70%);
     }
 
-    .globe {
+    .globe-sphere {
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      background: #111e36;
+      background: #0d1a30;
       position: relative;
       overflow: hidden;
       box-shadow: 
-        inset -30px -30px 80px rgba(0, 0, 0, 0.8),
-        inset 10px 10px 60px rgba(255, 255, 255, 0.05),
-        0 0 50px rgba(96, 165, 250, 0.15);
+        inset -15px -15px 40px rgba(0, 0, 0, 0.8),
+        inset 5px 5px 25px rgba(255, 255, 255, 0.05),
+        0 0 25px rgba(96, 165, 250, 0.1);
     }
 
-    .globe::after {
+    .globe-sphere::after {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      inset: 0;
       border-radius: 50%;
-      box-shadow: inset -15px -15px 40px rgba(0,0,0,0.6);
-      pointer-events: none;
+      box-shadow: inset -5px -5px 15px rgba(0,0,0,0.6);
       z-index: 3;
+      pointer-events: none;
     }
 
-    /* Seamless repeating vector world map pattern */
-    .globe-map {
+    .globe-map-texture {
       width: 200%;
       height: 100%;
       position: absolute;
       background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24" fill="none"><path d="M2.5 4h1v1h-1zM5 3h2v1H5zM8 2h3v2H8zM14 1h4v2h-4zM20 2h3v2h-3zM25 4h2v2h-2zM28 5h3v2h-3zM33 4h4v3h-4zM40 3h3v2h-3zM45 5h2v1h-2zM1 8h4v3H1zM7 9h5v3H7zM14 7h6v4h-6zM22 8h4v3h-4zM28 10h3v2h-3zM33 8h6v4h-6zM41 7h4v3h-4zM46 9h1v2h-1zM2 14h3v2H2zM7 13h4v3H7zM13 12h5v4h-5zM20 13h4v3h-4zM26 14h4v2h-4zM32 13h5v3h-5zM39 12h5v3h-5zM46 14h1v1h-1zM3 19h2v2H3zM7 18h3v2H7zM12 17h4v2h-4zM18 18h3v2h-3zM23 19h3v1h-3zM28 18h4v2h-4zM34 17h5v3h-5zM41 18h3v1h-3zM45 19h2v1h-2z" fill="%2360a5fa" opacity="0.45"/></svg>');
       background-size: 50% 100%;
       background-repeat: repeat-x;
-      animation: spin 18s linear infinite;
+      animation: globeRotate 14s linear infinite;
       z-index: 1;
     }
 
-    .globe-lines {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: 
-        linear-gradient(90deg, transparent 49%, var(--line-color) 49%, var(--line-color) 51%, transparent 51%),
-        linear-gradient(transparent 49%, var(--line-color) 49%, var(--line-color) 51%, transparent 51%);
-      background-size: 40px 40px;
-      z-index: 2;
-    }
-
-    @keyframes spin {
+    @keyframes globeRotate {
       0% { transform: translateX(0); }
       100% { transform: translateX(-50%); }
     }
 
-    /* Core Copy Typography */
-    .hero-content {
+    /* Core Hero Text Block */
+    .hero-text-block {
       text-align: center;
-      max-width: 750px;
-      margin: 0 auto;
+      max-width: 680px;
+      margin: 0 auto 32px auto;
     }
 
-    .hero-tagline {
-      color: #fbbf24;
+    .hero-sub {
+      color: var(--text-muted);
       font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      font-weight: 700;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
     }
 
-    .hero-title {
-      font-serif: Georgia, serif;
-      font-size: 3.5rem;
-      font-weight: 400;
-      line-height: 1.1;
-      margin-bottom: 24px;
-      letter-spacing: -1px;
-    }
-
-    .hero-description {
+    .hero-main-desc {
       color: var(--text-muted);
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       line-height: 1.6;
-      font-weight: 400;
     }
 
-    /* Floating Chat Widget */
-    .chat-widget {
-      position: absolute;
-      bottom: 40px;
-      right: 40px;
-      background-color: #0b1528;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Audio Intro Panel Frame */
+    .audio-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 16px;
-      width: 320px;
+      padding: 24px;
+      max-width: 760px;
+      margin: 0 auto 32px auto;
+    }
+
+    .audio-header-row {
       display: flex;
-      align-items: flex-start;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .coach-profile {
+      display: flex;
+      align-items: center;
       gap: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
 
-    .chat-close {
-      position: absolute;
-      top: 8px;
-      right: 12px;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 0.75rem;
-    }
-
-    .avatar-container {
-      position: relative;
-      width: 40px;
-      height: 40px;
+    .coach-avatar-circle {
+      width: 44px;
+      height: 44px;
+      background: #1e293b;
+      border: 2px solid var(--accent-orange);
       border-radius: 50%;
-      background-color: #f97316;
+      position: relative;
+    }
+
+    .coach-avatar-circle::before {
+      content: '';
+      position: absolute;
+      top: 8px; left: 13px;
+      width: 14px; height: 14px;
+      background: #cbd5e1;
+      border-radius: 50%;
+    }
+
+    .coach-avatar-circle::after {
+      content: '';
+      position: absolute;
+      bottom: 4px; left: 7px;
+      width: 26px; height: 12px;
+      background: #cbd5e1;
+      border-radius: 14px 14px 0 0;
+    }
+
+    .coach-info h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .badge-intro {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      letter-spacing: 0.5px;
+      vertical-align: middle;
+    }
+
+    .coach-quote {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    .listen-btn {
+      background: #ea580c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      gap: 8px;
     }
 
-    /* Basic vector layout for avatar */
-    .avatar-icon {
-      width: 20px;
-      height: 20px;
-      background: #fff;
-      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+    .listen-btn:hover {
+      background: #d97706;
+    }
+
+    /* Controls Configuration Bar */
+    .audio-config-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .config-field {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .config-field label {
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .config-field select {
+      background: #090f1c;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      outline: none;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    /* Lower Base Portal Options */
+    .portal-options-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 32px;
+      margin-top: 16px;
+    }
+
+    .portal-options-bar a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .portal-options-bar a:hover {
+      color: var(--text-main);
+    }
+
+    /* Floating Fixed Base Avatar Anchor */
+    .floating-chat-anchor {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      width: 48px;
+      height: 48px;
+      background: #1e293b;
+      border: 2px solid var(--accent-orange);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .floating-chat-anchor::before {
+      content: '';
+      position: absolute;
+      top: 9px; left: 15px;
+      width: 14px; height: 14px;
+      background: #cbd5e1;
       border-radius: 50%;
     }
 
-    .chat-body h4 {
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-bottom: 2px;
+    .floating-chat-anchor::after {
+      content: '';
+      position: absolute;
+      bottom: 5px; left: 9px;
+      width: 26px; height: 12px;
+      background: #cbd5e1;
+      border-radius: 14px 14px 0 0;
     }
 
-    .chat-body p {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
-
-    .chat-link {
-      color: var(--accent-blue);
-      text-decoration: none;
-      font-size: 0.8rem;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    /* Mobile Adaptability */
-    @media(max-width: 768px) {
-      .navbar { flex-direction: column; gap: 20px; }
-      .nav-links { flex-wrap: wrap; justify-content: center; gap: 16px; }
-      .hero-title { font-size: 2.5rem; }
-      .chat-widget { position: static; width: 100%; margin-top: 40px; }
+    /* Responsive Adaptation Rule structures */
+    @media (max-width: 768px) {
+      .navbar { flex-direction: column; gap: 16px; }
+      .nav-menu { flex-wrap: wrap; justify-content: center; gap: 12px; }
+      .audio-header-row { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .audio-config-row { flex-direction: column; }
+      .floating-chat-anchor { position: static; margin: 24px auto 0 auto; display: block; }
     }
   </style>
 </head>
 <body>
 
-  <div class="dashboard-frame">
-    <!-- Header/Navigation -->
+  <div class="dashboard-container">
+    <!-- Platform Navigation Header -->
     <header class="navbar">
-      <div class="brand-group">
-        <span class="brand-title">w3m</span>
-        <span class="brand-subtitle">Career Diagnostic Platform</span>
+      <div class="brand-section">
+        <div class="brand-logo">w3m</div>
+        <div class="brand-meta">
+          <span class="brand-title">What's Wrong With Me?</span>
+          <span class="brand-subtitle">Career Diagnostic Platform</span>
+        </div>
       </div>
-      <nav class="nav-links">
+      <nav class="nav-menu">
         <a href="#" class="active">Hub</a>
         <a href="#">ATS Check</a>
         <a href="#">Diagnostic</a>
@@ -309,38 +413,68 @@
       </nav>
     </header>
 
-    <!-- Visual Spinning Globe -->
-    <section class="hero-visual">
-      <div class="globe-container">
-        <div class="globe">
-          <div class="globe-lines"></div>
-          <div class="globe-map"></div>
+    <!-- Animated Core 3D Globe Visual component -->
+    <div class="globe-viewport">
+      <div class="globe-ring">
+        <div class="globe-sphere">
+          <div class="globe-map-texture"></div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Hero Header Copy -->
-    <section class="hero-content">
-      <p class="hero-tagline">Professional Career Diagnostic & Market Alignment</p>
-      <h1 class="hero-title">What's Wrong With Me?</h1>
-      <p class="hero-description">
+    <!-- Main Copy Text Intro Structure -->
+    <section class="hero-text-block">
+      <p class="hero-sub">PROFESSIONAL CAREER DIAGNOSTIC & MARKET ALIGNMENT</p>
+      <p class="hero-main-desc">
         A straight-talk read on your career from someone who's hired at scale for 20+ years. 
         Benchmark your ATS resume, pinpoint core skill gaps, and master market negotiation.
       </p>
     </section>
 
-    <!-- Interactive Floating AI Coach Widget -->
-    <div class="chat-widget">
-      <span class="chat-close" onclick="this.parentElement.style.display='none'">✕</span>
-      <div class="avatar-container">
-        <div class="avatar-icon"></div>
+    <!-- Unified Interactive Custom Audio Console Panel -->
+    <div class="audio-panel">
+      <div class="audio-header-row">
+        <div class="coach-profile">
+          <div class="coach-avatar-circle"></div>
+          <div class="coach-info">
+            <h3>Coach Neeraj Kapil <span class="badge-intro">Audio Intro</span></h3>
+            <p class="coach-quote">"Hi, My name is Neeraj Kapil and I am an AI coach..."</p>
+          </div>
+        </div>
+        <button class="listen-btn">
+          <span>▶</span> Listen to Intro
+        </button>
       </div>
-      <div class="chat-body">
-        <h4>Neeraj Kapil</h4>
-        <p>Need help framing a career gap?</p>
-        <a href="#" class="chat-link">Chat with me ➔</a>
+
+      <div class="audio-config-row">
+        <div class="config-field">
+          <label>Playback Speed</label>
+          <select>
+            <option>0.9x (Relaxed)</option>
+            <option selected>1.0x (Normal)</option>
+            <option>1.15x (Brisk)</option>
+          </select>
+        </div>
+        <div class="config-field">
+          <label>Select Voice</label>
+          <select>
+            <option>Microsoft Mark - English (United States) (en-US)</option>
+            <option>Microsoft David - English (United States) (en-US)</option>
+            <option>Google US English (en-US)</option>
+          </select>
+        </div>
       </div>
     </div>
+
+    <!-- Base Gateway Configuration Links -->
+    <footer class="portal-options-bar">
+      <a href="#">Login</a>
+      <a href="#">Sign Up</a>
+      <a href="#">Demo</a>
+    </footer>
+
+    <!-- Interactive Base Floating System Profile Icon -->
+    <div class="floating-chat-anchor"></div>
   </div>
 
 </body>
