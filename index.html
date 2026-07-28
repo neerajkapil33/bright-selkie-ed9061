@@ -1086,5 +1086,446 @@
   })();
 </script>
 
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>W3Me — What's Wrong With Me? | Career Diagnostic</title>
+<meta name="description" content="A career diagnostic, not another quiz. Assess, talk to an AI voice coach, and score your resume against real ATS logic — in one report.">
+<link rel="stylesheet" href="design-system.css">
+<style>
+  /* ---- Homepage-specific composition ---- */
+  .hero {
+    background: var(--navy);
+    color: var(--white);
+    padding: clamp(64px, 10vw, 120px) 0 clamp(56px, 8vw, 96px);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero__inner {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: clamp(32px, 5vw, 64px);
+    align-items: center;
+  }
+  .hero__eyebrow { color: #6FA88E; }
+  .hero h1 { margin-top: 18px; color: var(--white); }
+  .hero h1 em {
+    font-style: normal;
+    color: #7FC4A0;
+  }
+  .hero__sub {
+    margin-top: 20px;
+    font-size: var(--step-1);
+    color: rgba(247,248,250,0.78);
+    max-width: 46ch;
+  }
+  .hero__actions {
+    display: flex;
+    gap: 14px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+  .hero__proof {
+    display: flex;
+    gap: 22px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+  }
+  .hero__proof-item {
+    font-size: var(--step--1);
+    color: rgba(247,248,250,0.6);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hero__proof-item strong { color: var(--white); font-family: var(--font-display); font-size: 1.1em; }
+
+  /* Hero diagnostic panel */
+  .diag-panel {
+    background: var(--steel);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-lg);
+    padding: 26px;
+    box-shadow: var(--shadow-raised);
+  }
+  .diag-panel__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .diag-panel__title {
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: rgba(247,248,250,0.9);
+  }
+  .diag-row { margin-bottom: 18px; }
+  .diag-row:last-child { margin-bottom: 0; }
+  .diag-row .signal-meta__label { color: rgba(247,248,250,0.85); }
+  .diag-panel__footnote {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.78rem;
+    color: rgba(247,248,250,0.5);
+  }
+
+  /* Instrument cards */
+  .instrument-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .instrument-card__index {
+    font-family: var(--font-display);
+    font-size: var(--step--1);
+    color: var(--signal);
+    font-weight: 600;
+  }
+  .instrument-card a.card-link {
+    margin-top: auto;
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--navy);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .instrument-card a.card-link:hover { color: var(--signal); }
+
+  /* Measurement strip */
+  .measure-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .measure-item {
+    display: grid;
+    grid-template-columns: 220px 1fr auto;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .measure-item:last-child { border-bottom: none; }
+  .measure-item__name { font-weight: 600; font-size: var(--step--1); }
+  .measure-item__desc { color: var(--slate); font-size: var(--step--1); }
+  @media (max-width: 720px) {
+    .measure-item { grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  /* Report preview */
+  .report-preview {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 28px;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .report-preview { grid-template-columns: 1fr; } }
+
+  /* Credibility */
+  .credibility-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+
+  /* Booking CTA */
+  .booking-cta {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 40px;
+    align-items: center;
+  }
+  @media (max-width: 900px) { .booking-cta { grid-template-columns: 1fr; } }
+
+  @media (max-width: 900px) {
+    .hero__inner { grid-template-columns: 1fr; }
+  }
+
+  footer .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 32px;
+  }
+  footer .footer-grid h5 { color: var(--white); font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 12px; font-weight: 600; }
+  footer .footer-grid ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  footer .footer-bottom { padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  @media (max-width: 720px) { footer .footer-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container site-nav__inner">
+    <a href="index.html" class="site-nav__logo">
+      <span class="site-nav__logo-mark"><span></span><span></span><span></span></span>
+      W3Me
+    </a>
+    <ul class="site-nav__links">
+      <li><a href="index.html" aria-current="page">Home</a></li>
+      <li><a href="assessment.html">Assessment</a></li>
+      <li><a href="voice-coach.html">Voice Coach</a></li>
+      <li><a href="report.html">Report</a></li>
+      <li><a href="learning.html">Learning</a></li>
+      <li><a href="ats.html">ATS Score</a></li>
+      <li><a href="booking.html">Booking</a></li>
+    </ul>
+    <div class="site-nav__cta">
+      <a href="login.html" class="btn btn--ghost-on-dark btn--sm">Log in</a>
+      <a href="assessment.html" class="btn btn--primary btn--sm">Start diagnostic</a>
+    </div>
+    <button class="site-nav__toggle" aria-label="Open menu">☰</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="container hero__inner">
+    <div>
+      <span class="eyebrow hero__eyebrow">Career diagnostic</span>
+      <h1>Most career advice&nbsp;guesses.<br>We <em>diagnose</em>.</h1>
+      <p class="hero__sub">
+        W3Me reads your resume, your answers, and your voice against real hiring signal —
+        then hands you a report that names exactly what's working, what isn't, and what to fix first.
+      </p>
+      <div class="hero__actions">
+        <a href="assessment.html" class="btn btn--primary">Start your assessment</a>
+        <a href="#how-it-works" class="btn btn--ghost-on-dark">See how it works</a>
+      </div>
+      <div class="hero__proof">
+        <div class="hero__proof-item"><strong>3</strong> diagnostic instruments</div>
+        <div class="hero__proof-item"><strong>1</strong> report, no guesswork</div>
+        <div class="hero__proof-item"><strong>0</strong> generic advice</div>
+      </div>
+    </div>
+
+    <div class="diag-panel" aria-hidden="true">
+      <div class="diag-panel__top">
+        <span class="diag-panel__title">Sample diagnostic read</span>
+        <span class="pill-status">Preview</span>
+      </div>
+
+      <div class="diag-row">
+        <div class="signal-meta">
+          <span class="signal-meta__label">Positioning clarity</span>
+          <span class="signal-meta__value">8.2</span>
+        </div>
+        <div class="signal-bar" data-fill="10" data-total="12"></div>
+      </div>
+
+      <div class="diag-row">
+        <div class="signal-meta">
+          <span class="signal-meta__label">ATS compatibility</span>
+          <span class="signal-meta__value is-warn">5.4</span>
+        </div>
+        <div class="signal-bar" data-fill="6" data-total="12" data-warn="true"></div>
+      </div>
+
+      <div class="diag-row">
+        <div class="signal-meta">
+          <span class="signal-meta__label">Narrative consistency</span>
+          <span class="signal-meta__value">7.1</span>
+        </div>
+        <div class="signal-bar" data-fill="8" data-total="12"></div>
+      </div>
+
+      <div class="diag-panel__footnote">Illustrative sample — your report is generated from your own inputs.</div>
+    </div>
+  </div>
+</header>
+
+<!-- THREE INSTRUMENTS -->
+<section class="section" id="how-it-works">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">How the diagnosis works</span>
+      <h2>Three instruments. One read on where you stand.</h2>
+      <p>Each one measures something the others can't. Together, they triangulate the actual gap between how you present and how you're perceived.</p>
+    </div>
+
+    <div class="grid grid--3">
+      <div class="card instrument-card">
+        <span class="instrument-card__index">01 — Assessment</span>
+        <h4>The structured assessment</h4>
+        <p>A category-by-category read on clarity, positioning, and market fit — the questions a mentor would actually ask, scored consistently instead of by gut feel.</p>
+        <a href="assessment.html" class="card-link">Take the assessment →</a>
+      </div>
+
+      <div class="card instrument-card">
+        <span class="instrument-card__index">02 — Voice Coach</span>
+        <h4>The AI voice coach</h4>
+        <p>Talk through your career story out loud with a voice-based coach trained to probe the gaps a written form lets you skip past.</p>
+        <a href="voice-coach.html" class="card-link">Talk to the coach →</a>
+      </div>
+
+      <div class="card instrument-card">
+        <span class="instrument-card__index">03 — ATS Score</span>
+        <h4>The ATS score</h4>
+        <p>Upload your resume and see it the way an applicant tracking system does — before a recruiter ever gets the chance to.</p>
+        <a href="ats.html" class="card-link">Score your resume →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT WE MEASURE -->
+<section class="section section--steel">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow" style="color:#9FD4B8;">What gets measured</span>
+      <h2 style="color:var(--white);">Four signals, tracked the same way every time</h2>
+      <p style="color:rgba(247,248,250,0.75);">These are the categories your assessment report is built from. Every one gets its own signal read — not a single vague score.</p>
+    </div>
+
+    <div class="card measure-row" style="background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.1);">
+      <div class="measure-item">
+        <span class="measure-item__name" style="color:var(--white);">Clarity</span>
+        <span class="measure-item__desc" style="color:rgba(247,248,250,0.65);">Can you explain what you do and want in one breath?</span>
+        <div class="signal-bar signal-bar--sm" data-fill="9" data-total="12"></div>
+      </div>
+      <div class="measure-item">
+        <span class="measure-item__name" style="color:var(--white);">Positioning</span>
+        <span class="measure-item__desc" style="color:rgba(247,248,250,0.65);">Does your story match the role you're aiming at?</span>
+        <div class="signal-bar signal-bar--sm" data-fill="7" data-total="12"></div>
+      </div>
+      <div class="measure-item">
+        <span class="measure-item__name" style="color:var(--white);">Market fit</span>
+        <span class="measure-item__desc" style="color:rgba(247,248,250,0.65);">Is what you're offering something the market is asking for right now?</span>
+        <div class="signal-bar signal-bar--sm" data-fill="5" data-total="12" data-warn="true"></div>
+      </div>
+      <div class="measure-item">
+        <span class="measure-item__name" style="color:var(--white);">Execution proof</span>
+        <span class="measure-item__desc" style="color:rgba(247,248,250,0.65);">Do your examples actually back up the claims you're making?</span>
+        <div class="signal-bar signal-bar--sm" data-fill="10" data-total="12"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REPORT PREVIEW -->
+<section class="section">
+  <div class="container report-preview">
+    <div>
+      <span class="eyebrow">Your report</span>
+      <h2 style="margin-top:14px;">Everything lands in one report</h2>
+      <p style="margin-top:16px; font-size:var(--step-1);">The assessment, the voice coach transcript, and your ATS score all resolve into a single diagnostic report — with a learning plan built from exactly what it finds.</p>
+      <a href="report.html" class="btn btn--outline" style="margin-top:24px;">Preview the report →</a>
+    </div>
+
+    <div class="card card--dark">
+      <div class="diag-panel__top">
+        <span class="diag-panel__title">Diagnostic report</span>
+        <span class="pill-status" style="background:rgba(255,255,255,0.08); color:rgba(247,248,250,0.7); border-color:rgba(255,255,255,0.15);">Live in Phase 3</span>
+      </div>
+      <div class="diag-row">
+        <div class="signal-meta"><span class="signal-meta__label">Overall diagnostic score</span><span class="signal-meta__value">7.3 / 10</span></div>
+        <div class="signal-bar" data-fill="9" data-total="12"></div>
+      </div>
+      <div class="diag-row">
+        <div class="signal-meta"><span class="signal-meta__label">Priority fix</span><span class="signal-meta__value is-warn">Market fit</span></div>
+        <div class="signal-bar" data-fill="5" data-total="12" data-warn="true"></div>
+      </div>
+      <p style="margin-top:18px; font-size:0.85rem; color:rgba(247,248,250,0.55);">This panel shows placeholder data. Your actual report populates once your assessment, voice session, and ATS upload are complete.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CREDIBILITY -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div class="card" style="display:flex; justify-content:space-between; align-items:center; gap:24px; flex-wrap:wrap;">
+      <div>
+        <h4>Built as a diagnostic, not a directory of tips</h4>
+        <p style="margin-top:8px; max-width:52ch;">Every score you see traces back to a specific answer, transcript, or resume line — never a generic bucket.</p>
+        <div class="credibility-row">
+          <span class="badge-credential"><span class="badge-credential__dot"></span>Structured scoring methodology</span>
+          <span class="badge-credential"><span class="badge-credential__dot"></span>Voice-based coaching</span>
+          <span class="badge-credential"><span class="badge-credential__dot"></span>Resume-level ATS logic</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOOKING CTA -->
+<section class="section section--dark">
+  <div class="container booking-cta">
+    <div>
+      <span class="eyebrow">Want it talked through?</span>
+      <h2 style="color:var(--white); margin-top:14px;">Book time to walk through your results</h2>
+      <p style="color:rgba(247,248,250,0.75); margin-top:14px; font-size:var(--step-1);">Once your diagnostic is in, you can put time on the calendar to go through it line by line.</p>
+      <a href="booking.html" class="btn btn--primary" style="margin-top:26px;">Book a session →</a>
+    </div>
+    <div class="card" style="background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.12);">
+      <div class="diag-panel__top">
+        <span class="diag-panel__title" style="color:var(--white);">Next available</span>
+        <span class="pill-status" style="background:rgba(255,255,255,0.08); color:rgba(247,248,250,0.7); border-color:rgba(255,255,255,0.15);">Calendar</span>
+      </div>
+      <p style="color:rgba(247,248,250,0.65);">Live scheduling is embedded on the Booking page.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a href="index.html" class="site-nav__logo" style="margin-bottom:12px; display:inline-flex;">
+          <span class="site-nav__logo-mark"><span></span><span></span><span></span></span>
+          W3Me
+        </a>
+        <p style="color:rgba(247,248,250,0.55); max-width:32ch;">A career diagnostic — assessment, voice coaching, and ATS scoring in one report.</p>
+      </div>
+      <div>
+        <h5>Diagnose</h5>
+        <ul>
+          <li><a href="assessment.html">Assessment</a></li>
+          <li><a href="voice-coach.html">Voice coach</a></li>
+          <li><a href="ats.html">ATS score</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Improve</h5>
+        <ul>
+          <li><a href="report.html">Report</a></li>
+          <li><a href="learning.html">Learning</a></li>
+          <li><a href="booking.html">Booking</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Account</h5>
+        <ul>
+          <li><a href="login.html">Log in</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 W3Me — What's Wrong With Me?</span>
+      <span>w3me.in</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Signal bar renderer — signature component.
+  // data-fill / data-total set how many of N segments render as filled;
+  // data-warn switches the fill color from diagnostic-green to gold.
+  document.querySelectorAll('.signal-bar').forEach((bar) => {
+    const total = parseInt(bar.dataset.total || '12', 10);
+    const fill = parseInt(bar.dataset.fill || '0', 10);
+    const warn = bar.dataset.warn === 'true';
+    for (let i = 0; i < total; i++) {
+      const seg = document.createElement('span');
+      seg.className = 'signal-bar__segment';
+      if (i < fill) seg.classList.add(warn ? 'is-warn' : 'is-filled');
+      else seg.classList.add('is-empty');
+      bar.appendChild(seg);
+    }
+  });
+</script>
 
 </body></html>
