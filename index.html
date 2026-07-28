@@ -1,4 +1,534 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AskW3M - Career Diagnostic & AI Coach</title>
+    <!-- Tailwind CSS for Modern UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for App Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .safe-bottom {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .voice-wave span {
+            animation: wave 1.2s infinite ease-in-out;
+        }
+        .voice-wave span:nth-child(2) { animation-delay: 0.2s; }
+        .voice-wave span:nth-child(3) { animation-delay: 0.4s; }
+        .voice-wave span:nth-child(4) { animation-delay: 0.6s; }
+        @keyframes wave {
+            0%, 100% { height: 4px; }
+            50% { height: 24px; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased min-h-screen pb-24">
+
+    <!-- Top Native Header -->
+    <header class="sticky top-0 z-40 bg-slate-900 text-white px-4 py-3 flex justify-between items-center shadow-md">
+        <div class="flex items-center space-x-2">
+            <div class="bg-indigo-600 p-2 rounded-lg text-white font-bold tracking-wider text-sm">W3M</div>
+            <span class="font-bold text-lg tracking-tight">AskW3M <span class="text-xs text-indigo-400 font-normal">v2.0</span></span>
+        </div>
+        <div>
+            <button id="adminLoginBtn" onclick="toggleModal('loginModal', true)" class="text-xs bg-slate-800 border border-slate-700 hover:bg-slate-700 px-3 py-1.5 rounded-full flex items-center space-x-1 transition-all">
+                <i class="fa-solid fa-lock text-indigo-400"></i>
+                <span id="adminStatusText">Admin Portal</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- App Container -->
+    <main class="max-w-md mx-auto px-4 pt-4 safe-bottom">
+        
+        <!-- Active Tab Dynamic Panels -->
+        
+        <!-- PANEL 1: DASHBOARD / HUB -->
+        <section id="panel-hub" class="tab-panel space-y-4">
+            <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-5 rounded-2xl shadow-xl space-y-3 relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl"><i class="fa-solid fa-rocket"></i></div>
+                <span class="bg-indigo-500/30 text-indigo-300 text-xs px-2.5 py-1 rounded-full font-semibold border border-indigo-500/20">Career Portal</span>
+                <h1 class="text-2xl font-bold tracking-tight">What's Wrong With Me?</h1>
+                <p class="text-slate-300 text-xs leading-relaxed">Diagnose professional execution blocks, fix hidden ATS filtering flaws, optimize negotiation leverage, and talk seamlessly with our AI voice-to-voice career mentor.</p>
+            </div>
+
+            <!-- Core Operational View Metrics (Visible to Visitors) -->
+            <div class="grid grid-cols-2 gap-3">
+                <div onclick="switchTab('ats')" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/60 active:scale-95 transition-transform cursor-pointer">
+                    <div class="text-indigo-600 text-lg mb-1"><i class="fa-solid fa-file-invoice"></i></div>
+                    <div class="text-xs text-slate-500 font-medium">ATS Resume Check</div>
+                    <div class="text-lg font-bold text-slate-800">Ready for Scan</div>
+                </div>
+                <div onclick="switchTab('diagnostic')" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/60 active:scale-95 transition-transform cursor-pointer">
+                    <div class="text-emerald-600 text-lg mb-1"><i class="fa-solid fa-stethoscope"></i></div>
+                    <div class="text-xs text-slate-500 font-medium">Self Diagnostic</div>
+                    <div class="text-lg font-bold text-slate-800">Analyze Gaps</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANEL 2: ATS CHECK (WITH RESUME UPLOAD) -->
+        <section id="panel-ats" class="tab-panel hidden space-y-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 space-y-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                        <i class="fa-solid fa-file-lines text-indigo-600"></i>
+                        <span>ATS Resume Parser & Analytics</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Upload your CV/Resume to benchmark optimization scores.</p>
+                </div>
+
+                <!-- Active Industry Filter Selection -->
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Target Function & Industry Sector</label>
+                        <select id="atsIndustry" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none">
+                            <option value="tech-software">Technology — Software Engineering & Architecture</option>
+                            <option value="tech-data">Technology — Data Science, AI & ML Engineering</option>
+                            <option value="finance-corp">Banking & Finance — Corporate Investment Banking</option>
+                            <option value="finance-fintech">Banking & Finance — FinTech Operations</option>
+                            <option value="consulting-strat">Management Consulting — Strategy & Operations</option>
+                            <option value="marketing-digital">Marketing — Performance Branding & Product Growth</option>
+                            <option value="hr-talent">Human Resources — Talent Acquisition & Corporate HRBP</option>
+                            <option value="ops-supply">Supply Chain — Logistics & Global Operations Management</option>
+                            <option value="healthcare-pharma">Healthcare & Life Sciences — Pharma Operations</option>
+                        </select>
+                    </div>
+
+                    <!-- Drag and Drop Resume Upload Box -->
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors bg-slate-50/50 relative cursor-pointer" id="dropzone">
+                        <input type="file" id="resumeFileInput" accept=".pdf,.doc,.docx" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleResumeUpload(event)">
+                        <div class="space-y-2">
+                            <div class="text-slate-400 text-3xl"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                            <div class="text-sm font-semibold text-slate-700" id="uploadStatusText">Upload Resume or CV</div>
+                            <div class="text-xs text-slate-400">Supports PDF, DOCX up to 10MB</div>
+                        </div>
+                    </div>
+
+                    <!-- File Progress Bar Indicator -->
+                    <div id="uploadProgressContainer" class="hidden space-y-1.5">
+                        <div class="flex justify-between text-xs font-medium text-slate-500">
+                            <span id="uploadedFileName">Filename.pdf</span>
+                            <span id="uploadPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="uploadProgressBar" class="bg-indigo-600 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="simulateAtsAnalysis()" class="w-full bg-indigo-600 text-white font-medium py-2.5 rounded-xl shadow-md shadow-indigo-600/10 active:scale-[0.99] transition-all text-sm flex justify-center items-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Analyze Performance Metrics</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Simulated Scoring Output Card -->
+            <div id="atsResultsCard" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-bold text-slate-800">System Benchmark Score</span>
+                    <span class="text-2xl font-black text-emerald-600" id="atsScoreValue">84%</span>
+                </div>
+                <div class="space-y-2 text-xs">
+                    <div class="flex items-center space-x-2 text-emerald-700 bg-emerald-50 p-2 rounded-lg">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Core Action Verbs and Section Anchors parsed correctly.</span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-amber-700 bg-amber-50 p-2 rounded-lg">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span>Missing critical density metrics for target industry metrics.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANEL 3: SELF ASSESSMENT DIAGNOSTIC -->
+        <section id="panel-diagnostic" class="tab-panel hidden space-y-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 space-y-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                        <i class="fa-solid fa-paste text-emerald-600"></i>
+                        <span>Active Performance Screening</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Select alignment tier to initiate targeted evaluation questions.</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="bg-slate-100 hover:bg-slate-200/80 p-3 rounded-xl text-center border border-slate-200 transition-all text-xs font-semibold text-slate-700 active:ring-2 active:ring-slate-300">
+                        Campus to Corporate (Fresher)
+                    </button>
+                    <button class="bg-indigo-50 border border-indigo-200 p-3 rounded-xl text-center transition-all text-xs font-semibold text-indigo-700">
+                        Lateral / Cross-Functional Transfer
+                    </button>
+                </div>
+
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/60 space-y-3">
+                    <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Question 1 of 5</div>
+                    <p class="text-sm font-semibold text-slate-800">What primary processing grid block constraints your active internal lateral transfer speed?</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2.5 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer text-xs font-medium hover:bg-indigo-50/40 transition-colors">
+                            <input type="radio" name="diag-q1" class="text-indigo-600 focus:ring-indigo-500">
+                            <span>Misaligned industry profile definitions within the targeted functional matrix.</span>
+                        </label>
+                        <label class="flex items-center space-x-2.5 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer text-xs font-medium hover:bg-indigo-50/40 transition-colors">
+                            <input type="radio" name="diag-q1" class="text-indigo-600 focus:ring-indigo-500">
+                            <span>Ineffective handling of senior operational management dynamic screening scripts.</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANEL 4: ADMIN ADVANCED PRIVILEGES DEPLOYMENT METER (HIDDEN SECURELY BY DEFAULT) -->
+        <section id="panel-admin" class="tab-panel hidden space-y-4 admin-only">
+            <div class="bg-amber-50 border border-amber-200 p-5 rounded-2xl space-y-4 shadow-sm">
+                <div class="flex items-center space-x-2 text-amber-800">
+                    <i class="fa-solid fa-sliders-span text-lg"></i>
+                    <h2 class="text-base font-bold">Admin Privileged System Controller Panel</h2>
+                </div>
+                <p class="text-xs text-amber-700 leading-relaxed">
+                    Welcome back, Administrator. System telemetry pipelines, active parsing threshold settings, configuration metrics, and direct analytical logs are unlocked below.
+                </p>
+                
+                <div class="space-y-3 bg-white p-4 rounded-xl border border-amber-200/60">
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide">Developer Engine Customizations</h3>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">ATS Parser Matching Engine Threshold (%)</label>
+                            <input type="range" min="50" max="95" value="75" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        </div>
+                        <div class="pt-2">
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">AI Voice Streaming Engine Endpoint Matrix URI</label>
+                            <input type="text" value="https://api.w3m.internal/v1/voice/synthesizer/neeraj-kapil" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-mono text-slate-600 outline-none" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FLOATING NEERAJ KAPIL VOICE-TO-VOICE AI COACH INTERACTION DRAWER -->
+    <div id="ai-coach-drawer" class="fixed bottom-16 inset-x-0 mx-auto max-w-md bg-white/95 backdrop-blur-md border-t border-slate-200 rounded-t-3xl shadow-2xl z-40 transition-all duration-300 transform translate-y-[calc(100%-60px)]">
+        
+        <!-- Drawer Handlebar Activation Area -->
+        <div onclick="toggleCoachDrawer()" class="h-[60px] flex items-center justify-between px-5 border-b border-slate-100 cursor-pointer select-none">
+            <div class="flex items-center space-x-3">
+                <div class="relative">
+                    <!-- Standard Asset Avatar Container placeholder using professional profile image representation -->
+                    <div class="w-10 h-10 rounded-full bg-slate-800 border-2 border-indigo-500 flex items-center justify-between overflow-hidden">
+                        <i class="fa-solid fa-user-tie text-white text-lg mx-auto"></i>
+                    </div>
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 leading-none">Neeraj Kapil</h3>
+                    <span class="text-[10px] font-medium text-slate-400">AI Coach for Career Diagnostic</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div id="visual-equalizer" class="voice-wave hidden flex items-end space-x-0.5 h-6">
+                    <span class="w-0.5 bg-indigo-600 rounded-full"></span>
+                    <span class="w-0.5 bg-indigo-600 rounded-full"></span>
+                    <span class="w-0.5 bg-indigo-600 rounded-full"></span>
+                    <span class="w-0.5 bg-indigo-600 rounded-full"></span>
+                </div>
+                <i id="drawer-chevron" class="fa-solid fa-chevron-up text-slate-400 transition-transform"></i>
+            </div>
+        </div>
+
+        <!-- Coach Body Dynamic Interface Panel -->
+        <div class="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl space-y-2">
+                <p class="text-xs text-indigo-900 leading-relaxed font-medium italic">
+                    "Hi, my name is Neeraj Kapil and I am an AI coach for career diagnostic at W3M. I am here to help you out in your career development, in your search for the job, in your resume screening, in your challenges and queries on corporate to further internal industry transfers or transition from college to corporate, all kind of challenges which can be a real stuck at your career growth would be part of my resolution. Thank you."
+                </p>
+                <div class="flex items-center justify-between pt-1">
+                    <span class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Voice-To-Voice Synthesis Core</span>
+                    <span class="text-[10px] text-slate-400">Mid-Aged Indian Male Voice Profile (~40yo)</span>
+                </div>
+            </div>
+
+            <!-- Streaming Interactive Control Nodes -->
+            <div class="flex justify-center items-center space-x-6 py-4">
+                <button onclick="stopCoachAudio()" class="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all shadow-sm active:scale-90">
+                    <i class="fa-solid fa-square text-lg"></i>
+                </button>
+                <button onclick="triggerCoachVoiceGreeting()" class="w-16 h-16 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center transition-all shadow-lg shadow-indigo-600/30 active:scale-95 animate-pulse">
+                    <i id="mic-icon" class="fa-solid fa-microphone text-2xl"></i>
+                </button>
+                <button id="cloneConfigBtn" onclick="toggleModal('voiceCloningModal', true)" class="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 text-indigo-600 flex items-center justify-center transition-all shadow-sm active:scale-90">
+                    <i class="fa-solid fa-gear text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Live Text Speech Helper Log Block -->
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Live Interaction Log</label>
+                <div id="voiceTranscriptLog" class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-xs text-slate-500 min-h-[50px] flex items-center justify-center text-center">
+                    Tap the center microphone capsule to trigger the real-time Indian Origin AI Coach voice greeting workflow.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SYSTEM SECURE MODAL LAYER: REPLAYABLE DIALOG LOGIN FOR ACCESS CONTROL -->
+    <div id="loginModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 space-y-4 border border-slate-100">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                    <i class="fa-solid fa-shield-halved text-indigo-600"></i>
+                    <span>Secure Access Portal</span>
+                </h3>
+                <button onclick="toggleModal('loginModal', false)" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Username</label>
+                    <input type="text" id="adminUser" placeholder="Enter username" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+                    <input type="password" id="adminPass" placeholder="Enter security passphrase" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20">
+                </div>
+                <div id="loginErrorMsg" class="text-xs text-rose-600 hidden font-medium">
+                    Invalid credentials profile verification parameters matches failed.
+                </div>
+                <button onclick="executeAdminAuthentication()" class="w-full bg-slate-900 text-white py-2.5 rounded-xl font-medium text-sm transition-all active:scale-[0.99]">
+                    Verify Security Identity
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VOICE CLONING / SYNTHESIS EXTENSION WRAPPER MODAL -->
+    <div id="voiceCloningModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 space-y-4 border border-slate-100">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                    <i class="fa-solid fa-waveform-lines text-indigo-600"></i>
+                    <span>Voice Cloning Integration Framework</span>
+                </h3>
+                <button onclick="toggleModal('voiceCloningModal', false)" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3 text-xs text-slate-600">
+                <p>
+                    To run production-grade real-time voice cloning (streaming your precise voice print rather than browser text-to-speech fallback engines), bind your custom synthesized synthesis endpoint target below:
+                </p>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Cloned Voice Vendor Token Engine</label>
+                    <select class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs outline-none">
+                        <option>ElevenLabs Speech Synthesis (Neeraj Voice Profile)</option>
+                        <option>OpenAI Realtime Voice Integration Gateway</option>
+                        <option>Web Speech Browser Native Core Layer Engine</option>
+                    </select>
+                </div>
+                <button onclick="toggleModal('voiceCloningModal', false)" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium tracking-wide">
+                    Save Pipeline Link
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NATIVE SYSTEM MOBILE APP BOTTOM NAVIGATION DOCK -->
+    <nav class="fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-md border-t border-slate-200/80 px-2 py-2 flex justify-around items-center z-30 max-w-md mx-auto shadow-lg">
+        <button onclick="switchTab('hub')" id="nav-hub" class="nav-btn flex flex-col items-center space-y-0.5 text-indigo-600 font-bold">
+            <i class="fa-solid fa-house-chimney text-base"></i>
+            <span class="text-[9px]">Hub Dashboard</span>
+        </button>
+        <button onclick="switchTab('ats')" id="nav-ats" class="nav-btn flex flex-col items-center space-y-0.5 text-slate-400 hover:text-slate-600 transition-colors">
+            <i class="fa-solid fa-file-invoice text-base"></i>
+            <span class="text-[9px]">ATS Check</span>
+        </button>
+        <button onclick="switchTab('diagnostic')" id="nav-diagnostic" class="nav-btn flex flex-col items-center space-y-0.5 text-slate-400 hover:text-slate-600 transition-colors">
+            <i class="fa-solid fa-stethoscope text-base"></i>
+            <span class="text-[9px]">Diagnostic</span>
+        </button>
+        <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn flex flex-col items-center space-y-0.5 text-slate-400 hover:text-slate-600 transition-colors admin-only hidden">
+            <i class="fa-solid fa-user-gear text-base"></i>
+            <span class="text-[9px]">Admin Panel</span>
+        </button>
+    </nav>
+
+    <!-- CORE SYSTEM INTERACTION LOGIC ARCHITECTURE -->
+    <script>
+        let isDrawerOpen = false;
+        let syntheticSpeechInstance = null;
+        let currentAuthenticatedState = false;
+
+        // Core App Level Routing Strategy Function
+        function switchTab(targetTabId) {
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+            document.getElementById(`panel-${targetTabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-indigo-600', 'font-bold');
+                btn.classList.add('text-slate-400');
+            });
+            document.getElementById(`nav-${targetTabId}`).classList.remove('text-slate-400');
+            document.getElementById(`nav-${targetTabId}`).classList.add('text-indigo-600', 'font-bold');
+        }
+
+        // Modal Component Window Overlay Manager Switches
+        function toggleModal(modalId, renderState) {
+            const TargetElement = document.getElementById(modalId);
+            if(renderState) {
+                TargetElement.classList.remove('hidden');
+            } else {
+                TargetElement.classList.add('hidden');
+            }
+        }
+
+        // Administrative Access Identity Controller Rules Engine
+        function executeAdminAuthentication() {
+            const UserNode = document.getElementById('adminUser').value;
+            const PassNode = document.getElementById('adminPass').value;
+            const ErrorNode = document.getElementById('loginErrorMsg');
+
+            if(UserNode === "admin" && PassNode === "Terr0r_67") {
+                currentAuthenticatedState = true;
+                ErrorNode.classList.add('hidden');
+                toggleModal('loginModal', false);
+                
+                // Uncover elements with security classification matching admin privileges
+                document.querySelectorAll('.admin-only').forEach(element => {
+                    element.classList.remove('hidden');
+                });
+
+                document.getElementById('adminStatusText').innerText = "Admin Context Active";
+                document.getElementById('adminLoginBtn').classList.replace('bg-slate-800', 'bg-emerald-900');
+                document.getElementById('adminLoginBtn').classList.replace('border-slate-700', 'border-emerald-600');
+                switchTab('admin');
+            } else {
+                ErrorNode.classList.remove('hidden');
+            }
+        }
+
+        // Simulated Resume Processing State Transitions
+        function handleResumeUpload(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+
+            document.getElementById('uploadStatusText').innerText = "File Selected Successfully";
+            const ProgressBox = document.getElementById('uploadProgressContainer');
+            const ProgressMeter = document.getElementById('uploadProgressBar');
+            const ProgressValueText = document.getElementById('uploadPercent');
+            document.getElementById('uploadedFileName').innerText = file.name;
+
+            ProgressBox.classList.remove('hidden');
+            let mockProgressPercent = 0;
+            
+            const activeIntervalTimer = setInterval(() => {
+                mockProgressPercent += 20;
+                ProgressMeter.style.width = `${mockProgressPercent}%`;
+                ProgressValueText.innerText = `${mockProgressPercent}%`;
+                
+                if(mockProgressPercent >= 100) {
+                    clearInterval(activeIntervalTimer);
+                    document.getElementById('uploadStatusText').innerHTML = `<span class="text-emerald-600 font-bold"><i class="fa-solid fa-circle-check"></i> CV Loaded Ready</span>`;
+                }
+            }, 150);
+        }
+
+        function simulateAtsAnalysis() {
+            const resultsCard = document.getElementById('atsResultsCard');
+            resultsCard.classList.remove('hidden');
+            resultsCard.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Coach Interaction Sheet UI Toggle Transitions
+        function toggleCoachDrawer() {
+            const DrawerNode = document.getElementById('ai-coach-drawer');
+            const ChevronNode = document.getElementById('drawer-chevron');
+            if(isDrawerOpen) {
+                DrawerNode.style.transform = "translateY(calc(100% - 60px))";
+                ChevronNode.style.transform = "rotate(0deg)";
+                isDrawerOpen = false;
+            } else {
+                DrawerNode.style.transform = "translateY(0px)";
+                ChevronNode.style.transform = "rotate(180deg)";
+                isDrawerOpen = true;
+            }
+        }
+
+        // Indian Origin Middle Aged (40yo) AI Voice Engine Synthesis Emulation Strategy
+        function triggerCoachVoiceGreeting() {
+            const TranscriptLog = document.getElementById('voiceTranscriptLog');
+            const Equalizer = document.getElementById('visual-equalizer');
+            const Microphone = document.getElementById('mic-icon');
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Stop tracking past sequences execution stack
+
+                const greetingScriptText = "Hi, my name is Neeraj Kapil and I am a AI coach for career diagnostic at W3M. I am here to help you out in your career development, in your search for the job, in your resume screening, in your challenges and queries on corporate to further internal industry transfers or transition from college to corporate, all kind of challenges which can be a real stuck at your career growth would be part of my resolution. Thank you.";
+                
+                syntheticSpeechInstance = new SpeechSynthesisUtterance(greetingScriptText);
+                
+                // Optimize profile configuration arrays targeting a robust Indian accented English male vocal dynamic (~40yo)
+                const targetedAvailableVoices = window.speechSynthesis.getVoices();
+                const matchedIndianAccentProfile = targetedAvailableVoices.find(voice => voice.lang.includes('en-IN') && voice.name.toLowerCase().includes('male')) || 
+                                                     targetedAvailableVoices.find(voice => voice.lang.includes('en-IN')) || 
+                                                     targetedAvailableVoices.find(voice => voice.lang.includes('en-GB'));
+                
+                if(matchedIndianAccentProfile) {
+                    syntheticSpeechInstance.voice = matchedIndianAccentProfile;
+                }
+
+                // Voice tuning specifications matching requested mid-age demographic structural weightings
+                syntheticSpeechInstance.rate = 0.95;  // Measured, professional operational delivery pacing cadence
+                syntheticSpeechInstance.pitch = 0.92; // Slightly lower resonant base pitch representing mature mid-age configuration profile
+
+                syntheticSpeechInstance.onstart = function() {
+                    Equalizer.classList.remove('hidden');
+                    Microphone.classList.replace('fa-microphone', 'fa-volume-high');
+                    TranscriptLog.innerText = "Neeraj Kapil Speaking: \"Hi, my name is Neeraj Kapil and I am an AI coach...\"";
+                };
+
+                syntheticSpeechInstance.onend = function() {
+                    resetVoiceUiElements();
+                };
+
+                window.speechSynthesis.speak(syntheticSpeechInstance);
+            } else {
+                TranscriptLog.innerText = "Fallback Voice Alert: Browser client ecosystem does not support internal Web Speech API synthesis configurations natively.";
+            }
+        }
+
+        function stopCoachAudio() {
+            if('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            resetVoiceUiElements();
+        }
+
+        function resetVoiceUiElements() {
+            document.getElementById('visual-equalizer').classList.add('hidden');
+            document.getElementById('mic-icon').classList.replace('fa-volume-high', 'fa-microphone');
+            document.getElementById('voiceTranscriptLog').innerText = "Streaming session quiet. Tap the center microphone element to speak back to AI Coach Neeraj Kapil.";
+        }
+
+        // Initialize Web Speech cache mapping routines sequence dependencies binding rules
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = function() {
+                window.speechSynthesis.getVoices();
+            };
+        }
+    </script>
+</body>
+</html>
 <!-- saved from url=(0050)file:///C:/Users/Neeraj/Downloads/w3m-login_1.html -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
