@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Voice recognition — Test</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; padding:1rem; background:#0b0f19; color:#e6eef8 }
+    .controls { margin-top:.5rem; }
+    pre { background:#071127; padding:.5rem; overflow:auto; color:#cfe6ff }
+    .status { color:#9fb0c9 }
+    .card { background:#071127; padding:1rem; border-radius:.5rem; border:1px solid #162434 }
+    button { margin-right:.5rem }
+  </style>
+</head>
+<body>
+  <h1>Voice recognition — test</h1>
+  <p class="status">This page records a short microphone sample, attempts to transcribe via the browser Web Speech API and shows a coarse loudness envelope. It will reuse <code>/js/voiceUtils.js</code> if available.</p>
+
+  <div class="card">
+    <div class="controls">
+      <button id="startRec">Start recording (3s)</button>
+      <button id="stopRec" disabled>Stop</button>
+    </div>
+    <div class="status" id="status">Status: idle</div>
+
+    <h2>Transcript</h2>
+    <pre id="transcript">(none)</pre>
+
+    <h2>Envelope (first 200 samples)</h2>
+    <pre id="envelope">(none)</pre>
+
+    <h2>Voice profile vector</h2>
+    <pre id="profile">(none)</pre>
+  </div>
+
+  <script>
+    const startRec = document.getElementById('startRec');
+    const stopRec = document.getElementById('stopRec');
+    const status = document.getElementById('status');
+    const transcriptEl = document.getElementById('transcript');
+    const envelopeEl = document.getElementById('envelope');
+    const profileEl = document.getElementById('profile');
+
+    let gumStream;
+    let audioCtx;
+    let mediaNode;
+
+    startRec.addEventListener('click', async () => {
+      transcriptEl.textContent = '(listening...)';
+      envelopeEl.textContent = '(capturing...)';
+      profileEl.textContent = '(processing...)';
+      status.textContent = 'Status: starting microphone';
+      startRec.disabled = true;
+      stopRec.disabled = false;
+
+      if (window.voiceUtils && typeof voiceUtils.captureVoiceProfile === 'function') {
+        try {
+          status.textContent = 'Status: using voiceUtils.captureVoiceProfile()';
+          const result = await voiceUtils.captureVoiceProfile({ durationMs: 3000 });
+          transcriptEl.textContent = result.transcript || '(no transcript)';
+          envelopeEl.textContent = JSON.stringify((result.envelope || []).slice(0,200));
+          profileEl.textContent = JSON.stringify(result.profile || []);
+        } catch (e) {
+          transcriptEl.textContent = 'voiceUtils capture failed: ' + e.message;
+        } finally {
+          startRec.disabled = false;
+          stopRec.disabled = true;
+        }
+        return;
+      }
+
+      try {
+        gumStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        mediaNode = audioCtx.createMediaStreamSource(gumStream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 1024;
+        const bufferLength = analyser.fftSize;
+        const dataArray = new Uint8Array(bufferLength);
+        mediaNode.connect(analyser);
+
+        const envelope = [];
+        const samples = 300;
+        let captured = 0;
+        const interval = setInterval(() => {
+          analyser.getByteTimeDomainData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            const v = (dataArray[i] - 128) / 128;
+            sum += v * v;
+          }
+          const rms = Math.sqrt(sum / dataArray.length);
+          envelope.push(Number(rms.toFixed(3)));
+          captured++;
+          if (captured >= samples) clearInterval(interval);
+        }, 10);
+
+        // transcription
+        let transcriptText = '';
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+          const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+          const r = new Rec();
+          r.lang = 'en-US';
+          r.interimResults = false;
+          r.maxAlternatives = 1;
+          r.onresult = (e) => { transcriptText = Array.from(e.results).map(r => r[0].transcript).join(' '); };
+          r.onerror = () => {};
+          r.start();
+          setTimeout(() => { try { r.stop(); } catch (e) {} }, 3100);
+        } else {
+          transcriptText = '(browser has no Web Speech API)';
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 3200));
+
+        const fftSize = 512;
+        const freqAnalyser = audioCtx.createAnalyser();
+        freqAnalyser.fftSize = fftSize;
+        mediaNode.connect(freqAnalyser);
+        const freqBuffer = new Uint8Array(freqAnalyser.frequencyBinCount);
+        freqAnalyser.getByteFrequencyData(freqBuffer);
+        const bands = 16;
+        const bandSize = Math.floor(freqBuffer.length / bands);
+        const profile = new Array(bands).fill(0).map((_, bi) => {
+          let sum = 0;
+          for (let j = 0; j < bandSize; j++) sum += freqBuffer[bi * bandSize + j] || 0;
+          return Number((sum / bandSize / 255).toFixed(3));
+        });
+
+        transcriptEl.textContent = transcriptText || '(no transcript)';
+        envelopeEl.textContent = JSON.stringify(envelope.slice(0,200));
+        profileEl.textContent = JSON.stringify(profile);
+        status.textContent = 'Status: done';
+
+      } catch (e) {
+        status.textContent = 'Status: microphone error: ' + e.message;
+        transcriptEl.textContent = '(error)';
+        envelopeEl.textContent = '(error)';
+        profileEl.textContent = '(error)';
+      } finally {
+        if (gumStream) gumStream.getTracks().forEach(t => t.stop());
+        if (audioCtx && audioCtx.close) audioCtx.close();
+        startRec.disabled = false;
+        stopRec.disabled = true;
+      }
+    });
+
+    stopRec.addEventListener('click', () => {
+      if (gumStream) gumStream.getTracks().forEach(t => t.stop());
+      status.textContent = 'Status: stopped by user';
+      startRec.disabled = false;
+      stopRec.disabled = true;
+    });
+  </script>
+</body>
+</html>
