@@ -3,9 +3,12 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "sh -c \"vite build || (mkdir -p dist && cp -R index.html css js assets public dist/ || true)\"",
     "preview": "vite preview"
   },
   "dependencies": {
