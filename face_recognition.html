@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Face recognition — Test</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; padding: 1rem; background:#0b0f19; color:#e6eef8 }
+    .controls { margin-top: 0.5rem; }
+    video { border: 1px solid #ccc; max-width: 100%; width: 480px; height: auto; display:block }
+    pre { background:#071127; padding: .5rem; overflow:auto; max-width: 100%; color:#cfe6ff }
+    .note { color: #9fb0c9; margin-top:.5rem }
+    a { color:#7c3aed }
+    .card { background:#071127; padding:1rem; border-radius:.5rem; border:1px solid #162434 }
+  </style>
+</head>
+<body>
+  <h1>Face recognition — test</h1>
+
+  <p class="note">This page captures a face descriptor from your webcam and displays the numeric vector. It prefers your repo's existing <code>/js/faceUtils.js</code> when available. Camera access requires HTTPS on a public site or <code>http://localhost</code> for local testing.</p>
+
+  <div class="card">
+    <video id="video" autoplay muted playsinline></video>
+    <div class="controls">
+      <button id="startBtn">Start camera</button>
+      <button id="grabBtn" disabled>Capture descriptor</button>
+      <button id="stopBtn" disabled>Stop camera</button>
+    </div>
+
+    <div class="note" id="status">Status: idle</div>
+
+    <h2>Descriptor / Output</h2>
+    <pre id="output">(no descriptor yet)</pre>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const grabBtn = document.getElementById('grabBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const video = document.getElementById('video');
+    const output = document.getElementById('output');
+    const status = document.getElementById('status');
+    let stream;
+
+    startBtn.addEventListener('click', async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        status.textContent = 'Status: camera started';
+        grabBtn.disabled = false;
+        stopBtn.disabled = false;
+      } catch (e) {
+        status.textContent = 'Status: camera permission denied or not available: ' + e.message;
+      }
+    });
+
+    stopBtn.addEventListener('click', () => {
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        video.srcObject = null;
+        status.textContent = 'Status: camera stopped';
+      }
+      grabBtn.disabled = true;
+      stopBtn.disabled = true;
+    });
+
+    grabBtn.addEventListener('click', async () => {
+      output.textContent = 'Capturing...';
+      if (window.faceUtils && typeof faceUtils.captureDescriptor === 'function') {
+        try {
+          status.textContent = 'Status: using faceUtils.captureDescriptor()';
+          const descriptor = await faceUtils.captureDescriptor(video);
+          output.textContent = JSON.stringify(descriptor, null, 2);
+        } catch (e) {
+          output.textContent = 'faceUtils.captureDescriptor() failed: ' + e.message;
+        }
+        return;
+      }
+
+      if (window.faceapi) {
+        status.textContent = 'Status: using face-api fallback (ensure models are available)';
+        try {
+          const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+          if (!detection) {
+            output.textContent = 'No face detected. Try better lighting or move closer.';
+          } else {
+            output.textContent = JSON.stringify(Array.from(detection.descriptor), null, 2);
+          }
+        } catch (e) {
+          output.textContent = 'face-api detection failed: ' + e.message + '\nMake sure the models have been loaded (face-api model loading usually happens in your app).';
+        }
+        return;
+      }
+
+      output.textContent = 'No face utilities detected. To make this page work, include /js/faceUtils.js or face-api.js in the page.';
+      status.textContent = 'Status: missing face utilities';
+    });
+  </script>
+
+  <p class="note">Tip: for full parity with enrollment/login flows use your existing faceUtils.js from the site. To test locally: run your node server and open <code>http://localhost:3000/face_recognition.html</code>.</p>
+</body>
+</html>
