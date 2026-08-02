@@ -31,7 +31,7 @@ a browser-side call straight to Anthropic's API would be blocked and would expos
    - Key: `ANTHROPIC_API_KEY`
    - Value: your key from console.anthropic.com (starts with `sk-ant-`)
 5. Click **Deploy site**
-6. Once it's live, go to **Site settings → Domain management → Add a domain**, and point `w3me.in` at this site (this involves updating your domain's DNS records at wherever you bought w3me.in — Netlify will show you exactly what records to add)
+6. Once it's live, go to **Site settings → Domain management → Add a domain**, and point `w3me.in` at this site (this involves updating your domain's DNS records at wherever you bought w3me.in[...]
 
 ## Testing locally before deploying
 
@@ -54,3 +54,7 @@ console.anthropic.com → Settings → Limits before this goes live and gets rea
 - Voice input requires HTTPS — Netlify serves HTTPS by default, so this should be fine
 - Voice input is only supported in Chrome-based and Safari browsers; Firefox does not support the Web Speech API used here
 
+
+---
+
+Netlify redeploy trigger: 2026-08-02T06:28:00Z
