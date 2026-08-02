@@ -1,7 +1,10 @@
 [build]
-  command = "npm run build"
-  publish = "dist"
-  functions = "netlify/functions"
+  # This repo is a static site (plain HTML). Publish directly from repository root.
+  publish = "."
+  # No build command required for static HTML. If you add a build step later, restore a command here.
+
+# Serverless functions directory (kept in case you use Netlify Functions)
+functions = "netlify/functions"
 
 [[redirects]]
   from = "/api/*"
