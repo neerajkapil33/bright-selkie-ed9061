@@ -1,19 +1,36 @@
-const coachSystem = `You are Neeraj's warm, practical AI career coach for W3M. Help with job search, resumes, interviews, workplace challenges, and career transitions. Be concise, specific, and conversational because each reply will be spoken aloud. Do not make up facts.`;
+// netlify/functions/coach.js
+// Lightweight coach function: accepts message + history and returns a coach reply using OpenAI
 
-export const handler = async (event) => {
-  if (event.httpMethod !== 'POST') return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  if (!process.env.ANTHROPIC_API_KEY) return { statusCode: 503, body: JSON.stringify({ error: 'Coach is not configured yet' }) };
+const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+
+module.exports.handler = async function(event, context) {
   try {
-    const { message, history = [] } = JSON.parse(event.body || '{}');
-    if (!message || typeof message !== 'string') return { statusCode: 400, body: JSON.stringify({ error: 'A message is required' }) };
-    const messages = history.filter(item => item && ['user', 'coach'].includes(item.role) && typeof item.text === 'string').map(item => ({ role: item.role === 'coach' ? 'assistant' : 'user', content: item.text })).concat({ role: 'user', content: message });
-    const response = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' }, body: JSON.stringify({ model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6', max_tokens: 350, system: coachSystem, messages }) });
-    if (!response.ok) return { statusCode: 502, body: JSON.stringify({ error: 'Coach provider request failed' }) };
-    const data = await response.json();
-    const reply = data.content?.filter(block => block.type === 'text').map(block => block.text).join('').trim();
-    if (!reply) return { statusCode: 502, body: JSON.stringify({ error: 'Coach provider returned no text' }) };
-    return { statusCode: 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' }, body: JSON.stringify({ reply }) };
-  } catch {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Coach service failed' }) };
+    if (event.httpMethod !== 'POST') return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+    const body = event.body ? JSON.parse(event.body) : {};
+    const { message = '', history = [] } = body;
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return { statusCode: 500, body: JSON.stringify({ error: 'Missing OPENAI_API_KEY in function env' }) };
+    if (!message) return { statusCode: 400, body: JSON.stringify({ error: 'message required' }) };
+
+    const system = `You are Neeraj, a concise and actionable career coach. Answer with one short paragraph (2-4 sentences) and one bullet action item the candidate can take next. Keep tone encouraging and practical.`;
+
+    const convo = [{ role: 'system', content: system }];
+    // Add a small history context if provided
+    history.slice(-6).forEach(h => {
+      convo.push({ role: h.role === 'user' ? 'user' : 'assistant', content: h.text });
+    });
+    convo.push({ role: 'user', content: message });
+
+    const payload = { model: 'gpt-4o-mini', messages: convo, temperature: 0.3, max_tokens: 300 };
+
+    const resp = await fetch(OPENAI_URL, { method: 'POST', headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify(payload) });
+    if (!resp.ok) { const txt = await resp.text(); return { statusCode: 502, body: JSON.stringify({ error:'LLM provider error', status: resp.status, detail: txt }) }; }
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content ?? data.choices?.[0]?.text ?? '';
+
+    // Return small reply object
+    return { statusCode: 200, body: JSON.stringify({ reply: (content || '').trim() }) };
+  } catch (err) {
+    return { statusCode: 500, body: JSON.stringify({ error: String(err) }) };
   }
 };
