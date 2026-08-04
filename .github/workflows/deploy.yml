@@ -1,37 +1,60 @@
-name: Deploy to GitHub Pages
+name: Build site, publish Cloudflare Worker, deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches: [ main ]
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
+env:
+  WORKER_NAME: w3me.in-neerajkapil
 
 jobs:
-  deploy:
+  build-and-publish:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload site as artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
         with:
-          path: .
+          node-version: '18'
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
+        run: npm run build
+
+      - name: Write runtime API config for frontend
+        run: |
+          echo "window.__API_BASE__ = 'https://${{ env.WORKER_NAME }}.workers.dev';" > dist/api-config.js
+          ls -la dist
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ./dist
+
+  publish-worker:
+    needs: build-and-publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Publish Cloudflare Worker via API
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          WORKER_NAME: ${{ env.WORKER_NAME }}
+        run: |
+          echo "Publishing worker ${WORKER_NAME} to Cloudflare account ${CF_ACCOUNT_ID}..."
+          # upload the worker script file
+          curl -s -X PUT "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/workers/scripts/${WORKER_NAME}" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            -H "Content-Type: application/javascript" \
+            --data-binary @worker/index.js \
+            | jq -r '.errors, .messages // empty, .success'
+          echo "Worker publish completed (check Cloudflare dashboard)."
