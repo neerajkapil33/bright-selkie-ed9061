@@ -102,7 +102,6 @@ h1,h2,h3,.display{font-family:'Fraunces',serif;}
 #screen-provider.provider-linkedin .provider-auth-logo{background:#0A66C2; color:#fff;}
 #screen-provider.provider-apple .provider-auth-logo{background:#fff; color:#000;}
 #screen-provider.provider-yahoo .provider-auth-logo{background:#6001D2; color:#fff;}
-#screen-provider.provider-github .provider-auth-logo{background:#24292f; color:#fff;}
 #screen-provider h2{font-size:19px; margin:0 0 4px; font-family:'Space Grotesk'; font-weight:700;}
 #screen-provider p{font-size:12.5px; color:#666; margin:0 0 22px;}
 #screen-provider.provider-apple p{color:rgba(255,255,255,.6);}
@@ -115,7 +114,6 @@ h1,h2,h3,.display{font-family:'Fraunces',serif;}
 #screen-provider.provider-linkedin .p-submit{background:#0A66C2;}
 #screen-provider.provider-apple .p-submit{background:#fff; color:#000;}
 #screen-provider.provider-yahoo .p-submit{background:#6001D2;}
-#screen-provider.provider-github .p-submit{background:#24292f;}
 .p-submit:disabled{opacity:.6; cursor:not-allowed;}
 .p-cancel{margin-top:16px; font-size:12.5px; color:#888; cursor:pointer; text-decoration:underline;}
 #screen-provider.provider-apple .p-cancel{color:rgba(255,255,255,.55);}
@@ -500,21 +498,12 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     <h1 style="font-size:22px;">One step from your diagnostic</h1>
   </div>
   <div class="auth-stack">
-    <div id="oauthSetupChecklist" style="display:none; margin-bottom:14px; padding:12px 14px; border-radius:12px; background:rgba(193,84,61,.12); border:1px solid rgba(193,84,61,.35); font-size:11.5px; line-height:1.5; color:var(--ink-soft);">
-      <b style="color:var(--ink); display:block; margin-bottom:6px;">OAuth go-live checklist</b>
-      <div>1. Paste <b>Client IDs</b> into <code>OAUTH_CONFIG</code></div>
-      <div>2. Register <b>Redirect URI</b> = this page URL on <b>w3me.in</b></div>
-      <div id="oauthRedirectHint" style="word-break:break-all; opacity:.9; margin:2px 0 4px;"></div>
-      <div>3. Run <b>exchange API</b> with client secrets (server only)</div>
-      <div>4. Host on <b>HTTPS</b> (or localhost) — not file://</div>
-    </div>
     <div class="sso-grid">
       <button type="button" class="sso-btn" onclick="openProviderModal('google')"><span style="color:#4285F4;">●</span> Google</button>
       <button type="button" class="sso-btn" onclick="openProviderModal('microsoft')"><span style="color:#00A4EF;">■</span> Microsoft</button>
       <button type="button" class="sso-btn" onclick="openProviderModal('linkedin')"><span style="color:#0A66C2;">in</span> LinkedIn</button>
       <button type="button" class="sso-btn" onclick="openProviderModal('apple')"><span style="color:#fff;"></span> Apple</button>
-      <button type="button" class="sso-btn" onclick="openProviderModal('github')"><span style="color:#fff;">⌘</span> GitHub</button>
-      <button type="button" class="sso-btn" onclick="openProviderModal('yahoo')"><span style="color:#6001D2;">Y!</span> Yahoo</button>
+      <button type="button" class="sso-btn" onclick="openProviderModal('yahoo')" style="grid-column:1/-1;"><span style="color:#6001D2;">Y!</span> Yahoo</button>
     </div>
     <div class="auth-divider">or continue with username</div>
     <div class="auth-tabs">
@@ -534,7 +523,6 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     <div class="auth-status" id="au-status"></div>
     <button class="btn btn-gold" id="au-submit" onclick="submitAuth()">Log In</button>
     <div class="auth-divider">or</div>
-    <button class="bio-btn" id="passkeySignInBtn" onclick="startPasskeySignIn()" style="margin-bottom:8px;">🔑 Sign in with Passkey</button>
     <button class="bio-btn" onclick="startBiometricScreen()">🪪 Sign in with Face &amp; Voice ID</button>
     <div class="auth-toggle">Just exploring? <b onclick="demoLogin()">Try a demo account →</b></div>
   </div>
@@ -841,13 +829,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
       <div style="font-family:&#39;Fraunces&#39;; font-weight:700; font-size:16px;" id="profileName">—</div>
       <div style="font-size:12px; color:var(--ink-soft); margin-top:3px;" id="profileMeta">—</div>
     </div>
-    <div class="btn-row" style="flex-direction:column; gap:8px;">
-      <button class="btn btn-gold" type="button" onclick="enrollPasskeyFromProfile()">🔑 Add Passkey on this device</button>
-      <button class="btn btn-outline" onclick="logout()">Log Out</button>
-    </div>
-    <div style="font-size:11px; color:var(--ink-soft); margin-top:10px; line-height:1.45; text-align:center;">
-      Passkeys use your device unlock (Face ID, Touch ID, Windows Hello). Works on HTTPS only.
-    </div>
+    <div class="btn-row"><button class="btn btn-outline" onclick="logout()">Log Out</button></div>
   </div>
 </div>
 
@@ -1232,35 +1214,9 @@ function loginAs(user){
   document.getElementById('profileAvatar').textContent = initials(user.name);
   toast(`Signed in as ${user.name.split(' ')[0]}`);
   go('home');
-  // One-time soft nudge to enroll a passkey when supported and none stored yet
-  try{
-    if(webauthnSupported()){
-      const store = loadPasskeyStore();
-      const has = store.byUser && store.byUser[user.username] && store.byUser[user.username].length;
-      const nudged = sessionStorage.getItem('w3m_passkey_nudge');
-      if(!has && !nudged){
-        sessionStorage.setItem('w3m_passkey_nudge', '1');
-        setTimeout(()=>{
-          if(currentUser && currentUser.username === user.username){
-            toast('Tip: add a Passkey in Profile for 1-tap sign-in');
-          }
-        }, 1800);
-      }
-    }
-  }catch(e){}
 }
-function logout(){
-  currentUser=null;
-  try{ localStorage.removeItem('w3m_session'); }catch(e){}
-  clearJwtBundle();
-  go('entry');
-}
+function logout(){ currentUser=null; try{localStorage.removeItem('w3m_session');}catch(e){} go('entry'); }
 (function restoreSession(){
-  // OAuth ?code= callback is handled later (after OAuth helpers are defined)
-  try{
-    const params = new URLSearchParams(window.location.search || '');
-    if(params.get('code') || params.get('error')) return; // wait for handleOAuthCallbackFromUrl
-  }catch(e){}
   try{ const u = localStorage.getItem('w3m_session'); if(u && DB.users[u]) loginAs(DB.users[u]); }catch(e){}
 })();
 
@@ -1268,123 +1224,38 @@ function logout(){
    Google: real OAuth via Google Identity Services when GOOGLE_CLIENT_ID is set.
    Other providers: demo consent flow until their client IDs are configured. */
 
-/* =====================================================================
-   W3ME.IN — OAUTH GO-LIVE CHECKLIST (required for real Google/Microsoft/etc.)
-
-   1) PASTE CLIENT IDs into OAUTH_CONFIG below (keep the quotes).
-      Empty ID → that provider uses demo sign-in only.
-
-   2) REGISTER REDIRECT URI = current page URL on w3me.in
-      Example: https://w3me.in/   or  https://w3me.in/index.html
-      Must match EXACTLY in every provider console (Google, Microsoft, GitHub…).
-      Also add Authorized JavaScript origin: https://w3me.in (Google).
-
-   3) RUN EXCHANGE API with CLIENT SECRETS (never put secrets in this HTML)
-      cd api && npm install && npm start
-      export GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=...
-      export MICROSOFT_CLIENT_ID=...   (secret optional for public SPA)
-      export GITHUB_CLIENT_ID=... GITHUB_CLIENT_SECRET=...
-      Proxy: https://w3me.in/api/oauth/exchange → http://127.0.0.1:8787/api/oauth/exchange
-
-   4) HOST ON HTTPS (or localhost)
-      Production: https://w3me.in
-      Dev: http://localhost:PORT
-      file:// will NOT work for OAuth / passkeys / secure cookies.
-   ===================================================================== */
+/* ---- PASTE YOUR GOOGLE OAUTH CLIENT ID HERE ----
+   Create one at: https://console.cloud.google.com/apis/credentials
+   Type: OAuth client ID → Web application
+   Authorized JavaScript origins: http://localhost:PORT and your HTTPS domain
+   Authorized redirect URIs: same origins (GIS uses postMessage, origins matter most)
+   Leave empty to keep Google on the demo path. */
+/* Production host: https://w3me.in
+   Register in every provider console:
+   - Domain / JS origin: https://w3me.in  (and https://www.w3me.in if you use www)
+   - Redirect URI: exact page URL e.g. https://w3me.in/ or https://w3me.in/index.html
+   OAuth will NOT work on file:// — only on HTTPS at w3me.in (or localhost while testing). */
 const OAUTH_CONFIG = {
-  /* ---- 1) PASTE CLIENT IDs HERE ---- */
-  GOOGLE_CLIENT_ID: '',       // Google Cloud → OAuth client (Web)
-  MICROSOFT_CLIENT_ID: '',    // Azure App registration (SPA)
-  LINKEDIN_CLIENT_ID: '',     // LinkedIn Developers → Auth
-  APPLE_CLIENT_ID: '',        // Apple Services ID
-  YAHOO_CLIENT_ID: '',        // Yahoo Developer Network
-  GITHUB_CLIENT_ID: '',       // GitHub → Settings → Developer settings → OAuth Apps
-
-  /*
-   * ---- 2) REDIRECT URI = current page URL on w3me.in ----
-   * Leave '' to auto-detect (recommended).
-   * Or set explicitly, e.g. 'https://w3me.in/' or 'https://w3me.in/index.html'
-   * Register THIS exact string as Callback / Redirect URI at each provider.
-   */
-  REDIRECT_URI: '',
-
-  REDIRECT_URIS: {
-    google: '',
-    microsoft: '',
-    linkedin: '',
-    apple: '',
-    yahoo: '',
-    github: ''
-  },
-
-  ALLOWED_REDIRECT_ORIGINS: [
-    'https://w3me.in',
-    'https://www.w3me.in',
-    'http://localhost',
-    'http://127.0.0.1'
-  ],
-
-  /*
-   * ---- 3) EXCHANGE API (client secrets live only on the server) ----
-   * Leave '' to auto-use https://w3me.in/api/oauth/exchange
-   * Local: http://localhost:8787/api/oauth/exchange
-   */
-  TOKEN_EXCHANGE_URL: '',
-
-  /* JWT / token storage */
-  JWT_STORAGE_KEY: 'w3m_jwt_bundle_v1',
-  JWT_STORAGE: 'session' // 'session' | 'local'
+  // ---- PASTE CLIENT IDs ONLY BELOW. Never put a client secret here — it's public frontend code. ----
+  GOOGLE_CLIENT_ID: '1064023054974-jc0472q1uche513ur0q4u3hvs315ejkl.apps.googleusercontent.com',
+  MICROSOFT_CLIENT_ID: '',    // portal.azure.com → App registrations → SPA → redirect https://w3me.in/
+  LINKEDIN_CLIENT_ID: '',     // linkedin.com/developers/apps → Auth tab → redirect https://w3me.in/
+  APPLE_CLIENT_ID: '',        // developer.apple.com → Identifiers → Services ID → domain w3me.in, return URL https://w3me.in/
+  YAHOO_CLIENT_ID: '',        // developer.yahoo.com/apps → redirect https://w3me.in/
+  /* Must exactly match the redirect URI registered in each provider console */
+  REDIRECT_URI: (typeof location !== 'undefined' ? (location.origin + location.pathname) : 'https://w3me.in/'),
+  /* LinkedIn + Yahoo need a server-side code exchange (client secret can't live in the browser).
+     Point this at the deployed oauth-backend, reverse-proxied under your own domain, e.g.:
+     https://w3me.in/api/oauth/exchange */
+  TOKEN_EXCHANGE_URL: 'https://w3me.in/api/oauth/exchange'
 };
-
-/** Resolve token exchange endpoint (LinkedIn / Yahoo). */
-
-/** Refresh access token via server (rotation + reuse detection). */
-async function refreshOAuthTokens(provider, refreshToken){
-  const base = getTokenExchangeUrl();
-  if(!base) throw new Error('Token exchange URL not configured');
-  const url = base.replace(/\/exchange\/?$/, '/refresh');
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({ provider, refresh_token: refreshToken })
-  });
-  const data = await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(data.error || ('Refresh failed (' + r.status + ')'));
-  if(data.tokens){
-    try{
-      sessionStorage.setItem('w3m_oauth_tokens', JSON.stringify({
-        provider,
-        tokens: data.tokens,
-        rotation: data.rotation || null,
-        savedAt: Date.now()
-      }));
-    }catch(e){}
-  }
-  return data;
-}
-
-function getTokenExchangeUrl(){
-  const configured = (OAUTH_CONFIG.TOKEN_EXCHANGE_URL || '').trim();
-  if(configured) return configured;
-  try{
-    const host = location.hostname || '';
-    if(host === 'localhost' || host === '127.0.0.1'){
-      return 'http://localhost:8787/api/oauth/exchange';
-    }
-    if(host){
-      return location.origin + '/api/oauth/exchange';
-    }
-  }catch(e){}
-  return 'https://w3me.in/api/oauth/exchange';
-}
 
 const PROVIDERS = {
   google:    { label:'Google',    icon:'G',  color:'#4285F4', sample:'you@gmail.com' },
   microsoft: { label:'Microsoft', icon:'M',  color:'#2564CB', sample:'you@outlook.com' },
   linkedin:  { label:'LinkedIn',  icon:'in', color:'#0A66C2', sample:'you@company.com' },
   apple:     { label:'Apple',     icon:'',   color:'#000000', sample:'you@icloud.com' },
-  yahoo:     { label:'Yahoo',     icon:'Y!', color:'#6001D2', sample:'you@yahoo.com' },
-  github:    { label:'GitHub',    icon:'⌘',  color:'#24292f', sample:'you@users.noreply.github.com' }
+  yahoo:     { label:'Yahoo',     icon:'Y!', color:'#6001D2', sample:'you@yahoo.com' }
 };
 let currentProvider = 'google';
 let ssoInFlight = false;
@@ -1396,246 +1267,11 @@ function cfgId(key){
   const v = (OAUTH_CONFIG[key] || '').trim();
   return v && !v.includes('YOUR_') ? v : '';
 }
-
-/* ---------- 1) OAuth Redirect URI configuration ---------- */
-function normalizeRedirectUri(uri){
-  if(!uri) return '';
-  try{
-    const u = new URL(uri, typeof location !== 'undefined' ? location.href : 'https://w3me.in/');
-    // Strip hash & oauth query noise; keep path
-    u.hash = '';
-    ['code','state','error','error_description','session_state'].forEach(k => u.searchParams.delete(k));
-    let out = u.origin + u.pathname;
-    if(out.endsWith('/') && u.pathname !== '/') {
-      // keep trailing slash only for root path providers that require it
-    }
-    return out;
-  }catch(e){
-    return String(uri).trim();
-  }
-}
-
-function getOAuthRedirectUri(provider){
-  const overrides = OAUTH_CONFIG.REDIRECT_URIS || {};
-  const per = provider && overrides[provider] ? String(overrides[provider]).trim() : '';
-  const global = (OAUTH_CONFIG.REDIRECT_URI || '').trim();
-  let uri = per || global;
-  if(!uri){
-    try{ uri = location.origin + location.pathname; }
-    catch(e){ uri = 'https://w3me.in/'; }
-  }
-  uri = normalizeRedirectUri(uri);
-  if(!isRedirectUriAllowed(uri)){
-    console.warn('Redirect URI not in ALLOWED_REDIRECT_ORIGINS:', uri);
-  }
-  return uri;
-}
-
-function isRedirectUriAllowed(uri){
-  try{
-    const origin = new URL(uri).origin;
-    const list = OAUTH_CONFIG.ALLOWED_REDIRECT_ORIGINS || [];
-    return list.some(allowed => {
-      if(!allowed) return false;
-      if(allowed === origin) return true;
-      // allow any port on localhost
-      if((allowed === 'http://localhost' || allowed === 'http://127.0.0.1') && origin.startsWith(allowed)) return true;
-      return origin === allowed || origin.startsWith(allowed);
-    });
-  }catch(e){ return false; }
-}
-
-function getRegisteredRedirectUriHelp(provider){
-  const uri = getOAuthRedirectUri(provider);
-  return 'Register this exact Redirect URI in the ' + ((PROVIDERS[provider]&&PROVIDERS[provider].label)||provider) + ' console:\n' + uri;
-}
-
-/* ---------- 2) JWT / OAuth token storage ---------- */
-function jwtStorageEngine(){
-  try{
-    return (OAUTH_CONFIG.JWT_STORAGE === 'local') ? localStorage : sessionStorage;
-  }catch(e){ return null; }
-}
-
-function storeJwtBundle({ provider, tokens, profile }){
-  const engine = jwtStorageEngine();
-  if(!engine) return false;
-  const t = tokens || {};
-  const idToken = t.id_token || t.idToken || '';
-  const accessToken = t.access_token || t.accessToken || '';
-  const refreshToken = t.refresh_token || t.refreshToken || '';
-  let claims = null;
-  if(idToken){
-    try{ claims = decodeJwtPayload(idToken); }catch(e){}
-  }
-  const expMs = (()=>{
-    if(claims && claims.exp) return claims.exp * 1000;
-    if(t.expires_in) return Date.now() + (Number(t.expires_in) * 1000);
-    return null;
-  })();
-  const bundle = {
-    provider: provider || '',
-    access_token: accessToken,
-    id_token: idToken,
-    refresh_token: refreshToken,
-    token_type: t.token_type || 'Bearer',
-    expires_at: expMs,
-    claims: claims,
-    profile: profile || null,
-    saved_at: Date.now(),
-    refresh_token_rotated: !!t.refresh_token_rotated,
-    family_id: t.family_id || null
-  };
-  try{
-    engine.setItem(OAUTH_CONFIG.JWT_STORAGE_KEY || 'w3m_jwt_bundle_v1', JSON.stringify(bundle));
-    // keep legacy key in sync for older helpers
-    sessionStorage.setItem('w3m_oauth_tokens', JSON.stringify({
-      provider: bundle.provider,
-      tokens: {
-        access_token: accessToken,
-        id_token: idToken,
-        refresh_token: refreshToken,
-        expires_in: t.expires_in || null
-      },
-      savedAt: bundle.saved_at
-    }));
-    return true;
-  }catch(e){
-    console.warn('JWT storage failed', e);
-    return false;
-  }
-}
-
-function loadJwtBundle(){
-  const engine = jwtStorageEngine();
-  if(!engine) return null;
-  try{
-    const raw = engine.getItem(OAUTH_CONFIG.JWT_STORAGE_KEY || 'w3m_jwt_bundle_v1');
-    if(!raw) return null;
-    return JSON.parse(raw);
-  }catch(e){ return null; }
-}
-
-function clearJwtBundle(){
-  try{
-    const engine = jwtStorageEngine();
-    if(engine) engine.removeItem(OAUTH_CONFIG.JWT_STORAGE_KEY || 'w3m_jwt_bundle_v1');
-    sessionStorage.removeItem('w3m_oauth_tokens');
-  }catch(e){}
-}
-
-function isJwtExpired(bundle, skewSec){
-  if(!bundle || !bundle.expires_at) return false;
-  const skew = (skewSec == null ? 60 : skewSec) * 1000;
-  return Date.now() >= (bundle.expires_at - skew);
-}
-
-function getValidAccessToken(){
-  const b = loadJwtBundle();
-  if(!b || !b.access_token) return null;
-  if(isJwtExpired(b)) return null;
-  return b.access_token;
-}
-
-/* ---------- 3) Error handling for missing Client IDs ---------- */
-const OAUTH_CLIENT_ID_KEYS = {
-  google: 'GOOGLE_CLIENT_ID',
-  microsoft: 'MICROSOFT_CLIENT_ID',
-  linkedin: 'LINKEDIN_CLIENT_ID',
-  apple: 'APPLE_CLIENT_ID',
-  yahoo: 'YAHOO_CLIENT_ID',
-  github: 'GITHUB_CLIENT_ID'
-};
-
-function providerClientIdKey(provider){
-  return OAUTH_CLIENT_ID_KEYS[provider] || (String(provider||'').toUpperCase() + '_CLIENT_ID');
-}
-
-function isProviderConfigured(provider){
-  if(provider === 'google') return !!cfgId('GOOGLE_CLIENT_ID');
-  if(provider === 'microsoft') return !!cfgId('MICROSOFT_CLIENT_ID');
-  if(provider === 'linkedin') return !!cfgId('LINKEDIN_CLIENT_ID');
-  if(provider === 'apple') return !!cfgId('APPLE_CLIENT_ID');
-  if(provider === 'yahoo') return !!cfgId('YAHOO_CLIENT_ID');
-  if(provider === 'github') return !!cfgId('GITHUB_CLIENT_ID');
-  return false;
-}
-
-function missingClientIdError(provider){
-  const key = providerClientIdKey(provider);
-  const label = (PROVIDERS[provider] && PROVIDERS[provider].label) || provider;
-  const redirect = getOAuthRedirectUri(provider);
-  return {
-    code: 'MISSING_CLIENT_ID',
-    provider,
-    message: label + ' Client ID is not configured.',
-    detail: 'Set OAUTH_CONFIG.' + key + ' in this file, then register Redirect URI:\n' + redirect,
-    redirect_uri: redirect
-  };
-}
-
-function assertProviderConfigured(provider, opts){
-  const options = opts || {};
-  if(isProviderConfigured(provider)) return true;
-  const err = missingClientIdError(provider);
-  console.warn('[OAuth]', err.message, err.detail);
-  if(options.silent) return false;
-  toast(err.message + ' Using demo sign-in.');
-  showMissingIdBanner(err);
-  return false;
-}
-
-function showMissingIdBanner(err){
-  try{
-    let el = document.getElementById('oauthMissingIdBanner');
-    if(!el){
-      el = document.createElement('div');
-      el.id = 'oauthMissingIdBanner';
-      el.setAttribute('role','alert');
-      el.style.cssText = 'position:fixed;left:12px;right:12px;bottom:72px;z-index:9999;padding:12px 14px;border-radius:12px;background:#2a1510;color:#ffd7c8;border:1px solid #c1543d;font-size:12px;line-height:1.45;box-shadow:0 8px 28px rgba(0,0,0,.35);';
-      document.body.appendChild(el);
-    }
-    el.innerHTML = '<b>' + (err.message || 'OAuth not configured') + '</b><br><span style="opacity:.9;white-space:pre-wrap;">' +
-      (err.detail || '') + '</span><br><button type="button" style="margin-top:8px;padding:6px 10px;border-radius:8px;border:none;background:#c1543d;color:#fff;font-weight:600;cursor:pointer;" onclick="document.getElementById(\'oauthMissingIdBanner\').remove()">Dismiss</button>';
-  }catch(e){}
-}
-
-function listConfiguredProviders(){
-  return Object.keys(OAUTH_CLIENT_ID_KEYS).filter(isProviderConfigured);
-}
-
-/** Show go-live checklist on sign-in when Client IDs are missing or not on HTTPS. */
-function updateOAuthSetupChecklist(){
-  const box = document.getElementById('oauthSetupChecklist');
-  const hint = document.getElementById('oauthRedirectHint');
-  if(!box) return;
-  const configured = listConfiguredProviders();
-  const secure = !!(window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
-  const redirect = (typeof getOAuthRedirectUri === 'function') ? getOAuthRedirectUri('google') : (location.origin + location.pathname);
-  if(hint) hint.textContent = '→ ' + redirect;
-  // Show when nothing configured, or insecure context
-  const show = configured.length === 0 || !secure;
-  box.style.display = show ? 'block' : 'none';
-  if(!secure){
-    box.style.borderColor = 'rgba(193,84,61,.55)';
-  }
-}
-
-(function initOAuthSetupChecklist(){
-  try{
-    if(document.readyState === 'loading'){
-      document.addEventListener('DOMContentLoaded', updateOAuthSetupChecklist);
-    } else {
-      updateOAuthSetupChecklist();
-    }
-  }catch(e){}
-})();
 function isGoogleOAuthConfigured(){ return !!cfgId('GOOGLE_CLIENT_ID'); }
 function isMicrosoftOAuthConfigured(){ return !!cfgId('MICROSOFT_CLIENT_ID'); }
 function isLinkedInOAuthConfigured(){ return !!cfgId('LINKEDIN_CLIENT_ID'); }
 function isAppleOAuthConfigured(){ return !!cfgId('APPLE_CLIENT_ID'); }
 function isYahooOAuthConfigured(){ return !!cfgId('YAHOO_CLIENT_ID'); }
-function isGitHubOAuthConfigured(){ return !!cfgId('GITHUB_CLIENT_ID'); }
 
 /* ---- PKCE helpers (LinkedIn / Yahoo) ---- */
 function b64url(buf){
@@ -1660,87 +1296,7 @@ function decodeJwtPayload(token){
   }catch(e){ return null; }
 }
 
-function decodeJwtHeader(token){
-  try{
-    const part = token.split('.')[0];
-    const json = atob(part.replace(/-/g,'+').replace(/_/g,'/'));
-    return JSON.parse(json);
-  }catch(e){ return null; }
-}
-
-/** Client-side claims validation (exp / iss / aud). Signature verified on server via JWKS. */
-function validateJwtClaims(token, { provider, audience, clockSkewSec } = {}){
-  const payload = decodeJwtPayload(token);
-  const header = decodeJwtHeader(token);
-  if(!payload) return { ok:false, error:'Invalid JWT' };
-  const skew = clockSkewSec == null ? 120 : clockSkewSec;
-  const now = Math.floor(Date.now() / 1000);
-  if(payload.exp && now > payload.exp + skew) return { ok:false, error:'Token expired', payload, header };
-  if(payload.nbf && now + skew < payload.nbf) return { ok:false, error:'Token not yet valid', payload, header };
-  const issuerMap = {
-    google: ['https://accounts.google.com', 'accounts.google.com'],
-    microsoft: ['https://login.microsoftonline.com']
-  };
-  if(provider && issuerMap[provider]){
-    const okIss = issuerMap[provider].some(i => payload.iss === i || (payload.iss && String(payload.iss).startsWith(i)));
-    if(!okIss) return { ok:false, error:'Issuer mismatch: ' + payload.iss, payload, header };
-  }
-  if(audience){
-    const aud = payload.aud;
-    const list = Array.isArray(aud) ? aud : [aud];
-    if(!list.includes(audience)) return { ok:false, error:'Audience mismatch', payload, header };
-  }
-  return { ok:true, payload, header };
-}
-
-/** Ask exchange API to verify id_token signature (JWKS). */
-async function verifyJwtOnServer(idToken, provider){
-  const base = getTokenExchangeUrl();
-  if(!base || !idToken) return { ok:false, error:'No exchange URL or token' };
-  const url = base.replace(/\/exchange\/?$/, '/verify-jwt');
-  try{
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        id_token: idToken,
-        provider: provider || 'google',
-        audience: cfgId(provider === 'microsoft' ? 'MICROSOFT_CLIENT_ID' : 'GOOGLE_CLIENT_ID') || undefined
-      })
-    });
-    const data = await r.json().catch(()=>({}));
-    if(!r.ok) return { ok:false, error: data.error || ('HTTP ' + r.status) };
-    return { ok:true, verified: !!data.verified, claims: data.claims, kid: data.kid, alg: data.alg };
-  }catch(e){
-    return { ok:false, error: e.message || 'verify failed' };
-  }
-}
-
-/**
- * PKCE flow (Authorization Code + S256) — summary of this app's path:
- * 1) random code_verifier (43–128 chars) → code_challenge = BASE64URL(SHA256(verifier))
- * 2) redirect to provider with code_challenge + state
- * 3) provider returns ?code=&state= to Redirect URI
- * 4) POST /api/oauth/exchange { code, code_verifier, code_challenge, state, redirect_uri }
- * 5) server validates PKCE, exchanges code, verifies id_token JWT signature (Google/Microsoft)
- * 6) storeJwtBundle + completeSsoLogin
- */
-function describePkceFlow(){
-  return {
-    method: 'S256',
-    steps: [
-      'generate verifier + challenge',
-      'authorize redirect',
-      'callback with code',
-      'server PKCE validate + token exchange',
-      'JWT signature verify (JWKS)',
-      'session + JWT storage'
-    ],
-    providers: Object.keys(typeof PKCE_PROVIDERS !== 'undefined' ? PKCE_PROVIDERS : {})
-  };
-}
-
-function completeSsoLogin({ name, email, provider, picture, tokens, id_token }){
+function completeSsoLogin({ name, email, provider, picture }){
   const lookupKey = (email || '').toLowerCase();
   let user = null;
   if(lookupKey && DB.byEmail && DB.byEmail[lookupKey] && DB.users[DB.byEmail[lookupKey]]){
@@ -1774,17 +1330,6 @@ function completeSsoLogin({ name, email, provider, picture, tokens, id_token }){
     if(picture) user.picture = picture;
     saveDB();
   }
-
-  // Persist JWT / OAuth tokens when present
-  const tokenBag = tokens || (id_token ? { id_token } : null);
-  if(tokenBag){
-    storeJwtBundle({
-      provider,
-      tokens: tokenBag,
-      profile: { name: user.name, email: user.email, picture: user.picture || picture || '' }
-    });
-  }
-
   ssoInFlight = false;
   loginAs(user);
 }
@@ -1796,31 +1341,17 @@ function handleGoogleCredentialResponse(response){
       ssoInFlight = false;
       return;
     }
-    const claimsCheck = validateJwtClaims(response.credential, {
-      provider: 'google',
-      audience: cfgId('GOOGLE_CLIENT_ID') || undefined
-    });
-    const payload = claimsCheck.payload || decodeJwtPayload(response.credential);
-    if(!claimsCheck.ok){
-      console.warn('Google JWT claims:', claimsCheck.error);
-    }
+    const payload = decodeJwtPayload(response.credential);
     if(!payload || !payload.email){
       toast('Could not read Google profile — try again');
       ssoInFlight = false;
       return;
     }
-    // Best-effort server signature verify (non-blocking if API down)
-    verifyJwtOnServer(response.credential, 'google').then(v=>{
-      if(v && v.ok && v.verified) console.info('Google id_token signature verified');
-      else if(v && v.error) console.warn('Google JWT server verify:', v.error);
-    }).catch(()=>{});
     completeSsoLogin({
       name: payload.name || payload.given_name || payload.email.split('@')[0],
       email: payload.email,
       provider: 'google',
-      picture: payload.picture || '',
-      tokens: { id_token: response.credential, access_token: '', token_type: 'Bearer' },
-      id_token: response.credential
+      picture: payload.picture || ''
     });
   }catch(err){
     console.error('Google credential handler error', err);
@@ -1927,7 +1458,6 @@ function goProviderShell(provider){
   const logo = document.getElementById('paLogo');
   if(provider==='apple') logo.innerHTML = '';
   else if(provider==='yahoo') logo.textContent = 'Y!';
-  else if(provider==='github') logo.textContent = 'GH';
   else logo.textContent = p.icon || p.label.charAt(0);
   document.getElementById('paTitle').textContent = 'Sign in with ' + p.label;
   document.getElementById('paSub').textContent = 'to continue to What\'s Wrong With Me?';
@@ -1941,20 +1471,13 @@ function openDemoProvider(provider){
 function openProviderModal(provider, forceDemo){
   if(!PROVIDERS[provider]){ toast('Unknown sign-in provider'); return; }
 
-  // Missing Client ID → structured error + demo path (never silent)
-  if(!forceDemo && !isProviderConfigured(provider)){
-    const err = missingClientIdError(provider);
-    assertProviderConfigured(provider);
-    forceDemo = true;
-  }
-
-  // Real provider login — full redirect to Google / Microsoft / etc. login pages
+  // Real OAuth paths when configured
   if(!forceDemo){
-    if(provider === 'apple' && isProviderConfigured('apple')){ startRealAppleSignIn(); return; }
-    if(typeof PKCE_PROVIDERS !== 'undefined' && PKCE_PROVIDERS[provider] && isProviderConfigured(provider)){
-      startPkceSignIn(provider); // leaves this page → provider → returns with ?code=
-      return;
-    }
+    if(provider === 'google' && isGoogleOAuthConfigured()){ startRealGoogleSignIn(); return; }
+    if(provider === 'microsoft' && isMicrosoftOAuthConfigured()){ startRealMicrosoftSignIn(); return; }
+    if(provider === 'apple' && isAppleOAuthConfigured()){ startRealAppleSignIn(); return; }
+    if(provider === 'linkedin' && isLinkedInOAuthConfigured()){ startRealLinkedInSignIn(); return; }
+    if(provider === 'yahoo' && isYahooOAuthConfigured()){ startRealYahooSignIn(); return; }
   }
 
   currentProvider = provider;
@@ -1969,24 +1492,19 @@ function openProviderModal(provider, forceDemo){
   const gHost = document.getElementById('paGoogleBtnHost');
   if(gHost){ gHost.innerHTML = ''; gHost.style.display = 'none'; }
 
-  const redirectHelp = getOAuthRedirectUri(provider);
   const setupHints = {
-    google: 'Google Cloud Console → Credentials → OAuth client (Web) → JS origin https://w3me.in → Redirect URI must be exactly: <code>' + redirectHelp + '</code> → paste Client ID into OAUTH_CONFIG.GOOGLE_CLIENT_ID',
-    microsoft: 'Azure → App registration → SPA redirect URI exactly: <code>' + redirectHelp + '</code> → OAUTH_CONFIG.MICROSOFT_CLIENT_ID',
-    apple: 'Apple Services ID → Return URL exactly: <code>' + redirectHelp + '</code> → OAUTH_CONFIG.APPLE_CLIENT_ID',
-    linkedin: 'LinkedIn Auth → Redirect URL exactly: <code>' + redirectHelp + '</code> → OAUTH_CONFIG.LINKEDIN_CLIENT_ID + exchange API',
-    yahoo: 'Yahoo app → Redirect URI exactly: <code>' + redirectHelp + '</code> → OAUTH_CONFIG.YAHOO_CLIENT_ID + exchange API',
-    github: 'GitHub OAuth App → Callback URL exactly: <code>' + redirectHelp + '</code> → OAUTH_CONFIG.GITHUB_CLIENT_ID + exchange API'
+    google: 'Google Cloud Console → Credentials → OAuth client ID (Web) → Authorized JavaScript origins: http://localhost + your domain → paste into OAUTH_CONFIG.GOOGLE_CLIENT_ID',
+    microsoft: 'Azure Portal → App registrations → New registration (SPA) → add redirect URI (Single-page application) matching this page → paste Application (client) ID into OAUTH_CONFIG.MICROSOFT_CLIENT_ID',
+    apple: 'Apple Developer → Identifiers → Services ID → enable Sign in with Apple → configure domains & return URLs → paste Services ID into OAUTH_CONFIG.APPLE_CLIENT_ID',
+    linkedin: 'LinkedIn Developers → My Apps → Auth → add redirect URL → paste Client ID into OAUTH_CONFIG.LINKEDIN_CLIENT_ID. Token exchange needs TOKEN_EXCHANGE_URL (server) because LinkedIn requires a client secret.',
+    yahoo: 'Yahoo Developer Network → Create app → set Redirect URI → paste Client ID (Consumer Key) into OAUTH_CONFIG.YAHOO_CLIENT_ID. Token exchange needs TOKEN_EXCHANGE_URL (server).'
   };
 
-  if(!isProviderConfigured(provider) || forceDemo){
+  if(!forceDemo && setupHints[provider]){
     if(consent){
-      consent.innerHTML = '<b style="color:#c1543d;">' + p.label + ' Client ID missing</b><br>' +
-        'Set <code>OAUTH_CONFIG.' + providerClientIdKey(provider) + '</code>, then reload.<br>' +
-        'Redirect URI to register: <code style="word-break:break-all;">' + redirectHelp + '</code><br>' +
-        'Until then you can use <b>demo sign-in</b> below.';
+      consent.innerHTML = '<b>' + p.label + ' OAuth is not configured yet.</b><br>Add your Client ID in <code>OAUTH_CONFIG</code>, then reload. Until then you can use demo sign-in below.';
     }
-    if(hint){ hint.innerHTML = 'Setup: ' + (setupHints[provider] || 'Add Client ID and matching Redirect URI.'); }
+    if(hint){ hint.innerHTML = 'Setup: ' + setupHints[provider]; }
   } else {
     if(consent){
       consent.textContent = p.label + ' will share your name and email with W3M so we can create your career profile. Your ' + p.label + ' password is never sent to this app.';
@@ -2023,7 +1541,7 @@ async function ensureMsal(){
     auth: {
       clientId: cfgId('MICROSOFT_CLIENT_ID'),
       authority: 'https://login.microsoftonline.com/common',
-      redirectUri: getOAuthRedirectUri('microsoft')
+      redirectUri: OAUTH_CONFIG.REDIRECT_URI || window.location.origin
     },
     cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
   });
@@ -2083,7 +1601,7 @@ async function startRealAppleSignIn(){
     AppleID.auth.init({
       clientId: cfgId('APPLE_CLIENT_ID'),
       scope: 'name email',
-      redirectURI: getOAuthRedirectUri('apple'),
+      redirectURI: OAUTH_CONFIG.REDIRECT_URI || (window.location.origin + window.location.pathname),
       usePopup: true
     });
     const res = await AppleID.auth.signIn();
@@ -2111,86 +1629,12 @@ async function startRealAppleSignIn(){
 }
 
 /* ---- LinkedIn / Yahoo via authorize popup + optional token exchange ---- */
-/* ---- Unified Authorization Code + PKCE for Google, Microsoft, LinkedIn, Yahoo ---- */
-const PKCE_PROVIDERS = {
-  google: {
-    authBase: 'https://accounts.google.com/o/oauth2/v2/auth',
-    clientKey: 'GOOGLE_CLIENT_ID',
-    scope: 'openid email profile',
-    extra: { access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true' }
-  },
-  microsoft: {
-    authBase: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-    clientKey: 'MICROSOFT_CLIENT_ID',
-    scope: 'openid profile email User.Read offline_access',
-    extra: { response_mode: 'query', prompt: 'select_account' }
-  },
-  linkedin: {
-    authBase: 'https://www.linkedin.com/oauth/v2/authorization',
-    clientKey: 'LINKEDIN_CLIENT_ID',
-    scope: 'openid profile email',
-    extra: {}
-  },
-  yahoo: {
-    authBase: 'https://api.login.yahoo.com/oauth2/request_auth',
-    clientKey: 'YAHOO_CLIENT_ID',
-    scope: 'openid profile email',
-    extra: { language: 'en-us' }
-  },
-  github: {
-    authBase: 'https://github.com/login/oauth/authorize',
-    clientKey: 'GITHUB_CLIENT_ID',
-    scope: 'read:user user:email',
-    extra: { allow_signup: 'true' }
-  }
-};
-
-function getPkceStartUrl(){
-  const exchange = getTokenExchangeUrl();
-  if(!exchange) return '';
-  return exchange.replace(/\/exchange\/?$/, '/pkce/start');
-}
-
-async function registerPkceOnServer({ state, provider, challenge, redirect }){
-  const startUrl = getPkceStartUrl();
-  if(!startUrl) return false;
-  try{
-    const r = await fetch(startUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        state,
-        provider,
-        code_challenge: challenge,
-        code_challenge_method: 'S256',
-        redirect_uri: redirect
-      })
-    });
-    if(!r.ok){
-      const data = await r.json().catch(()=>({}));
-      console.warn('PKCE start registration failed', data.error || r.status);
-      return false;
-    }
-    return true;
-  }catch(e){
-    console.warn('PKCE start unreachable — server will validate verifier+challenge on exchange only', e.message);
-    return false;
-  }
-}
-
-/** Build provider authorize URL and leave this page (full redirect — most reliable). */
-async function buildPkceAuthorizeUrl(provider, authBase, clientId, scope, extraParams){
+async function startOAuthCodePopup(provider, authBase, clientId, scope){
   const verifier = randomVerifier();
   const challenge = await pkceChallenge(verifier);
   const state = b64url(crypto.getRandomValues(new Uint8Array(16)));
-  const redirect = getOAuthRedirectUri(provider);
-
-  await registerPkceOnServer({ state, provider, challenge, redirect });
-
-  sessionStorage.setItem('w3m_oauth_pkce', JSON.stringify({
-    provider, verifier, challenge, state, redirect, ts: Date.now()
-  }));
-
+  sessionStorage.setItem('w3m_oauth_pkce', JSON.stringify({ provider, verifier, state }));
+  const redirect = OAUTH_CONFIG.REDIRECT_URI || (window.location.origin + window.location.pathname);
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
@@ -2200,19 +1644,16 @@ async function buildPkceAuthorizeUrl(provider, authBase, clientId, scope, extraP
     code_challenge: challenge,
     code_challenge_method: 'S256'
   });
-  if(extraParams){
-    Object.keys(extraParams).forEach(k=>{ if(extraParams[k] != null) params.set(k, extraParams[k]); });
+  // LinkedIn uses slightly different param names historically; PKCE supported on newer apps
+  if(provider === 'linkedin'){
+    params.delete('code_challenge'); params.delete('code_challenge_method');
+    // LinkedIn classic still works with code only; store verifier for exchange proxy if added later
   }
-  return authBase + '?' + params.toString();
-}
-
-/** Legacy popup path (fallback if redirect is blocked by environment). */
-async function startOAuthCodePopup(provider, authBase, clientId, scope, extraParams){
-  const url = await buildPkceAuthorizeUrl(provider, authBase, clientId, scope, extraParams);
-  const w = 520, h = 680;
-  const left = Math.max(0, (screen.width - w) / 2), top = Math.max(0, (screen.height - h) / 2);
-  const popup = window.open(url, 'w3m_oauth_' + provider, `width=${w},height=${h},left=${left},top=${top},scrollbars=yes`);
-  if(!popup){ throw new Error('Popup blocked — allow popups or use redirect sign-in'); }
+  const url = authBase + '?' + params.toString();
+  const w = 520, h = 640;
+  const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+  const popup = window.open(url, 'w3m_oauth_' + provider, `width=${w},height=${h},left=${left},top=${top}`);
+  if(!popup){ throw new Error('Popup blocked — allow popups for this site'); }
 
   return new Promise((resolve, reject)=>{
     const timer = setInterval(()=>{
@@ -2231,193 +1672,78 @@ async function startOAuthCodePopup(provider, authBase, clientId, scope, extraPar
           const st = u.searchParams.get('state');
           const saved = JSON.parse(sessionStorage.getItem('w3m_oauth_pkce') || '{}');
           if(saved.state && st && saved.state !== st){ reject(new Error('OAuth state mismatch')); return; }
-          if(!code){ reject(new Error('No authorization code returned')); return; }
-          resolve({
-            code,
-            verifier: saved.verifier,
-            challenge: saved.challenge,
-            state: saved.state || st,
-            provider
-          });
+          resolve({ code, verifier: saved.verifier, provider });
         }
       }catch(e){ /* cross-origin until redirect returns */ }
-    }, 350);
-    setTimeout(()=>{ clearInterval(timer); try{ popup.close(); }catch(e){} reject(new Error('Sign-in timed out')); }, 180000);
+    }, 400);
+    setTimeout(()=>{ clearInterval(timer); try{ popup.close(); }catch(e){} reject(new Error('Sign-in timed out')); }, 120000);
   });
 }
 
-/** After Google/Microsoft/etc. redirects back with ?code=&state= */
-async function handleOAuthCallbackFromUrl(){
-  let u;
-  try{ u = new URL(window.location.href); }catch(e){ return false; }
-  const code = u.searchParams.get('code');
-  const state = u.searchParams.get('state');
-  const err = u.searchParams.get('error');
-  const errDesc = u.searchParams.get('error_description');
-  if(!code && !err) return false;
-
-  // Clean URL so refresh doesn't replay the code
-  try{
-    const clean = u.origin + u.pathname + (u.hash || '');
-    window.history.replaceState({}, document.title, clean);
-  }catch(e){}
-
-  if(err){
-    toast(errDesc || err || 'Sign-in cancelled at provider');
-    return true;
+async function exchangeCodeForProfile({ provider, code, verifier }){
+  if(!OAUTH_CONFIG.TOKEN_EXCHANGE_URL){
+    // No server proxy — cannot complete LinkedIn/Yahoo without client secret
+    throw new Error('TOKEN_EXCHANGE_URL not set. LinkedIn/Yahoo require a server-side code exchange.');
   }
-
-  const saved = JSON.parse(sessionStorage.getItem('w3m_oauth_pkce') || '{}');
-  if(saved.state && state && saved.state !== state){
-    toast('OAuth state mismatch — try signing in again');
-    return true;
-  }
-  const provider = saved.provider || 'google';
-  const label = (PROVIDERS[provider] && PROVIDERS[provider].label) || provider;
-  toast('Finishing ' + label + ' sign-in…');
-  ssoInFlight = true;
-  try{
-    const profile = await exchangeCodeForProfile({
-      provider,
-      code,
-      verifier: saved.verifier,
-      challenge: saved.challenge,
-      state: saved.state || state
-    });
-    try{ sessionStorage.removeItem('w3m_oauth_pkce'); }catch(e){}
-    if(profile.tokens){
-      try{
-        sessionStorage.setItem('w3m_oauth_tokens', JSON.stringify({
-          provider, tokens: profile.tokens, savedAt: Date.now()
-        }));
-      }catch(e){}
-    }
-    completeSsoLogin({
-      name: profile.name || label + ' User',
-      email: profile.email,
-      provider,
-      picture: profile.picture || '',
-      tokens: profile.tokens || null
-    });
-  }catch(ex){
-    console.error('OAuth callback', ex);
-    ssoInFlight = false;
-    toast(ex.message || 'Could not finish sign-in — is /api/oauth/exchange running?');
-  }
-  return true;
+  const redirect = OAUTH_CONFIG.REDIRECT_URI || (window.location.origin + window.location.pathname);
+  const r = await fetch(OAUTH_CONFIG.TOKEN_EXCHANGE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider, code, code_verifier: verifier, redirect_uri: redirect })
+  });
+  if(!r.ok) throw new Error('Token exchange failed (' + r.status + ')');
+  return r.json();
 }
 
-async function exchangeCodeForProfile({ provider, code, verifier, challenge, state }){
-  const url = getTokenExchangeUrl();
-  if(!url){
-    throw new Error('Token exchange URL missing. Deploy /api/oauth/exchange or set OAUTH_CONFIG.TOKEN_EXCHANGE_URL.');
-  }
-  const redirect = getOAuthRedirectUri(provider);
-  let r;
-  try{
-    r = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        provider,
-        code,
-        code_verifier: verifier || '',
-        code_challenge: challenge || '',
-        code_challenge_method: 'S256',
-        state: state || '',
-        redirect_uri: redirect
-      })
-    });
-  }catch(netErr){
-    throw new Error('Cannot reach token exchange at ' + url + ' — is the API running?');
-  }
-  let data = {};
-  try{ data = await r.json(); }catch(e){}
-  if(!r.ok){
-    throw new Error(data.error || ('Token exchange failed (' + r.status + ')'));
-  }
-  if(!data.email){
-    throw new Error('Exchange succeeded but no email was returned');
-  }
-  return {
-    email: data.email,
-    name: data.name || data.email.split('@')[0],
-    picture: data.picture || '',
-    tokens: data.tokens || null
-  };
-}
-
-async function startPkceSignIn(provider, usePopup){
-  const meta = PKCE_PROVIDERS[provider];
-  if(!meta){ toast('Unsupported provider'); return; }
-  const clientId = cfgId(meta.clientKey);
-  if(!clientId){
-    assertProviderConfigured(provider);
-    openDemoProvider(provider);
-    return;
-  }
-  // Validate redirect URI before leaving the page
-  const redirectCheck = getOAuthRedirectUri(provider);
-  if(!isRedirectUriAllowed(redirectCheck)){
-    toast('Redirect URI not allowed: ' + redirectCheck);
-    showMissingIdBanner({
-      message: 'Invalid OAuth Redirect URI',
-      detail: 'Add this origin to OAUTH_CONFIG.ALLOWED_REDIRECT_ORIGINS or fix REDIRECT_URI.\n' + redirectCheck
-    });
-    ssoInFlight = false;
-    return;
-  }
+async function startRealLinkedInSignIn(){
   ssoInFlight = true;
-  const label = (PROVIDERS[provider] && PROVIDERS[provider].label) || provider;
+  toast('Opening LinkedIn…');
   try{
-    if(usePopup){
-      toast('Opening ' + label + '…');
-      const { code, verifier, challenge, state } = await startOAuthCodePopup(
-        provider, meta.authBase, clientId, meta.scope, meta.extra || {}
-      );
-      const profile = await exchangeCodeForProfile({ provider, code, verifier, challenge, state });
-      if(profile.tokens){
-        try{
-          sessionStorage.setItem('w3m_oauth_tokens', JSON.stringify({
-            provider, tokens: profile.tokens, savedAt: Date.now()
-          }));
-        }catch(e){}
-      }
-      completeSsoLogin({
-        name: profile.name || label + ' User',
-        email: profile.email,
-        provider,
-        picture: profile.picture || ''
-      });
-      return;
-    }
-
-    // Full-page redirect to the real provider login (Google / Microsoft / …)
-    toast('Redirecting to ' + label + '…');
-    const url = await buildPkceAuthorizeUrl(
-      provider, meta.authBase, clientId, meta.scope, meta.extra || {}
+    const { code, verifier } = await startOAuthCodePopup(
+      'linkedin',
+      'https://www.linkedin.com/oauth/v2/authorization',
+      cfgId('LINKEDIN_CLIENT_ID'),
+      'openid profile email'
     );
-    window.location.assign(url);
+    const profile = await exchangeCodeForProfile({ provider: 'linkedin', code, verifier });
+    completeSsoLogin({
+      name: profile.name || profile.given_name || 'LinkedIn User',
+      email: profile.email,
+      provider: 'linkedin',
+      picture: profile.picture || ''
+    });
   }catch(err){
-    console.error(label + ' PKCE SSO', err);
+    console.error('LinkedIn SSO', err);
     ssoInFlight = false;
-    toast(err.message || (label + ' sign-in failed'));
-    openDemoProvider(provider);
+    toast(err.message || 'LinkedIn sign-in failed');
+    openDemoProvider('linkedin');
   }
 }
 
-/* Back-compat aliases — Google/Microsoft prefer native SDKs when present */
-function startRealLinkedInSignIn(){ return startPkceSignIn('linkedin'); }
-function startRealYahooSignIn(){ return startPkceSignIn('yahoo'); }
-function startRealGitHubSignIn(){ return startPkceSignIn('github'); }
-
-/* Finish redirect-based OAuth when provider sends user back with ?code= */
-(async function completeOAuthReturn(){
+async function startRealYahooSignIn(){
+  ssoInFlight = true;
+  toast('Opening Yahoo…');
   try{
-    const handled = await handleOAuthCallbackFromUrl();
-    if(handled) return;
-  }catch(e){ console.warn('OAuth return', e); }
-})();
+    const { code, verifier } = await startOAuthCodePopup(
+      'yahoo',
+      'https://api.login.yahoo.com/oauth2/request_auth',
+      cfgId('YAHOO_CLIENT_ID'),
+      'openid profile email'
+    );
+    const profile = await exchangeCodeForProfile({ provider: 'yahoo', code, verifier });
+    completeSsoLogin({
+      name: profile.name || profile.given_name || 'Yahoo User',
+      email: profile.email,
+      provider: 'yahoo',
+      picture: profile.picture || ''
+    });
+  }catch(err){
+    console.error('Yahoo SSO', err);
+    ssoInFlight = false;
+    toast(err.message || 'Yahoo sign-in failed');
+    openDemoProvider('yahoo');
+  }
+}
 
 function cancelProviderAuth(){
   ssoInFlight = false;
@@ -2480,226 +1806,6 @@ function submitProviderAuth(){
     }
   }, 600);
 }
-
-/* ================= WEBAUTHN / PASSKEYS =================
-   Passwordless sign-in via platform authenticators (Touch ID, Windows Hello,
-   phone passkeys). Requires HTTPS (or localhost). Credentials are device-bound.
-   Production: prefer server-generated challenges at /api/webauthn/* ;
-   client-side challenges work for single-device enroll on this SPA. */
-const PASSKEY_RP_NAME = 'What\'s Wrong With Me?';
-const PASSKEY_STORAGE_KEY = 'w3m_passkeys_v1';
-
-function webauthnSupported(){
-  return !!(window.PublicKeyCredential
-    && navigator.credentials
-    && typeof navigator.credentials.create === 'function'
-    && typeof navigator.credentials.get === 'function'
-    && window.isSecureContext);
-}
-
-function b64urlToBuf(b64url){
-  const pad = '='.repeat((4 - (b64url.length % 4)) % 4);
-  const b64 = (b64url + pad).replace(/-/g, '+').replace(/_/g, '/');
-  const bin = atob(b64);
-  const buf = new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
-  return buf.buffer;
-}
-function bufToB64url(buf){
-  const bytes = buf instanceof ArrayBuffer ? new Uint8Array(buf) : new Uint8Array(buf.buffer || buf);
-  let s = '';
-  bytes.forEach(b => s += String.fromCharCode(b));
-  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-function randomChallenge(len){
-  const a = new Uint8Array(len || 32);
-  crypto.getRandomValues(a);
-  return a.buffer;
-}
-
-function loadPasskeyStore(){
-  try{
-    return JSON.parse(localStorage.getItem(PASSKEY_STORAGE_KEY) || '{"byCred":{},"byUser":{}}');
-  }catch(e){
-    return { byCred:{}, byUser:{} };
-  }
-}
-function savePasskeyStore(store){
-  try{ localStorage.setItem(PASSKEY_STORAGE_KEY, JSON.stringify(store)); }catch(e){}
-}
-
-function passkeyRpId(){
-  try{
-    const h = location.hostname;
-    if(!h || h === 'localhost' || h === '127.0.0.1') return h || 'localhost';
-    return h;
-  }catch(e){ return 'w3me.in'; }
-}
-
-async function registerPasskeyForUser(user){
-  if(!webauthnSupported()){
-    toast('Passkeys need HTTPS and a supported browser');
-    return false;
-  }
-  if(!user || !user.username){
-    toast('Sign in first, then add a passkey');
-    return false;
-  }
-  const userId = user.username;
-  const challenge = randomChallenge(32);
-  const userIdBytes = new TextEncoder().encode(userId);
-
-  const publicKey = {
-    challenge,
-    rp: { name: PASSKEY_RP_NAME, id: passkeyRpId() },
-    user: {
-      id: userIdBytes,
-      name: user.email || user.username,
-      displayName: user.name || user.username
-    },
-    pubKeyCredParams: [
-      { type: 'public-key', alg: -7 },   // ES256
-      { type: 'public-key', alg: -257 }  // RS256
-    ],
-    authenticatorSelection: {
-      authenticatorAttachment: 'platform',
-      userVerification: 'preferred',
-      residentKey: 'preferred',
-      requireResidentKey: false
-    },
-    timeout: 120000,
-    attestation: 'none',
-    excludeCredentials: listExcludeCredentials(userId)
-  };
-
-  try{
-    const cred = await navigator.credentials.create({ publicKey });
-    if(!cred){ toast('Passkey creation cancelled'); return false; }
-    const credId = bufToB64url(cred.rawId);
-    const store = loadPasskeyStore();
-    store.byCred[credId] = {
-      username: userId,
-      name: user.name || userId,
-      email: user.email || '',
-      createdAt: new Date().toISOString(),
-      rpId: passkeyRpId(),
-      transports: (cred.response && cred.response.getTransports) ? cred.response.getTransports() : []
-    };
-    if(!store.byUser[userId]) store.byUser[userId] = [];
-    if(!store.byUser[userId].includes(credId)) store.byUser[userId].push(credId);
-    savePasskeyStore(store);
-    try{ localStorage.setItem('w3m_biometric_user', userId); }catch(e){}
-    toast('Passkey saved on this device');
-    return true;
-  }catch(err){
-    console.error('WebAuthn register', err);
-    if(err && (err.name === 'NotAllowedError' || err.name === 'AbortError')){
-      toast('Passkey registration cancelled');
-    } else if(err && err.name === 'InvalidStateError'){
-      toast('A passkey already exists for this account on this device');
-    } else {
-      toast('Could not create passkey — use HTTPS and a supported device');
-    }
-    return false;
-  }
-}
-
-function listExcludeCredentials(username){
-  const store = loadPasskeyStore();
-  const ids = (store.byUser && store.byUser[username]) || [];
-  return ids.map(id => ({
-    type: 'public-key',
-    id: b64urlToBuf(id)
-  }));
-}
-
-function listAllowCredentials(){
-  const store = loadPasskeyStore();
-  return Object.keys(store.byCred || {}).map(id => {
-    const meta = store.byCred[id] || {};
-    const item = { type: 'public-key', id: b64urlToBuf(id) };
-    if(meta.transports && meta.transports.length) item.transports = meta.transports;
-    return item;
-  });
-}
-
-async function startPasskeySignIn(){
-  if(!webauthnSupported()){
-    toast('Passkeys require HTTPS (w3me.in) and a modern browser');
-    return;
-  }
-  const allow = listAllowCredentials();
-  if(!allow.length){
-    toast('No passkey on this device yet — sign in, then add one from your profile');
-    return;
-  }
-
-  const challenge = randomChallenge(32);
-  const publicKey = {
-    challenge,
-    rpId: passkeyRpId(),
-    timeout: 120000,
-    userVerification: 'preferred',
-    allowCredentials: allow
-  };
-
-  try{
-    toast('Waiting for passkey…');
-    const assertion = await navigator.credentials.get({ publicKey });
-    if(!assertion){ toast('Passkey sign-in cancelled'); return; }
-    const credId = bufToB64url(assertion.rawId);
-    const store = loadPasskeyStore();
-    const meta = store.byCred[credId];
-    if(!meta || !meta.username){
-      toast('Unknown passkey — register again after signing in');
-      return;
-    }
-    let user = DB.users[meta.username];
-    if(!user){
-      user = {
-        name: meta.name || meta.username,
-        email: meta.email || '',
-        username: meta.username,
-        password: '',
-        role: 'Not specified',
-        location: 'Not set',
-        passkey: true
-      };
-      DB.users[meta.username] = user;
-      if(user.email) DB.byEmail[user.email] = meta.username;
-      saveDB();
-    }
-    user.passkeyLastUsed = new Date().toISOString();
-    saveDB();
-    loginAs(user);
-  }catch(err){
-    console.error('WebAuthn assert', err);
-    if(err && (err.name === 'NotAllowedError' || err.name === 'AbortError')){
-      toast('Passkey sign-in cancelled');
-    } else {
-      toast('Passkey failed — try another sign-in method');
-    }
-  }
-}
-
-async function enrollPasskeyFromProfile(){
-  if(!currentUser){
-    toast('Sign in first to add a passkey');
-    go('entry');
-    return;
-  }
-  await registerPasskeyForUser(currentUser);
-}
-
-(function initPasskeyUi(){
-  try{
-    const btn = document.getElementById('passkeySignInBtn');
-    if(btn && !webauthnSupported()){
-      btn.style.opacity = '0.55';
-      btn.title = 'Passkeys need HTTPS and a supported browser/device';
-    }
-  }catch(e){}
-})();
 
 /* ================= BIOMETRIC (FACE + VOICE) LOGIN ================= */
 let bioStream = null, bioTimer = null;
