@@ -266,6 +266,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 .bar-label .bl-complete{font-size:9.5px; color:var(--ink-soft); font-family:'IBM Plex Mono'; margin-left:6px;}
 .bar-track{height:7px; background:var(--line); border-radius:5px; overflow:hidden;}
 .bar-fill{height:100%; background:linear-gradient(90deg, var(--accent), var(--gold)); border-radius:5px;}
+.bar-feedback{font-size:11px; color:var(--ink-soft); line-height:1.5; margin-top:6px;}
 .log-item{background:var(--bg); padding:11px; border-radius:10px; border:1px solid var(--line); margin-bottom:8px;}
 .log-item .lc{font-size:10px; color:var(--accent); font-family:'IBM Plex Mono'; margin-bottom:3px; text-transform:uppercase;}
 .log-item .lq{font-size:12.5px; font-weight:600; margin-bottom:3px;}
@@ -574,7 +575,22 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
           <div class="fgroup"><label>Field of Study</label><select id="fieldOfStudy" onchange="onFieldOfStudyChange()"><option value="">Choose</option></select></div>
         </div>
         <div class="fgroup"><label>Course / Degree Program</label><select id="courseProgram" disabled><option value="">Choose field of study first</option></select></div>
-        <div class="field-note">These replace Industry &amp; Job Function below while you're a student — we'll tailor questions and skill signals to your course instead.</div>
+        <div class="frow2">
+          <div class="fgroup"><label>Year of Study</label><select id="yearOfStudy"><option value="">Choose</option>
+            <option>1st Year / Sem 1-2</option><option>2nd Year / Sem 3-4</option><option>3rd Year / Sem 5-6</option>
+            <option>4th Year / Sem 7-8</option><option>5th Year+ (Integrated / Postgrad)</option><option>Final Year</option>
+            <option>Recently Graduated</option></select></div>
+          <div class="fgroup"><label>Internship Status</label><select id="internshipStatus"><option value="">Choose</option>
+            <option>Not looking for an internship</option><option>Currently seeking an internship</option>
+            <option>Currently interning</option><option>Completed 1 internship</option>
+            <option>Completed 2+ internships</option></select></div>
+        </div>
+        <div class="fgroup"><label>College / University</label>
+          <select id="collegeSelect" disabled onchange="onCollegeSelectChange()"><option value="">Choose field of study first</option></select>
+          <input class="field-note-input" id="collegeOtherInput" type="text" placeholder="Type your college / university name"
+            style="display:none; margin-top:8px; background:var(--bg); border:1.5px solid var(--line); border-radius:11px; color:var(--ink); font-family:inherit; font-size:13px; padding:10px 12px; outline:none; width:100%;">
+        </div>
+        <div class="field-note">These replace Industry &amp; Job Function below while you're a student — we'll tailor questions, skill signals, and roadmap content to your course, year, and internship stage instead.</div>
       </div>
 
       <!-- Professional fields: shown for Graduate/Fresher and Experienced Professional -->
@@ -1279,6 +1295,14 @@ function updateScoreArrows(){
   }
 }
 window.addEventListener('resize', updateScoreArrows);
+/* Extra recalculation triggers so the arrows never get stuck mismeasured — covers late font loads,
+   dynamic content re-renders, and any other timing edge case beyond the initial setTimeout. */
+if('ResizeObserver' in window){
+  const scoreRowEl = document.getElementById('reportScoreRow');
+  if(scoreRowEl) new ResizeObserver(()=>updateScoreArrows()).observe(scoreRowEl);
+}
+if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>updateScoreArrows()).catch(()=>{}); }
+document.getElementById('reportScoreRow')?.addEventListener('scroll', updateScoreArrows);
 
 /* ---- Wellbeing radar axis definitions, used for both the static legend and interpretation copy ---- */
 const RADAR_AXIS_DEFS = [
@@ -1348,6 +1372,10 @@ const SKILL_SIGNALS_BY_FIELD_OF_STUDY = {
   "Education": [{n:'Instructional Design',c:'#C6932A'},{n:'Communication',c:'#132A52'},{n:'Classroom Skills',c:'#4C8F6B'},{n:'Patience & Empathy',c:'#E3B23C'}]
 };
 const DEFAULT_SKILL_SIGNALS = [{n:'Communication',c:'#E3B23C'},{n:'Problem Solving',c:'#132A52'},{n:'Adaptability',c:'#4C8F6B'},{n:'Time Management',c:'#C6932A'}];
+/* NOTE: userSkills must be declared before renderSkillSignals() is first invoked below (top-level call),
+   otherwise referencing it inside the function throws a ReferenceError (temporal dead zone) and silently
+   halts ALL script execution after this point — breaking dropdown population, carousel arrows, etc. */
+const userSkills = [];
 
 function pctFromSkillLabel(label){
   // deterministic pseudo-score derived from the skill name so the same skill always renders the same value in a session
@@ -1435,7 +1463,7 @@ function renderHeatmap(){
 renderHeatmap();
 
 /* ================= RESUME / ATS ================= */
-let analyzedAts = null, analyzedAtsFile = '';
+let analyzedAts = null, analyzedAtsFile = '', analyzedAtsInsights = [];
 const uploadZoneEl = document.getElementById('uploadZone');
 const fileInputEl = document.getElementById('fileInput');
 uploadZoneEl.addEventListener('click', ()=>{ fileInputEl.click(); });
@@ -1471,6 +1499,8 @@ function handleResumeUpload(file){
         ? ['Decent structure, could use more metrics','A few sections are missing keywords','Consider tightening your summary line']
         : ['Formatting may confuse some ATS parsers','Add more role-specific keywords','Quantify achievements with numbers where possible'];
       document.getElementById('atsInsights').innerHTML = pool.map(p=>`<div><span class="dot"></span>${p}</div>`).join('');
+      // save the real ATS findings so the Report's "Resume" focus item can show concrete, score-specific fixes
+      analyzedAtsInsights = pool.slice();
     }, 700);
   }catch(err){
     console.error('Resume upload failed:', err);
@@ -1540,6 +1570,40 @@ const FIELDS_OF_STUDY = {
   "Education": ["B.Ed","M.Ed","Early Childhood Education Diploma"]
 };
 
+/* ---- student-only: field of study -> a representative set of global universities/colleges ----
+   Not exhaustive (no single list can cover every college on earth) — spans major regions per field,
+   plus an "Other" option that reveals a free-text box so any college can still be entered. ---- */
+const COLLEGES_BY_FIELD_OF_STUDY = {
+  "Engineering & Computer Science": ["IIT Bombay (India)","IIT Delhi (India)","NIT Trichy (India)","BITS Pilani (India)",
+    "MIT (USA)","Stanford University (USA)","UC Berkeley (USA)","Georgia Tech (USA)","University of Waterloo (Canada)",
+    "University of Toronto (Canada)","Imperial College London (UK)","University of Cambridge (UK)","ETH Zurich (Switzerland)",
+    "Technical University of Munich (Germany)","National University of Singapore (Singapore)","Nanyang Technological University (Singapore)",
+    "University of Melbourne (Australia)","University of Tokyo (Japan)","Tsinghua University (China)"],
+  "Business & Commerce": ["Shri Ram College of Commerce (India)","IIM Ahmedabad (India)","Narsee Monjee (India)",
+    "Harvard Business School (USA)","Wharton, UPenn (USA)","Stanford GSB (USA)","London Business School (UK)",
+    "London School of Economics (UK)","INSEAD (France/Singapore)","HEC Paris (France)","University of Melbourne (Australia)",
+    "National University of Singapore Business School (Singapore)","University of Toronto — Rotman (Canada)"],
+  "Arts & Humanities": ["St. Stephen's College, Delhi (India)","Lady Shri Ram College (India)","University of Oxford (UK)",
+    "University of Cambridge (UK)","Harvard University (USA)","Yale University (USA)","UC Berkeley (USA)",
+    "University of Toronto (Canada)","Sciences Po (France)","University of Melbourne (Australia)","University of Edinburgh (UK)"],
+  "Science": ["Indian Institute of Science, Bangalore (India)","University of Delhi (India)","MIT (USA)",
+    "Caltech (USA)","Stanford University (USA)","University of Cambridge (UK)","University of Oxford (UK)",
+    "ETH Zurich (Switzerland)","University of Toronto (Canada)","University of Tokyo (Japan)","ANU (Australia)"],
+  "Medicine & Health Sciences": ["AIIMS Delhi (India)","CMC Vellore (India)","Harvard Medical School (USA)",
+    "Johns Hopkins University (USA)","University of Oxford (UK)","Imperial College London (UK)","University of Toronto (Canada)",
+    "University of Melbourne (Australia)","National University of Singapore (Singapore)","Karolinska Institute (Sweden)"],
+  "Law": ["National Law School of India University, Bangalore (India)","NALSAR Hyderabad (India)",
+    "Harvard Law School (USA)","Yale Law School (USA)","University of Oxford (UK)","University of Cambridge (UK)",
+    "London School of Economics (UK)","University of Melbourne (Australia)","National University of Singapore (Singapore)"],
+  "Design & Architecture": ["National Institute of Design, Ahmedabad (India)","CEPT University (India)",
+    "Royal College of Art (UK)","Parsons School of Design (USA)","Rhode Island School of Design (USA)",
+    "Politecnico di Milano (Italy)","Delft University of Technology (Netherlands)","University of Melbourne (Australia)"],
+  "Education": ["Tata Institute of Social Sciences (India)","Delhi University — Faculty of Education (India)",
+    "Harvard Graduate School of Education (USA)","University College London — IOE (UK)","University of Cambridge (UK)",
+    "University of Melbourne (Australia)","University of Toronto — OISE (Canada)"]
+};
+const COLLEGE_OTHER_LABEL = "Other / Not Listed — I'll type it in";
+
 const SKILLS = ["JavaScript","Python","Java","C++","SQL","React","Node.js","AWS","Azure","Google Cloud",
   "Data Analysis","Machine Learning","Project Management","Agile / Scrum","Communication","Leadership",
   "Sales","Negotiation","SEO","Content Writing","Graphic Design","Figma","Excel","Financial Modeling",
@@ -1597,6 +1661,13 @@ function initSetupDropdowns(){
   populateSelect('langSelect', LANGUAGES, 'Language');
 }
 initSetupDropdowns();
+/* Backup wiring in addition to the inline onchange attribute — belt-and-braces so the Student
+   toggle reliably fires even if inline handlers get stripped/overridden in some environments. */
+(function bindCareerStageBackup(){
+  const el = document.getElementById('careerStage');
+  if(el) el.addEventListener('change', onCareerStageChange);
+})();
+onCareerStageChange(); // sync visible groups with whatever the select's initial value is
 function onJobFunctionChange(){
   const func = document.getElementById('jobFunction').value;
   const roleSelect = document.getElementById('jobRole');
@@ -1608,25 +1679,47 @@ function onJobFunctionChange(){
   roleSelect.disabled = false;
   populateSelect('jobRole', JOB_FUNCTIONS[func], 'Choose a role');
 }
-/* ---- Student career-stage toggle: swap Industry/Job Function for Education Level, Field of Study & Course ---- */
+/* ---- Student career-stage toggle: swap Industry/Job Function for Education Level, Field of Study & Course ----
+   Hardened so it works whether triggered by a real user click, a programmatic .value set + dispatched event,
+   or simply re-run on load — it always reads the live select value rather than relying on event state. ---- */
 function onCareerStageChange(){
-  const stage = document.getElementById('careerStage').value;
-  const isStudent = stage === 'Student';
-  document.getElementById('studentFieldsGroup').style.display = isStudent ? 'block' : 'none';
-  document.getElementById('professionalFieldsGroup').style.display = isStudent ? 'none' : 'block';
+  const stageEl = document.getElementById('careerStage');
+  const studentGroup = document.getElementById('studentFieldsGroup');
+  const proGroup = document.getElementById('professionalFieldsGroup');
+  if(!stageEl || !studentGroup || !proGroup) return;
+  const isStudent = stageEl.value === 'Student';
+  studentGroup.style.display = isStudent ? 'block' : 'none';
+  proGroup.style.display = isStudent ? 'none' : 'block';
+  // keep Skill Signals / roadmap context in sync immediately if a report already exists on screen
+  try{ renderSkillSignals(); }catch(e){}
 }
 function onFieldOfStudyChange(){
   const fos = document.getElementById('fieldOfStudy').value;
   const courseSelect = document.getElementById('courseProgram');
+  const collegeSelect = document.getElementById('collegeSelect');
+  const otherInput = document.getElementById('collegeOtherInput');
+  if(otherInput){ otherInput.style.display = 'none'; otherInput.value = ''; }
   if(!fos){
     courseSelect.innerHTML = '<option value="">Choose field of study first</option>';
     courseSelect.disabled = true;
+    if(collegeSelect){ collegeSelect.innerHTML = '<option value="">Choose field of study first</option>'; collegeSelect.disabled = true; }
     return;
   }
   courseSelect.disabled = false;
   populateSelect('courseProgram', FIELDS_OF_STUDY[fos], 'Choose a course / degree');
+  if(collegeSelect){
+    collegeSelect.disabled = false;
+    const colleges = (COLLEGES_BY_FIELD_OF_STUDY[fos] || []).concat([COLLEGE_OTHER_LABEL]);
+    populateSelect('collegeSelect', colleges, 'Choose your college / university');
+  }
 }
-const userSkills = [];
+/* ---- Reveal a free-text box when the college isn't in the list — the college list is representative, not exhaustive ---- */
+function onCollegeSelectChange(){
+  const sel = document.getElementById('collegeSelect');
+  const otherInput = document.getElementById('collegeOtherInput');
+  if(!sel || !otherInput) return;
+  otherInput.style.display = sel.value === COLLEGE_OTHER_LABEL ? 'block' : 'none';
+}
 function addSkill(){
   const sel = document.getElementById('skillSelect');
   const val = sel.value;
@@ -1988,9 +2081,12 @@ function compileReport(){
   const bars = document.getElementById('competencyBars');
   bars.innerHTML = userAnswers.length ? userAnswers.map(a=>{
     const pct = Math.round((a.score/4)*100);
+    const feedback = competencyFeedbackFor(a.key, pct);
     return `<div class="bar-row">
     <div class="bar-label"><span class="bl-name">${a.cat}</span><span><span class="bl-score">${pct}%</span><span class="bl-complete">1/1 answered</span></span></div>
-    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div></div>`;
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div>
+    ${feedback ? `<div class="bar-feedback">${feedback}</div>` : ''}
+    </div>`;
   }).join('')
     : `<p style="font-size:12.5px; color:var(--ink-soft);">No diagnostic run yet this session.</p>`;
   document.getElementById('transcriptLogs').innerHTML = userAnswers.length ? userAnswers.map(a=>`<div class="log-item">
@@ -2074,9 +2170,46 @@ const FOCUS_ACTIONS = {
   }
 };
 function focusActionsFor(key, pct){
+  /* ---- Resume: prefer the ACTUAL ATS findings from the uploaded resume over generic tiered text,
+     since those are score-specific fixes rather than a guess based on the diagnostic answer alone. ---- */
+  if(key === 'resume' && analyzedAts !== null && analyzedAtsInsights.length){
+    const scoreLine = analyzedAts >= 90
+      ? `Your uploaded resume scored ${analyzedAts}% on ATS compatibility — here's what's keeping it strong:`
+      : `Your uploaded resume scored ${analyzedAts}% on ATS compatibility — here's what would move it toward 90%+:`;
+    return [scoreLine, ...analyzedAtsInsights];
+  }
   const lib = FOCUS_ACTIONS[key];
   if(!lib) return [];
   if(pct===null) return ["Complete the diagnostic to get personalized actions for this area."];
+  const tier = pct<50 ? 'low' : pct<80 ? 'mid' : 'high';
+  return lib[tier];
+}
+/* ---- Diagnostic Competencies: short, constructive, score-tiered feedback shown under every bar ----
+   so the report explains *why* the number is what it is, not just the number itself. ---- */
+const COMPETENCY_FEEDBACK = {
+  direction:{low:"Your sense of direction is unclear right now — worth spending focused time mapping out where you actually want to head before optimizing anything else.",mid:"You have a general direction but it's not fully locked in — sharpening it into a concrete 12-month target will make everything else easier to prioritize.",high:"You're clear on where you're headed — use that clarity to filter out opportunities that don't serve it."},
+  satisfaction:{low:"Low satisfaction here is a signal worth taking seriously — identify specifically what's driving it before it turns into disengagement or burnout.",mid:"You're getting some fulfillment from this role but not enough — pin down the 1-2 changes that would move the needle most.",high:"You're genuinely satisfied — protect whatever's driving that as your role or team evolves."},
+  growth:{low:"Growth has stalled — this is usually fixable with a direct conversation with your manager about scope, or a deliberate search for stretch work.",mid:"Growth is happening but slowly — look for one deliberate stretch assignment to accelerate it.",high:"You're growing at a strong pace — make sure you're documenting it so it's visible at review time."},
+  leadership:{low:"Leadership readiness is a real gap right now — start small: lead one meeting or one initiative end-to-end to build the muscle.",mid:"You're mostly ready but a few gaps remain — targeted feedback from someone who's seen you lead would help close them fast.",high:"You're ready for more scope — make sure your manager knows you're seeking it."},
+  resume:{low:"Your resume likely isn't reflecting your real impact yet — see the specific fixes below.",mid:"Your resume is solid but leaves value on the table — see the specific fixes below.",high:"Your resume is in strong shape — keep it current as you take on new work."},
+  linkedin:{low:"An inactive LinkedIn profile is easy to fix and often overlooked — even 15 minutes a week of updates and engagement compounds quickly.",mid:"Your presence is decent but could be more active — posting or commenting even occasionally increases visibility to recruiters.",high:"Your LinkedIn presence is working for you — keep the cadence going."},
+  interview:{low:"Interview nerves usually come from under-preparation, not lack of skill — a couple of mock interviews will close this gap fast.",mid:"You're reasonably prepared but not fully confident — build out a deeper story bank to cover more question types.",high:"You're interview-ready — focus energy on researching each specific company instead."},
+  skills:{low:"Your skills are falling behind where the market is heading — pick one in-demand skill and commit to a focused 4-week upskill.",mid:"A few gaps are forming — keep an eye on where your field is trending and address gaps before they widen.",high:"You're ahead of the curve — consider mentoring others, which also reinforces your own edge."},
+  workplace:{low:"An unsupportive environment affects everything else on this report — this may be worth escalating or ultimately a reason to look elsewhere.",mid:"Your environment has real friction — identify the specific source and see if it's addressable before assuming it's fixed by leaving.",high:"You're in a healthy environment — that's a real asset, worth factoring into any future career decision."},
+  obstacles:{low:"Major obstacles are blocking progress — break the biggest one into a first concrete step this week rather than trying to solve it all at once.",mid:"You have real obstacles but some ideas to address them — pick the highest-leverage one and act on it first.",high:"Few obstacles are in your way right now — good time to be proactive about growth rather than reactive."},
+  goals:{low:"Undefined goals make everything else on this report harder to act on — spend 20 minutes writing down where you want to be in 3 years.",mid:"Your goals are loosely defined — turning them into specific, measurable targets will make progress easier to track.",high:"Your goals are well-defined — revisit them quarterly to keep them current."},
+  aireadiness:{low:"AI fluency is increasingly table-stakes in most fields — even a few hours with common tools this month will meaningfully close the gap.",mid:"You're comfortable with the basics — going deeper into tools specific to your field will set you apart.",high:"You're ahead on AI fluency — this is a genuine differentiator worth highlighting on your resume."},
+  burnout:{low:"This score suggests real exhaustion — this deserves direct attention, not just \"pushing through.\" See the roadmap below for recovery steps.",mid:"You're managing but recovery is inconsistent — build in protected rest before it compounds.",high:"You're in a good place on energy — keep whatever boundaries are working."},
+  stress:{low:"Stress is at a level that's hard to sustain — identifying your top 1-2 triggers this week is the highest-leverage first step.",mid:"Stress is manageable most days but not always — a consistent coping routine would help smooth the harder days.",high:"You're handling stress well right now — good foundation to build on."},
+  motivation:{low:"Low motivation is worth investigating rather than pushing through — often it traces back to a mismatch between the work and what actually drives you.",mid:"Motivation comes and goes — reconnecting with the parts of your work that feel meaningful can help stabilize it.",high:"You're driven right now — a great time to take on ambitious work while the energy is there."},
+  focus:{low:"Frequent distraction is costing you real output — start with two protected, notification-free blocks a day.",mid:"You can focus but interruptions break it often — identify your biggest recurring interruption and address that one first.",high:"You're able to sustain deep focus — protect that time as your workload grows."},
+  behavior:{low:"Reacting poorly under pressure is a learnable skill, not a fixed trait — a brief pause-before-responding habit makes a real difference.",mid:"You mostly stay composed but it takes effort — practicing this in lower-stakes moments builds the habit for high-stakes ones.",high:"You handle pressure well — this is a real strength in high-stakes moments."},
+  peerpressure:{low:"Heavy peer or organizational pressure is taking a toll — naming the specific source is the first step to addressing it directly.",mid:"There's real pressure here but it's manageable — a clear boundary in the right place would ease it further.",high:"You're navigating organizational dynamics well — keep an eye out as team or org changes occur."},
+  projectchallenges:{low:"You're overwhelmed by current project demands — breaking the largest project into smaller milestones will make it feel far more manageable.",mid:"You're handling your projects but with real strain — flag scope or resourcing gaps before they compound.",high:"You're confidently on top of your project load — good time to take on a stretch project if you want more scope."}
+};
+function competencyFeedbackFor(key, pct){
+  const lib = COMPETENCY_FEEDBACK[key];
+  if(!lib || pct===null) return '';
   const tier = pct<50 ? 'low' : pct<80 ? 'mid' : 'high';
   return lib[tier];
 }
@@ -2229,11 +2362,22 @@ function renderRoadmap(){
   const industryVal = (document.getElementById('industry') || {}).value || '';
   const functionVal = (document.getElementById('jobFunction') || {}).value || '';
   const fosVal = (document.getElementById('fieldOfStudy') || {}).value || '';
+  const yearVal = (document.getElementById('yearOfStudy') || {}).value || '';
+  const internshipVal = (document.getElementById('internshipStatus') || {}).value || '';
   const channels = FUNCTION_LEARNING_CHANNELS[functionVal] || DEFAULT_LEARNING_CHANNELS;
   const contextBits = isStudent ? [fosVal].filter(Boolean) : [functionVal, industryVal].filter(Boolean);
-  const contextLine = contextBits.length
+  let contextLine = contextBits.length
     ? `Picked for ${contextBits.join(' in ')}, and matched to where your evaluation flagged the biggest gaps — ${focusList.map(f=>f.cat).join(', ')}.`
     : `Matched to where your evaluation flagged the biggest gaps — ${focusList.map(f=>f.cat).join(', ')}. Choose your ${isStudent?'field of study':'industry & function'} in Diagnostic Setup to sharpen these further.`;
+  if(isStudent && (yearVal || internshipVal)){
+    const bits = [yearVal, internshipVal].filter(Boolean).join(' · ');
+    contextLine += ` Adjusted for where you are right now: ${bits}.`;
+    if(internshipVal === 'Not looking for an internship' || internshipVal === 'Currently seeking an internship'){
+      contextLine += ` Since you haven't landed one yet, the tasks below lean toward building the profile and outreach needed to get one.`;
+    } else if(internshipVal === 'Currently interning'){
+      contextLine += ` Since you're mid-internship, the tasks below lean toward converting it into strong references and a full-time offer.`;
+    }
+  }
 
   ['30','60','90'].forEach(phase=>{
     const stageInfo = STAGE_FOCUS[phase];
