@@ -159,11 +159,22 @@ h1,h2,h3,.display{font-family:'Fraunces',serif;}
   font-family:'Fraunces'; font-weight:700; font-size:13px; padding:12px 20px; border-radius:13px; cursor:pointer; position:relative; z-index:2;}
 
 /* ---- score rings / grid ---- */
-.score-row{display:flex; gap:11px; overflow-x:auto; padding:2px 2px 6px; scrollbar-width:none;}
+.score-row-wrap{position:relative;}
+.score-row{display:flex; gap:11px; overflow-x:auto; padding:2px 2px 6px; scrollbar-width:none; scroll-behavior:smooth; scroll-snap-type:x proximity;}
 .score-row::-webkit-scrollbar{display:none;}
-.score-card{min-width:104px; padding:14px 10px; text-align:center; flex-shrink:0;}
+.score-card{min-width:104px; padding:14px 10px; text-align:center; flex-shrink:0; scroll-snap-align:start;}
 .score-card .val{font-family:'Fraunces'; font-weight:700; font-size:15px;}
 .score-card .lbl{font-size:10px; color:var(--ink-soft); margin-top:2px;}
+.carousel-arrow{position:absolute; top:50%; transform:translateY(-50%); width:30px; height:30px; border-radius:50%;
+  background:var(--card); border:1px solid var(--line); box-shadow:var(--shadow); display:flex; align-items:center;
+  justify-content:center; cursor:pointer; z-index:5; font-size:13px; color:var(--navy); user-select:none;}
+.carousel-arrow.left{left:-6px;}
+.carousel-arrow.right{right:-6px;}
+.carousel-arrow:active{transform:translateY(-50%) scale(0.92);}
+.carousel-arrow.hidden{display:none;}
+.carousel-dots{display:flex; justify-content:center; gap:5px; margin-top:2px;}
+.carousel-dots span{width:5px;height:5px;border-radius:50%; background:var(--line);}
+.carousel-dots span.on{background:var(--accent);}
 .grid2{display:grid; grid-template-columns:1fr 1fr; gap:11px;}
 .mini-card{padding:14px; cursor:pointer;}
 .mini-card h4{font-size:12.5px; margin:8px 0 2px; font-weight:600;}
@@ -174,8 +185,9 @@ h1,h2,h3,.display{font-family:'Fraunces',serif;}
 .s-track{flex:1; height:7px; border-radius:6px; background:var(--line); overflow:hidden;}
 .s-fill{height:100%; border-radius:6px; background:linear-gradient(90deg, var(--accent), var(--gold));}
 .s-val{width:28px; text-align:right; font-size:10.5px; color:var(--ink-soft); font-weight:600;}
+.skill-context-note{font-size:10.5px; color:var(--ink-soft); margin:-4px 0 10px; line-height:1.5;}
 .heat-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:6px;}
-.heat-cell{aspect-ratio:1; border-radius:5px; border:1px solid rgba(19,42,82,0.06);}
+.heat-cell{aspect-ratio:1; border-radius:5px; border:1px solid rgba(19,42,82,0.06); position:relative;}
 .heat-weekdays{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px;}
 .heat-weekdays span{text-align:center; font-size:9px; font-weight:700; color:var(--ink-soft); letter-spacing:.02em;}
 .heat-legend-detail{display:flex; flex-direction:column; gap:8px; margin-top:14px; padding-top:12px; border-top:1px dashed var(--line);}
@@ -183,6 +195,10 @@ h1,h2,h3,.display{font-family:'Fraunces',serif;}
 .heat-legend-detail .hl-swatch{width:16px; height:16px; border-radius:5px; flex-shrink:0; box-shadow:inset 0 0 0 1px rgba(19,42,82,0.08);}
 .heat-legend-detail .hl-item b{display:block; font-size:11.5px;}
 .heat-legend-detail .hl-item span{font-size:10.5px; color:var(--ink-soft);}
+.heat-data-badge{display:inline-block; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+  padding:3px 8px; border-radius:20px; margin-bottom:8px;}
+.heat-data-badge.sample{background:rgba(198,147,42,.12); color:var(--accent);}
+.heat-data-badge.real{background:rgba(76,143,107,.14); color:var(--good);}
 
 /* ---- assess setup ---- */
 .upload-zone{border:2px dashed var(--line); border-radius:var(--r-md); padding:20px; text-align:center; cursor:pointer; margin-bottom:14px;}
@@ -211,6 +227,7 @@ select:focus,input:focus,textarea:focus{border-color:var(--accent);}
 .lang-pool{display:flex; flex-wrap:wrap; gap:7px; margin-top:8px;}
 .lang-chip{background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:5px 9px; font-size:11.5px; display:flex; gap:6px; align-items:center;}
 .lang-chip b{cursor:pointer; color:var(--danger);}
+.field-note{font-size:10.5px; color:var(--ink-soft); margin:-6px 0 10px; line-height:1.5;}
 
 /* ---- hardware / assessment ---- */
 .hw-row{display:flex; justify-content:space-between; align-items:center; font-size:13px; margin-bottom:10px;}
@@ -242,15 +259,30 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
   font-size:12.5px; font-style:italic; color:var(--ink-soft); margin-bottom:12px;}
 
 /* ---- report ---- */
-.bar-row{margin-bottom:13px;}
-.bar-label{display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;}
-.bar-label span:last-child{font-family:'IBM Plex Mono'; color:var(--accent);}
+.bar-row{margin-bottom:15px;}
+.bar-label{display:flex; justify-content:space-between; align-items:baseline; font-size:12px; margin-bottom:5px;}
+.bar-label .bl-name{font-weight:600;}
+.bar-label .bl-score{font-family:'IBM Plex Mono'; color:var(--accent); font-weight:700; font-size:13px;}
+.bar-label .bl-complete{font-size:9.5px; color:var(--ink-soft); font-family:'IBM Plex Mono'; margin-left:6px;}
 .bar-track{height:7px; background:var(--line); border-radius:5px; overflow:hidden;}
 .bar-fill{height:100%; background:linear-gradient(90deg, var(--accent), var(--gold)); border-radius:5px;}
 .log-item{background:var(--bg); padding:11px; border-radius:10px; border:1px solid var(--line); margin-bottom:8px;}
 .log-item .lc{font-size:10px; color:var(--accent); font-family:'IBM Plex Mono'; margin-bottom:3px; text-transform:uppercase;}
 .log-item .lq{font-size:12.5px; font-weight:600; margin-bottom:3px;}
 .log-item .le{font-size:11.5px; color:var(--ink-soft);}
+/* ---- radar definitions / interpretation ---- */
+.radar-defs{display:flex; flex-direction:column; gap:7px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
+.radar-def-item{display:flex; gap:8px; align-items:flex-start; font-size:11px; color:var(--ink-soft); line-height:1.5;}
+.radar-def-item .rd-dot{width:8px;height:8px;border-radius:50%; flex-shrink:0; margin-top:3px;}
+.radar-def-item b{color:var(--ink); font-weight:700;}
+.radar-interpretation{margin-top:12px; padding:11px 13px; background:rgba(227,178,60,.08); border:1px solid rgba(227,178,60,.3);
+  border-radius:11px; font-size:12px; color:var(--ink); line-height:1.55;}
+/* ---- focus item action detail ---- */
+.focus-actions{display:none; margin:0 0 12px 41px; padding:0 0 2px;}
+.focus-actions.open{display:block;}
+.focus-actions ul{margin:6px 0 0; padding-left:16px;}
+.focus-actions li{font-size:11px; color:var(--ink-soft); line-height:1.6; margin-bottom:2px;}
+.focus-toggle{font-size:10px; font-weight:700; color:var(--accent); cursor:pointer; margin-left:auto; padding-left:8px; flex-shrink:0;}
 /* ---- auto demo overlay ---- */
 .demo-overlay{display:none; position:fixed; top:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; z-index:500; pointer-events:none;}
 .demo-overlay.active{display:block;}
@@ -311,7 +343,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 .rating-score span{display:block; font-family:'Space Grotesk'; font-size:9px; color:var(--ink-soft); font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
 
 /* ---- focus areas ---- */
-.focus-item{display:flex; align-items:center; gap:11px; padding:10px 0; border-bottom:1px solid var(--line);}
+.focus-item{display:flex; align-items:center; gap:11px; padding:10px 0; border-bottom:1px solid var(--line); flex-wrap:wrap;}
 .focus-item:last-child{border-bottom:none;}
 .focus-badge{width:30px;height:30px;border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;}
 .focus-badge.crit{background:rgba(193,84,61,.15);} .focus-badge.sens{background:rgba(198,147,42,.15);} .focus-badge.med{background:rgba(227,178,60,.18);}
@@ -344,11 +376,10 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 .learn-item .li-body b{display:block; font-size:12px; margin-bottom:1px;}
 .learn-item .li-body span{color:var(--ink-soft); font-size:11px; line-height:1.45;}
 .learn-item .li-tag{display:inline-block; margin-top:3px; font-size:9.5px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--accent); background:rgba(198,147,42,.1); padding:2px 7px; border-radius:20px;}
-
-/* ---- weekly trend ---- */
-.trend-legend{display:flex; gap:14px; margin-top:8px; flex-wrap:wrap;}
-.trend-legend .tl-item{display:flex; align-items:center; gap:5px; font-size:10.5px; color:var(--ink-soft);}
-.trend-legend .tl-dot{width:8px;height:8px;border-radius:50%;}
+.book-block{margin-top:14px; padding-top:12px; border-top:1px dashed var(--line);}
+.book-block h4{display:flex; align-items:center; gap:6px; font-size:12px; margin:0 0 8px; font-family:'Space Grotesk'; font-weight:700; color:var(--navy-deep);}
+.book-item{font-size:11px; color:var(--ink-soft); padding:4px 0; line-height:1.55;}
+.book-item b{color:var(--ink);}
 
 /* ---- payment screen ---- */
 #screen-payment{padding-bottom:100px;}
@@ -529,15 +560,32 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
   <div class="content">
     <div class="card">
       <h2 style="font-size:14px; margin:0 0 12px;">About You</h2>
-      <div class="frow2">
-        <div class="fgroup"><label>Career Stage</label><select id="careerStage"><option value="">Choose</option>
-          <option>Student</option><option>Graduate / Fresher</option><option>Experienced Professional</option></select></div>
-        <div class="fgroup"><label>Target Industry</label><select id="industry"><option value="">Choose</option></select></div>
+      <div class="fgroup">
+        <label>Career Stage</label>
+        <select id="careerStage" onchange="onCareerStageChange()"><option value="">Choose</option>
+          <option>Student</option><option>Graduate / Fresher</option><option>Experienced Professional</option></select>
       </div>
-      <div class="frow2">
-        <div class="fgroup"><label>Job Function</label><select id="jobFunction" onchange="onJobFunctionChange()"><option value="">Choose</option></select></div>
+
+      <!-- Student-only fields: shown only when Career Stage = Student -->
+      <div id="studentFieldsGroup" style="display:none;">
+        <div class="frow2">
+          <div class="fgroup"><label>Education Level</label><select id="educationLevel"><option value="">Choose</option>
+            <option>High School</option><option>Undergraduate</option><option>Postgraduate</option><option>Doctorate (PhD)</option><option>Diploma / Vocational</option></select></div>
+          <div class="fgroup"><label>Field of Study</label><select id="fieldOfStudy" onchange="onFieldOfStudyChange()"><option value="">Choose</option></select></div>
+        </div>
+        <div class="fgroup"><label>Course / Degree Program</label><select id="courseProgram" disabled><option value="">Choose field of study first</option></select></div>
+        <div class="field-note">These replace Industry &amp; Job Function below while you're a student — we'll tailor questions and skill signals to your course instead.</div>
+      </div>
+
+      <!-- Professional fields: shown for Graduate/Fresher and Experienced Professional -->
+      <div id="professionalFieldsGroup">
+        <div class="frow2">
+          <div class="fgroup"><label>Target Industry</label><select id="industry"><option value="">Choose</option></select></div>
+          <div class="fgroup"><label>Job Function</label><select id="jobFunction" onchange="onJobFunctionChange()"><option value="">Choose</option></select></div>
+        </div>
         <div class="fgroup"><label>Job Role</label><select id="jobRole" disabled><option value="">Choose function first</option></select></div>
       </div>
+
       <div class="fgroup"><label>Location</label><select id="location"><option value="">Choose country</option></select></div>
       <div class="fgroup"><label>Skillset</label>
         <select id="skillSelect"><option value="">Choose a skill</option></select>
@@ -546,7 +594,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
       </div>
       <div class="fgroup" style="margin-bottom:0;"><label>Languages</label>
         <div class="frow2">
-          <select id="langSelect"><option value="">Language</option><option>English</option><option>Hindi</option><option>Spanish</option><option>French</option><option>Mandarin</option></select>
+          <select id="langSelect"><option value="">Language</option></select>
           <select id="langLevel"><option>Basic</option><option>Efficient</option><option>Professional</option><option>Native</option></select>
         </div>
         <button class="btn btn-outline" style="margin-top:8px; padding:9px;" onclick="addLanguage()">+ Add Language</button>
@@ -647,7 +695,12 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     </div>
 
     <div class="section-title"><h2>Career Signals</h2></div>
-    <div class="score-row" id="reportScoreRow"></div>
+    <div class="score-row-wrap">
+      <div class="carousel-arrow left hidden" id="scoreArrowLeft" onclick="scrollScoreRow(-1)">‹</div>
+      <div class="score-row" id="reportScoreRow" onscroll="updateScoreArrows()"></div>
+      <div class="carousel-arrow right" id="scoreArrowRight" onclick="scrollScoreRow(1)">›</div>
+    </div>
+    <div class="carousel-dots" id="scoreDots"></div>
 
     <div class="section-title"><h2>Diagnostic Competencies</h2></div>
     <div class="card" id="competencyBars"></div>
@@ -656,6 +709,8 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     <div class="card">
       <svg id="radarSvg" width="100%" height="230" viewBox="0 0 240 220"></svg>
       <div style="font-size:10.5px; color:var(--ink-soft); text-align:center; margin-top:4px;">Burnout · Stress · Behavior · Motivation · Direction · Focus</div>
+      <div class="radar-interpretation" id="radarInterpretation">Run the diagnostic to see your personalized wellbeing read-out.</div>
+      <div class="radar-defs" id="radarDefs"></div>
     </div>
 
     <div class="section-title"><h2>Key Areas to Work On</h2></div>
@@ -664,20 +719,17 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     <div class="section-title"><h2>Strong Areas</h2></div>
     <div class="card"><div class="strong-chip-row" id="strongAreas"></div></div>
 
-    <div class="section-title"><h2>Evaluating Through the Weeks</h2></div>
-    <div class="card">
-      <svg id="trendSvg" width="100%" height="150" viewBox="0 0 300 150"></svg>
-      <div class="trend-legend" id="trendLegend"></div>
-      <div style="font-size:10.5px; color:var(--ink-soft); margin-top:8px;" id="trendNote"></div>
-    </div>
-
     <div class="section-title"><h2>Skill Signals</h2></div>
-    <div class="card" id="skillSliders"></div>
+    <div class="card">
+      <div class="skill-context-note" id="skillContextNote"></div>
+      <div id="skillSliders"></div>
+    </div>
     <div class="section-title"><h2>Engagement — Last 4 Weeks</h2></div>
     <div class="card">
-      <p style="font-size:11px; color:var(--ink-soft); line-height:1.55; margin:0 0 12px;">
-        This heatmap tracks how actively you've engaged with your diagnostics, coaching sessions, and roadmap tasks over the past 28 days — one cell per day, grouped into 4 weekly rows (Mon–Sun across each row). Darker, warmer cells mean quieter days; brighter green cells mean days you were most active.
+      <p style="font-size:11px; color:var(--ink-soft); line-height:1.55; margin:0 0 10px;">
+        This heatmap tracks how actively you've engaged with your diagnostics, coaching sessions, and roadmap tasks over the past 28 days — one cell per day, grouped into 4 weekly rows (Mon–Sun across each row). Darker red cells mean quieter days; green cells mean days you were most active.
       </p>
+      <div id="heatDataBadge"></div>
       <div class="heat-weekdays"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
       <div class="heat-grid" id="heatGrid"></div>
       <div class="heat-legend-detail">
@@ -871,25 +923,24 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
   const cx = size/2, cy = size/2, R = size/2 - 2;
   const TILT = -13 * Math.PI/180, cosT = Math.cos(TILT), sinT = Math.sin(TILT);
 
-  // More detailed real-world continent & island coastline approximations for a recognizable, realistic globe
   const CONTINENTS = [
     [[-168,66],[-165,60],[-155,59],[-145,60],[-140,60],[-135,57],[-130,55],[-125,49],[-124,42],
      [-122,37],[-120,34],[-117,32],[-110,31],[-105,22],[-100,20],[-97,16],[-94,16],[-90,14],
      [-88,13],[-84,9],[-79,8],[-77,8],[-80,18],[-81,25],[-80,26],[-77,29],[-75,35],[-74,39],
      [-70,41],[-66,45],[-60,47],[-55,51],[-58,49],[-65,55],[-70,58],[-75,62],[-80,68],[-90,69],
-     [-95,70],[-105,72],[-115,72],[-125,70],[-135,70],[-145,70],[-155,71],[-160,70],[-165,68],[-168,66]], // North America
+     [-95,70],[-105,72],[-115,72],[-125,70],[-135,70],[-145,70],[-155,71],[-160,70],[-165,68],[-168,66]],
     [[-77,8],[-73,10],[-68,11],[-62,10],[-58,7],[-55,5],[-51,1],[-50,0],[-48,-5],[-45,-6],
      [-40,-10],[-35,-8],[-36,-11],[-38,-13],[-39,-17],[-40,-20],[-41,-22],[-42,-23],[-45,-24],
      [-48,-26],[-50,-29],[-53,-30],[-56,-33],[-58,-35],[-60,-38],[-62,-40],[-64,-43],[-65,-45],
      [-67,-48],[-68,-50],[-70,-53],[-72,-52],[-73,-48],[-73,-45],[-72,-40],[-71,-35],[-71,-30],
-     [-70,-25],[-70,-20],[-71,-15],[-71,-10],[-76,-5],[-79,-4],[-80,-2],[-80,2],[-79,4],[-77,8]], // South America
+     [-70,-25],[-70,-20],[-71,-15],[-71,-10],[-76,-5],[-79,-4],[-80,-2],[-80,2],[-79,4],[-77,8]],
     [[-17,21],[-16,17],[-16,15],[-15,12],[-13,10],[-11,7],[-9,5],[-7,4],[-4,5],[-2,5],[2,6],
      [5,5],[7,4],[9,4],[9,1],[9,-2],[11,-4],[12,-6],[13,-9],[13,-13],[13,-16],[12,-19],[12,-22],
      [14,-25],[16,-28],[18,-31],[18,-34],[20,-34],[23,-34],[26,-33],[28,-31],[30,-30],[32,-27],
      [33,-24],[35,-24],[37,-20],[39,-16],[40,-14],[40,-10],[42,-6],[41,-1],[42,2],[44,4],[45,8],
      [45,10],[43,11],[43,13],[41,13],[42,15],[40,16],[38,17],[37,19],[37,22],[35,25],[34,27],
      [32,29],[32,31],[29,31],[26,32],[24,32],[19,32],[15,32],[11,33],[10,35],[9,37],[3,37],
-     [0,36],[-3,36],[-6,36],[-6,33],[-8,32],[-10,30],[-13,28],[-15,25],[-17,21]], // Africa
+     [0,36],[-3,36],[-6,36],[-6,33],[-8,32],[-10,30],[-13,28],[-15,25],[-17,21]],
     [[-10,36],[-9,39],[-9,43],[-7,44],[-5,46],[-2,47],[0,50],[2,49],[4,50],[5,52],[4,53],
      [5,55],[7,57],[10,58],[8,56],[11,55],[13,55],[15,55],[15,58],[18,59],[20,60],[18,63],
      [20,65],[22,66],[24,66],[24,68],[28,70],[30,70],[32,66],[35,66],[38,64],[40,66],[42,66],
@@ -903,27 +954,27 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
      [90,21],[88,22],[85,20],[83,18],[80,8],[78,9],[76,10],[75,15],[70,20],[68,24],[65,25],
      [60,25],[57,26],[55,26],[52,28],[50,30],[48,30],[46,30],[42,29],[40,30],[36,31],[35,30],
      [34,31],[33,31],[30,31],[28,36],[27,37],[25,40],[22,40],[19,40],[15,42],[12,44],[8,43],
-     [3,43],[-2,43],[-6,43],[-9,43],[-10,40],[-10,36]], // Eurasia
+     [3,43],[-2,43],[-6,43],[-9,43],[-10,40],[-10,36]],
     [[113,-22],[114,-20],[116,-19],[120,-18],[122,-17],[124,-15],[127,-13],[130,-12],[132,-11],
      [134,-11],[136,-12],[138,-11],[142,-11],[144,-14],[145,-16],[145,-17],[146,-19],[147,-19],
      [148,-20],[150,-22],[151,-24],[153,-25],[153,-27],[153,-28],[151,-31],[150,-33],[150,-35],
      [148,-37],[147,-38],[144,-38],[141,-38],[138,-35],[136,-35],[137,-33],[134,-32],[132,-32],
-     [130,-32],[128,-32],[126,-33],[124,-33],[120,-34],[117,-35],[115,-34],[115,-31],[113,-26],[113,-22]] // Australia
+     [130,-32],[128,-32],[126,-33],[124,-33],[120,-34],[117,-35],[115,-34],[115,-31],[113,-26],[113,-22]]
   ];
   const ISLANDS = [
     [[-45,60],[-42,62],[-38,65],[-34,68],[-25,71],[-20,74],[-22,77],[-30,80],[-38,82],[-45,83],
-     [-52,82],[-58,79],[-63,76],[-65,72],[-63,68],[-58,64],[-52,61],[-45,60]], // Greenland
+     [-52,82],[-58,79],[-63,76],[-65,72],[-63,68],[-58,64],[-52,61],[-45,60]],
     [[43,-12],[45,-13],[47,-13],[48,-15],[49,-16],[48,-19],[47,-22],[46,-24],[45,-25],[44,-24],
-     [43,-22],[43,-18],[43,-15],[43,-12]], // Madagascar
+     [43,-22],[43,-18],[43,-15],[43,-12]],
     [[130,31],[131,32],[132,33],[133,34],[135,34],[136,35],[137,35],[139,36],[140,37],[140,39],
      [141,40],[141,41],[142,43],[144,44],[145,43],[143,41],[141,39],[140,36],[137,35],[135,34],
-     [133,32],[131,31],[130,31]], // Japan
+     [133,32],[131,31],[130,31]],
     [[-8,52],[-7,54],[-6,55],[-5,57],[-4,58],[-3,59],[-2,58],[-1,56],[-1,53],[0,52],[1,51],
-     [0,51],[-2,50],[-4,50],[-5,50],[-6,50],[-8,51],[-10,52],[-8,52]], // British Isles
+     [0,51],[-2,50],[-4,50],[-5,50],[-6,50],[-8,51],[-10,52],[-8,52]],
     [[95,5],[97,4],[98,3],[101,0],[104,-3],[106,-6],[110,-3],[113,-3],[116,-3],[119,-4],[120,-5],
-     [122,-8],[120,-8],[117,-8],[112,-8],[108,-6],[104,-6],[100,-3],[97,2],[95,5]], // Indonesia
+     [122,-8],[120,-8],[117,-8],[112,-8],[108,-6],[104,-6],[100,-3],[97,2],[95,5]],
     [[173,-41],[174,-39],[176,-38],[178,-38],[178,-39],[177,-40],[175,-41],[175,-45],[173,-44],
-     [170,-43],[169,-44],[171,-42],[173,-41]] // New Zealand
+     [170,-43],[169,-44],[171,-42],[173,-41]]
   ];
   function catmullRomPt(p0,p1,p2,p3,t){
     const t2=t*t, t3=t2*t;
@@ -1038,6 +1089,7 @@ function go(screen){
   if(screen==='setup'){ coachSay("Hey, I'm Neeraj! Let's get to know you a little better. Pop in your resume if you have one handy — it helps me ask sharper, more relevant questions."); }
   else if(!['hardware','assess'].includes(screen)){ hideCoach(); }
   if(screen==='schedule'){ resetScheduleScreen(); }
+  if(screen==='report'){ setTimeout(updateScoreArrows, 60); }
   window.scrollTo(0,0);
 }
 function toast(msg){
@@ -1146,7 +1198,7 @@ function submitProviderAuth(){
         username, password: pass, role:'Not specified', location:'Not set' };
       DB.users[username] = user; if(user.email) DB.byEmail[user.email] = username; saveDB();
     }
-    loginAs(user); // returns from authorization straight to the home screen
+    loginAs(user);
   }, 900);
 }
 
@@ -1200,7 +1252,56 @@ function ring(val,color){ const r=25,c=2*Math.PI*r,off=c-(val/100)*c;
   <circle cx="30" cy="30" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 30 30)"/></svg>`; }
 function renderScoreRow(elId){
   document.getElementById(elId).innerHTML = scores.map(s=>`<div class="score-card card">${ring(s.val,s.color)}<div class="val">${s.val}%</div><div class="lbl">${s.label}</div></div>`).join('');
+  const dots = document.getElementById('scoreDots');
+  if(dots) dots.innerHTML = scores.map((_,i)=>`<span class="${i===0?'on':''}"></span>`).join('');
+  setTimeout(updateScoreArrows, 60);
 }
+/* ---- Career Signals carousel controls: arrow buttons + dot indicator so every card is reachable ---- */
+function scrollScoreRow(dir){
+  const row = document.getElementById('reportScoreRow');
+  if(!row) return;
+  const card = row.querySelector('.score-card');
+  const step = card ? (card.offsetWidth + 11) : 120;
+  row.scrollBy({left: dir*step*2, behavior:'smooth'});
+}
+function updateScoreArrows(){
+  const row = document.getElementById('reportScoreRow');
+  const left = document.getElementById('scoreArrowLeft');
+  const right = document.getElementById('scoreArrowRight');
+  const dots = document.getElementById('scoreDots');
+  if(!row || !left || !right) return;
+  const maxScroll = row.scrollWidth - row.clientWidth;
+  left.classList.toggle('hidden', row.scrollLeft <= 4);
+  right.classList.toggle('hidden', row.scrollLeft >= maxScroll - 4);
+  if(dots && dots.children.length){
+    const idx = Math.min(dots.children.length-1, Math.round((row.scrollLeft/(maxScroll||1))*(dots.children.length-1)));
+    Array.from(dots.children).forEach((d,i)=>d.classList.toggle('on', i===idx));
+  }
+}
+window.addEventListener('resize', updateScoreArrows);
+
+/* ---- Wellbeing radar axis definitions, used for both the static legend and interpretation copy ---- */
+const RADAR_AXIS_DEFS = [
+  {key:'burnout', label:'Burnout', color:'#C1543D', def:'How depleted you feel from ongoing work demands.'},
+  {key:'stress', label:'Stress', color:'#C6932A', def:'Your current pressure and anxiety load.'},
+  {key:'behavior', label:'Behavior', color:'#E3B23C', def:'How well your day-to-day actions hold up under pressure.'},
+  {key:'motivation', label:'Motivation', color:'#4C8F6B', def:'Your drive to show up and grow in your role.'},
+  {key:'direction', label:'Direction', color:'#132A52', def:'How clear you are on where your career is headed.'},
+  {key:'focus', label:'Focus', color:'#0D1E3D', def:'Your ability to concentrate without getting pulled away.'}
+];
+function renderRadarDefs(){
+  const el = document.getElementById('radarDefs');
+  if(!el) return;
+  el.innerHTML = RADAR_AXIS_DEFS.map(a=>`<div class="radar-def-item"><span class="rd-dot" style="background:${a.color};"></span><span><b>${a.label}</b> — ${a.def}</span></div>`).join('');
+}
+function radarInterpretation(vals01){
+  const withVal = RADAR_AXIS_DEFS.map((a,i)=>({...a, v: Math.round(vals01[i]*100)}));
+  const strongest = withVal.slice().sort((a,b)=>b.v-a.v)[0];
+  const weakest = withVal.slice().sort((a,b)=>a.v-b.v)[0];
+  if(strongest.v === weakest.v) return "Your six signals are fairly balanced right now — no single area is pulling far ahead or behind the rest.";
+  return `Your ${strongest.label} is your strongest signal (${strongest.v}%), while ${weakest.label} is lagging (${weakest.v}%) — that gap is usually the clearest place to focus your next few weeks.`;
+}
+
 function drawRadar(id, vals){
   const axes=['Purpose','Leadership','Growth','Culture','Stability','Balance'];
   const cx=120,cy=108,R=76;
@@ -1217,16 +1318,74 @@ function drawRadar(id, vals){
   document.getElementById(id).innerHTML = svg;
 }
 drawWellbeingRadar('radarSvg', [0.65,0.6,0.7,0.6,0.75,0.6]);
-try{ renderRatingBand(); renderFocusAreas(); renderStrongAreas(); renderRoadmap(); renderWeeklyTrend(); }catch(e){}
-const skills = [{n:'Programming',v:72,c:'#C6932A'},{n:'Leadership',v:65,c:'#132A52'},{n:'Communication',v:88,c:'#E3B23C'},{n:'Cloud / AI',v:54,c:'#4C8F6B'}];
-document.getElementById('skillSliders').innerHTML = skills.map(s=>`<div class="skill-row"><div class="s-label">${s.n}</div>
-  <div class="s-track"><div class="s-fill" style="width:${s.v}%; background:${s.c};"></div></div><div class="s-val">${s.v}%</div></div>`).join('');
+renderRadarDefs();
+try{ renderRatingBand(); renderFocusAreas(); renderStrongAreas(); renderRoadmap(); }catch(e){}
+
+/* ================= SKILL SIGNALS — tied to job function / field of study, not a fixed generic set ================= */
+const SKILL_SIGNALS_BY_FUNCTION = {
+  "Engineering & Technology": [{n:'Programming',c:'#C6932A'},{n:'System Design',c:'#132A52'},{n:'Cloud / DevOps',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Product & Design": [{n:'Product Strategy',c:'#C6932A'},{n:'User Research',c:'#132A52'},{n:'Stakeholder Mgmt',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Data & AI": [{n:'Data Analysis',c:'#C6932A'},{n:'Machine Learning',c:'#132A52'},{n:'Cloud / AI Tooling',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Sales & Business Development": [{n:'Negotiation',c:'#C6932A'},{n:'Pipeline Management',c:'#132A52'},{n:'Relationship Building',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Marketing & Communications": [{n:'Content Strategy',c:'#C6932A'},{n:'SEO / Growth',c:'#132A52'},{n:'Brand Storytelling',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Finance & Accounting": [{n:'Financial Modeling',c:'#C6932A'},{n:'Analysis & Reporting',c:'#132A52'},{n:'Compliance',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Human Resources": [{n:'Talent Acquisition',c:'#C6932A'},{n:'Employee Relations',c:'#132A52'},{n:'HR Analytics',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Operations & Supply Chain": [{n:'Process Optimization',c:'#C6932A'},{n:'Logistics Planning',c:'#132A52'},{n:'Vendor Management',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Customer Support": [{n:'Troubleshooting',c:'#C6932A'},{n:'Customer Empathy',c:'#132A52'},{n:'Product Knowledge',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Legal & Compliance": [{n:'Contract Drafting',c:'#C6932A'},{n:'Regulatory Knowledge',c:'#132A52'},{n:'Risk Assessment',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Healthcare": [{n:'Clinical Knowledge',c:'#C6932A'},{n:'Patient Care',c:'#132A52'},{n:'Documentation',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Education": [{n:'Curriculum Design',c:'#C6932A'},{n:'Classroom Management',c:'#132A52'},{n:'Assessment Design',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Executive & Leadership": [{n:'Strategic Planning',c:'#C6932A'},{n:'Team Leadership',c:'#132A52'},{n:'Decision Making',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}]
+};
+const SKILL_SIGNALS_BY_FIELD_OF_STUDY = {
+  "Engineering & Computer Science": [{n:'Programming',c:'#C6932A'},{n:'Problem Solving',c:'#132A52'},{n:'Cloud / AI Basics',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Business & Commerce": [{n:'Financial Literacy',c:'#C6932A'},{n:'Analytical Thinking',c:'#132A52'},{n:'Presentation Skills',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Arts & Humanities": [{n:'Research & Writing',c:'#C6932A'},{n:'Critical Thinking',c:'#132A52'},{n:'Communication',c:'#4C8F6B'},{n:'Creativity',c:'#E3B23C'}],
+  "Science": [{n:'Research Methods',c:'#C6932A'},{n:'Data Interpretation',c:'#132A52'},{n:'Lab / Technical Skills',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Medicine & Health Sciences": [{n:'Clinical Foundations',c:'#C6932A'},{n:'Patient Communication',c:'#132A52'},{n:'Attention to Detail',c:'#4C8F6B'},{n:'Teamwork',c:'#E3B23C'}],
+  "Law": [{n:'Legal Research',c:'#C6932A'},{n:'Argumentation',c:'#132A52'},{n:'Drafting',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Design & Architecture": [{n:'Visual Design',c:'#C6932A'},{n:'Spatial Reasoning',c:'#132A52'},{n:'Design Tools',c:'#4C8F6B'},{n:'Communication',c:'#E3B23C'}],
+  "Education": [{n:'Instructional Design',c:'#C6932A'},{n:'Communication',c:'#132A52'},{n:'Classroom Skills',c:'#4C8F6B'},{n:'Patience & Empathy',c:'#E3B23C'}]
+};
+const DEFAULT_SKILL_SIGNALS = [{n:'Communication',c:'#E3B23C'},{n:'Problem Solving',c:'#132A52'},{n:'Adaptability',c:'#4C8F6B'},{n:'Time Management',c:'#C6932A'}];
+
+function pctFromSkillLabel(label){
+  // deterministic pseudo-score derived from the skill name so the same skill always renders the same value in a session
+  let hash=0; for(let i=0;i<label.length;i++) hash = (hash*31 + label.charCodeAt(i)) % 401;
+  return 45 + (hash % 46);
+}
+function renderSkillSignals(){
+  const stage = (document.getElementById('careerStage')||{}).value || '';
+  const isStudent = stage === 'Student';
+  let signalSet, contextLabel;
+  if(isStudent){
+    const fos = (document.getElementById('fieldOfStudy')||{}).value || '';
+    signalSet = SKILL_SIGNALS_BY_FIELD_OF_STUDY[fos] || DEFAULT_SKILL_SIGNALS;
+    contextLabel = fos ? `Matched to your field of study: ${fos}.` : `Choose a Field of Study in Diagnostic Setup to sharpen these further.`;
+  } else {
+    const func = (document.getElementById('jobFunction')||{}).value || '';
+    signalSet = SKILL_SIGNALS_BY_FUNCTION[func] || DEFAULT_SKILL_SIGNALS;
+    contextLabel = func ? `Matched to your job function: ${func}.` : `Choose a Job Function in Diagnostic Setup to sharpen these further.`;
+  }
+  // If the user has manually added skills, blend in up to 2 of their own alongside the role-matched defaults
+  const extras = (userSkills||[]).slice(0,2).filter(s=>!signalSet.some(x=>x.n===s));
+  const finalSet = signalSet.concat(extras.map(s=>({n:s, c:'#C6932A'}))).slice(0,5);
+  document.getElementById('skillSliders').innerHTML = finalSet.map(s=>{
+    const v = pctFromSkillLabel(s.n);
+    return `<div class="skill-row"><div class="s-label">${s.n}</div>
+    <div class="s-track"><div class="s-fill" style="width:${v}%; background:${s.c};"></div></div><div class="s-val">${v}%</div></div>`;
+  }).join('');
+  const note = document.getElementById('skillContextNote');
+  if(note) note.textContent = contextLabel;
+}
+renderSkillSignals();
+
+/* ---- engagement heatmap: real data once diagnostics exist, clearly-labeled sample data until then ---- */
 function heatColor(v){
-  // v: 0 (low engagement) -> 1 (high engagement). Clear, easy-to-read color ramp: red -> gold -> green.
   const stops = [
-    {p:0,   c:[193,84,61]},   // red  (low)
-    {p:0.5, c:[227,178,60]},  // gold (medium)
-    {p:1,   c:[76,143,107]}   // green (high)
+    {p:0,   c:[193,84,61]},
+    {p:0.5, c:[227,178,60]},
+    {p:1,   c:[76,143,107]}
   ];
   let a=stops[0], b=stops[1];
   for(let i=0;i<stops.length-1;i++){ if(v>=stops[i].p && v<=stops[i+1].p){ a=stops[i]; b=stops[i+1]; break; } }
@@ -1235,12 +1394,45 @@ function heatColor(v){
   const rgb = a.c.map((ac,i)=>Math.round(ac + (b.c[i]-ac)*t));
   return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
 }
-document.getElementById('heatGrid').innerHTML = Array.from({length:28},()=>Math.random()).map((v,i)=>{
+function engagementKey(){ return 'w3m_engagement_' + (currentUser ? currentUser.username : 'guest'); }
+function loadEngagementDays(){ try{ return JSON.parse(localStorage.getItem(engagementKey())) || []; }catch(e){ return []; } }
+function markEngagementToday(){
+  try{
+    const days = loadEngagementDays();
+    const todayKey = new Date().toISOString().slice(0,10);
+    const existing = days.find(d=>d.date===todayKey);
+    if(existing){ existing.count = (existing.count||1)+1; } else { days.push({date:todayKey, count:1}); }
+    localStorage.setItem(engagementKey(), JSON.stringify(days.slice(-60)));
+  }catch(e){}
+}
+function renderHeatmap(){
+  const days = loadEngagementDays();
+  const badgeEl = document.getElementById('heatDataBadge');
+  const hasReal = days.length >= 3;
+  if(badgeEl){
+    badgeEl.innerHTML = hasReal
+      ? `<span class="heat-data-badge real">Your real activity</span>`
+      : `<span class="heat-data-badge sample">Sample data — fills in as you use the app</span>`;
+  }
   const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const week = Math.floor(i/7)+1, day = dayNames[i%7];
-  const level = v<0.34?'Low':v<0.67?'Moderate':'High';
-  return `<div class="heat-cell" style="background:${heatColor(v)};" title="Week ${week} · ${day} — ${level} engagement (${Math.round(v*100)}%)"></div>`;
-}).join('');
+  const cells = [];
+  const today = new Date();
+  for(let i=27;i>=0;i--){
+    const d = new Date(today); d.setDate(today.getDate()-i);
+    const key = d.toISOString().slice(0,10);
+    const entry = days.find(x=>x.date===key);
+    let v;
+    if(hasReal){ v = entry ? Math.min(1, entry.count/3) : 0.05; }
+    else { v = Math.random(); }
+    cells.push({v, date:d});
+  }
+  document.getElementById('heatGrid').innerHTML = cells.map((c,i)=>{
+    const week = Math.floor(i/7)+1, day = dayNames[i%7];
+    const level = c.v<0.34?'Low':c.v<0.67?'Moderate':'High';
+    return `<div class="heat-cell" style="background:${heatColor(c.v)};" title="Week ${week} · ${day} — ${level} engagement"></div>`;
+  }).join('');
+}
+renderHeatmap();
 
 /* ================= RESUME / ATS ================= */
 let analyzedAts = null, analyzedAtsFile = '';
@@ -1307,7 +1499,7 @@ function renderLangPool(){
 }
 function removeLang(i){ userLangs.splice(i,1); renderLangPool(); }
 
-/* ================= SETUP DROPDOWNS (industry / function / role / location / skills) ================= */
+/* ================= SETUP DROPDOWNS (industry / function / role / location / skills / languages) ================= */
 const INDUSTRIES = ["Technology / IT","Finance & Banking","Healthcare & Pharma","Education","Retail & E-commerce",
   "Manufacturing","Automotive","Real Estate","Construction","Energy & Utilities","Telecommunications",
   "Media & Entertainment","Hospitality & Travel","Transportation & Logistics","Government & Public Sector",
@@ -1334,6 +1526,18 @@ const JOB_FUNCTIONS = {
   "Healthcare": ["Registered Nurse","Physician","Medical Technician","Healthcare Administrator","Pharmacist"],
   "Education": ["Teacher","Professor","Instructional Designer","Academic Counselor"],
   "Executive & Leadership": ["CEO","COO","CTO","CFO","VP","Director"]
+};
+
+/* ---- student-only: field of study -> course/degree program options ---- */
+const FIELDS_OF_STUDY = {
+  "Engineering & Computer Science": ["B.Tech / B.E.","B.Sc Computer Science","M.Tech / M.E.","MCA","Diploma in Engineering"],
+  "Business & Commerce": ["B.Com","BBA","MBA","M.Com","BMS"],
+  "Arts & Humanities": ["BA","MA","B.A. LLB (Integrated)","Journalism & Mass Comm."],
+  "Science": ["B.Sc","M.Sc","B.Sc (Hons)","Integrated M.Sc"],
+  "Medicine & Health Sciences": ["MBBS","BDS","B.Pharm","BSc Nursing","Physiotherapy (BPT)"],
+  "Law": ["LLB","LLM","BA LLB","BBA LLB"],
+  "Design & Architecture": ["B.Des","B.Arch","M.Des","Fashion Design Diploma"],
+  "Education": ["B.Ed","M.Ed","Early Childhood Education Diploma"]
 };
 
 const SKILLS = ["JavaScript","Python","Java","C++","SQL","React","Node.js","AWS","Azure","Google Cloud",
@@ -1365,6 +1569,21 @@ const COUNTRIES = ["Afghanistan","Albania","Algeria","Andorra","Angola","Argenti
   "United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Vatican City",
   "Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
 
+/* ---- languages: broad world-language list covering all major regions/countries, not just a handful ---- */
+const LANGUAGES = ["English","Mandarin Chinese","Hindi","Spanish","French","Standard Arabic","Bengali",
+  "Portuguese","Russian","Urdu","Indonesian","German","Japanese","Nigerian Pidgin","Marathi","Telugu",
+  "Turkish","Tamil","Yue Chinese (Cantonese)","Vietnamese","Wu Chinese","Korean","Iranian Persian (Farsi)",
+  "Hausa","Javanese","Italian","Egyptian Arabic","Gujarati","Bhojpuri","Southern Min",
+  "Amharic","Punjabi","Burmese","Eastern Punjabi","Polish","Kannada","Yoruba","Malayalam","Xhosa",
+  "Sundanese","Filipino / Tagalog","Odia","Zulu","Ukrainian","Igbo","Uzbek","Sindhi","Romanian","Azerbaijani",
+  "Cebuano","Dutch","Kazakh","Nepali","Swedish","Greek","Chittagonian","Hungarian","Somali","Malay",
+  "Assamese","Czech","Sinhala","Northern Kurdish","Zhuang","Belarusian","Bulgarian","Thai","Hebrew",
+  "Finnish","Danish","Norwegian","Slovak","Croatian","Serbian","Lithuanian","Latvian","Estonian",
+  "Georgian","Armenian","Mongolian","Khmer","Lao","Pashto","Dari","Kurdish (Sorani)","Tigrinya",
+  "Swahili","Afrikaans","Shona","Chichewa","Twi","Wolof","Fula","Akan","Kinyarwanda","Luganda",
+  "Icelandic","Irish (Gaelic)","Welsh","Maltese","Albanian","Macedonian","Bosnian","Slovenian",
+  "Tajik","Turkmen","Kyrgyz","Tibetan","Uyghur"];
+
 function populateSelect(id, items, placeholder){
   document.getElementById(id).innerHTML = `<option value="">${placeholder}</option>` +
     items.map(v=>`<option>${v}</option>`).join('');
@@ -1374,6 +1593,8 @@ function initSetupDropdowns(){
   populateSelect('jobFunction', Object.keys(JOB_FUNCTIONS), 'Choose');
   populateSelect('location', COUNTRIES, 'Choose country');
   populateSelect('skillSelect', SKILLS, 'Choose a skill');
+  populateSelect('fieldOfStudy', Object.keys(FIELDS_OF_STUDY), 'Choose');
+  populateSelect('langSelect', LANGUAGES, 'Language');
 }
 initSetupDropdowns();
 function onJobFunctionChange(){
@@ -1386,6 +1607,24 @@ function onJobFunctionChange(){
   }
   roleSelect.disabled = false;
   populateSelect('jobRole', JOB_FUNCTIONS[func], 'Choose a role');
+}
+/* ---- Student career-stage toggle: swap Industry/Job Function for Education Level, Field of Study & Course ---- */
+function onCareerStageChange(){
+  const stage = document.getElementById('careerStage').value;
+  const isStudent = stage === 'Student';
+  document.getElementById('studentFieldsGroup').style.display = isStudent ? 'block' : 'none';
+  document.getElementById('professionalFieldsGroup').style.display = isStudent ? 'none' : 'block';
+}
+function onFieldOfStudyChange(){
+  const fos = document.getElementById('fieldOfStudy').value;
+  const courseSelect = document.getElementById('courseProgram');
+  if(!fos){
+    courseSelect.innerHTML = '<option value="">Choose field of study first</option>';
+    courseSelect.disabled = true;
+    return;
+  }
+  courseSelect.disabled = false;
+  populateSelect('courseProgram', FIELDS_OF_STUDY[fos], 'Choose a course / degree');
 }
 const userSkills = [];
 function addSkill(){
@@ -1415,9 +1654,6 @@ async function requestHardware(){
   document.getElementById('camStatus').className='status-pill status-wait'; document.getElementById('camStatus').textContent='Requesting…';
   document.getElementById('micStatus').className='status-pill status-wait'; document.getElementById('micStatus').textContent='Requesting…';
   document.getElementById('beginAssessBtn').disabled = true;
-  // getUserMedia only exists in a secure context (HTTPS or localhost). Opening this file
-  // directly (file://) or over plain HTTP means navigator.mediaDevices won't exist at all —
-  // that's a different failure than the user blocking permission, so we surface it clearly.
   if(!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
     document.getElementById('camStatus').className='status-pill status-bad'; document.getElementById('camStatus').textContent='Unavailable';
     document.getElementById('micStatus').className='status-pill status-bad'; document.getElementById('micStatus').textContent='Unavailable';
@@ -1449,24 +1685,20 @@ async function requestHardware(){
 let coachVoice = null, ttsSupported = 'speechSynthesis' in window, sttSupported = ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window);
 function pickCoachVoice(){
   if(!ttsSupported) return;
-  // Known British English (en-GB) male voice names across common engines, best-sounding first
   const BRITISH_MALE_PREFERRED = [
-    /Microsoft Ryan Online.*Natural/i,          // Edge/Windows — natural neural UK male
+    /Microsoft Ryan Online.*Natural/i,
     /Microsoft Ryan/i,
-    /Microsoft George/i,                         // classic Windows UK male
-    /Google UK English Male/i,                   // Google narrator — Chrome/ChromeOS/Android
-    /Daniel/i,                                    // macOS/iOS UK male
+    /Microsoft George/i,
+    /Google UK English Male/i,
+    /Daniel/i,
     /Arthur/i,
     /Oliver/i
   ];
-  // Any Google narrator voice (Chrome/ChromeOS/Android) that isn't specifically UK — used as a named fallback
   const GOOGLE_NARRATOR = [/Google UK English Male/i, /Google US English/i, /Google.*English.*Male/i];
-  // Names known to be female voices, so they're never picked even if they slip through an en-GB filter
   const FEMALE_NAME_HINT = /Hazel|Susan|Kate|Serena|Sonia|Fiona|Moira|Zira|Libby|Sarah|Female/i;
   const load = ()=>{
     const voices = speechSynthesis.getVoices();
     if(!voices.length) return;
-    // "Thomas" requested by name — check across all voices first (some engines list it outside en-GB)
     let best = voices.find(v=>/Thomas/i.test(v.name));
     if(!best){
       const gbVoices = voices.filter(v=>/^en-GB/i.test(v.lang));
@@ -1476,7 +1708,6 @@ function pickCoachVoice(){
       if(!best) best = gbVoices[0];
     }
     if(!best){
-      // no en-GB voice (or Thomas) at all — try a Google narrator voice by name before the generic fallback
       for(const rx of GOOGLE_NARRATOR){ best = voices.find(v=>rx.test(v.name)); if(best) break; }
     }
     coachVoice = best
@@ -1497,7 +1728,6 @@ function coachSay(text, onEnd){
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   if(coachVoice) u.voice = coachVoice;
-  // Natural conversational pace and pitch — no artificial deepening, just an unhurried, warm delivery
   u.rate = 0.97; u.pitch = 1.0; u.volume = 1;
   avatar.classList.add('speaking');
   u.onend = ()=>{ avatar.classList.remove('speaking'); if(onEnd) onEnd(); };
@@ -1586,7 +1816,6 @@ const userAnswers = [];
 let recognizer = null;
 let timerInterval = null, timeLeft = 600;
 
-/* --- adapt question order/wording to the resume upload and stated career stage --- */
 function buildAdaptiveCategories(){
   let list = CATEGORIES.map(c=>({...c, options:c.options}));
   if(analyzedAts !== null && analyzedAts < 70){
@@ -1607,7 +1836,6 @@ function buildAdaptiveCategories(){
   return list;
 }
 
-/* --- infer a score from a spoken answer by matching it against option language --- */
 function inferScoreFromTranscript(transcript, options){
   const t = transcript.toLowerCase();
   const STOP = new Set(['the','a','an','and','or','to','of','is','in','on','for','with','my','i','it','that','this','at','as','be','are','very']);
@@ -1722,6 +1950,7 @@ function finishAssessment(){
   if(recognizer){ try{ recognizer.stop(); }catch(e){} }
   hideCoach();
   if(hwStream){ hwStream.getTracks().forEach(t=>t.stop()); hwStream=null; }
+  markEngagementToday();
   go('report');
   compileReport();
 }
@@ -1754,10 +1983,15 @@ function compileReport(){
     document.getElementById('reportAtsMeta').textContent='No resume uploaded for this session.';
     atsCircle.style.borderColor='var(--line)';
   }
+  /* ---- Diagnostic Competencies: show the real weighted score (%) as the primary number, ----
+     ---- with the raw "answered" completion count kept only as a small secondary label.    ---- */
   const bars = document.getElementById('competencyBars');
-  bars.innerHTML = userAnswers.length ? userAnswers.map(a=>`<div class="bar-row">
-    <div class="bar-label"><span>${a.cat}</span><span>${a.score}/4</span></div>
-    <div class="bar-track"><div class="bar-fill" style="width:${(a.score/4)*100}%;"></div></div></div>`).join('')
+  bars.innerHTML = userAnswers.length ? userAnswers.map(a=>{
+    const pct = Math.round((a.score/4)*100);
+    return `<div class="bar-row">
+    <div class="bar-label"><span class="bl-name">${a.cat}</span><span><span class="bl-score">${pct}%</span><span class="bl-complete">1/1 answered</span></span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div></div>`;
+  }).join('')
     : `<p style="font-size:12.5px; color:var(--ink-soft);">No diagnostic run yet this session.</p>`;
   document.getElementById('transcriptLogs').innerHTML = userAnswers.length ? userAnswers.map(a=>`<div class="log-item">
     <div class="lc">${a.cat}</div><div class="lq">${a.q}</div><div class="le">"${a.text}"</div>${a.followUp?`<div class="le" style="margin-top:4px;">Follow-up: "${a.followUp}"</div>`:''}</div>`).join('')
@@ -1768,8 +2002,8 @@ function compileReport(){
   renderFocusAreas();
   renderStrongAreas();
   renderRoadmap();
-  saveHistorySnapshot();
-  renderWeeklyTrend();
+  renderSkillSignals();
+  renderHeatmap();
 }
 
 /* ---- overall rating band ---- */
@@ -1796,6 +2030,8 @@ function renderWellbeingRadar(){
   const defaults = [0.65,0.6,0.7,0.6,0.75,0.6];
   const vals = axesKeys.map((k,i)=>{ const p = pctByKey(k); return p===null ? defaults[i] : p/100; });
   drawWellbeingRadar('radarSvg', vals);
+  const interpEl = document.getElementById('radarInterpretation');
+  if(interpEl) interpEl.textContent = radarInterpretation(vals);
 }
 function drawWellbeingRadar(id, vals){
   const axes=['Burnout','Stress','Behavior','Motivation','Direction','Focus'];
@@ -1814,6 +2050,43 @@ function drawWellbeingRadar(id, vals){
 }
 
 /* ---- key focus areas: resume, interview, peer/org pressure, project challenges ---- */
+/* ---- each area now carries specific, per-user "what to work on" action bullets, not just a score ---- */
+const FOCUS_ACTIONS = {
+  resume:{
+    low:["Rewrite your top 3 bullet points to lead with measurable outcomes (%, ₹, time saved).","Cut generic responsibility statements — replace with specific accomplishments.","Get a second pair of eyes on formatting so it's ATS-parseable."],
+    mid:["Quantify 2-3 more bullet points that are still purely descriptive.","Tighten your summary line to name your target role directly.","Make sure your most recent, most relevant role is the most detailed."],
+    high:["Tailor 1-2 versions of your resume for different target roles.","Keep it current — refresh every 3-4 months even without a job search."]
+  },
+  interview:{
+    low:["Run one mock interview this week and record it to review your pacing.","Build a bank of 3-4 STAR-format stories from recent work.","Practice a crisp 60-second self-introduction out loud."],
+    mid:["Add 2-3 more STAR stories covering conflict, failure, and leadership.","Practice answering under time pressure to reduce rambling.","Prepare 3 sharp questions to ask the interviewer."],
+    high:["Do a full mock loop with a career coach to polish delivery.","Rehearse compensation/negotiation talking points in advance."]
+  },
+  peerpressure:{
+    low:["Identify the one relationship or dynamic causing the most friction and name it clearly.","Practice one boundary-setting phrase you can use this week.","Talk to someone outside the situation for an outside perspective."],
+    mid:["Set one explicit boundary and communicate it directly to the person involved.","Notice patterns — is this pressure recurring around a specific project or person?"],
+    high:["Build a support network that buffers organizational pressure long-term.","Mentor someone else navigating similar dynamics — teaching reinforces your own footing."]
+  },
+  projectchallenges:{
+    low:["Break your biggest project into 3 concrete, dated milestones this week.","Flag scope or resourcing gaps to your manager directly — don't absorb them silently.","Identify one task you can delegate or drop."],
+    mid:["Set a weekly check-in to track milestone progress against plan.","Renegotiate one deadline that's unrealistic given current resourcing."],
+    high:["Document what's working so it's repeatable on your next project.","Look for a stretch project to apply this strength further."]
+  }
+};
+function focusActionsFor(key, pct){
+  const lib = FOCUS_ACTIONS[key];
+  if(!lib) return [];
+  if(pct===null) return ["Complete the diagnostic to get personalized actions for this area."];
+  const tier = pct<50 ? 'low' : pct<80 ? 'mid' : 'high';
+  return lib[tier];
+}
+function toggleFocusActions(key){
+  const el = document.getElementById('focus-actions-'+key);
+  const btn = document.getElementById('focus-toggle-'+key);
+  if(!el) return;
+  const open = el.classList.toggle('open');
+  if(btn) btn.textContent = open ? 'Hide ▲' : 'What to work on ▼';
+}
 function renderFocusAreas(){
   const items = [
     {key:'resume', icon:'📄', title:'Resume', desc:'How well your resume reflects your impact'},
@@ -1826,11 +2099,14 @@ function renderFocusAreas(){
     const pct = pctByKey(it.key);
     const band = bandFor(pct);
     const badgeCls = pct===null || band.cls==='norm' ? 'med' : band.cls;
+    const actions = focusActionsFor(it.key, pct);
     return `<div class="focus-item">
       <div class="focus-badge ${badgeCls}">${it.icon}</div>
       <div class="focus-info"><div class="ft">${it.title}</div><div class="fd">${it.desc}</div></div>
       <div class="focus-pct">${pct===null?'—':pct+'%'}</div>
-    </div>`;
+      <div class="focus-toggle" id="focus-toggle-${it.key}" onclick="toggleFocusActions('${it.key}')">What to work on ▼</div>
+    </div>
+    <div class="focus-actions" id="focus-actions-${it.key}"><ul>${actions.map(a=>`<li>${a}</li>`).join('')}</ul></div>`;
   }).join('');
   el.innerHTML = rows;
 }
@@ -1859,14 +2135,12 @@ const ROADMAP_LIBRARY = {
   direction:{30:'Write one paragraph on where you want to be in 3 years.', 60:'Talk to 2 people already in that direction.', 90:'Draft a concrete 12-month plan toward that direction.'},
   goals:{30:'Turn one vague goal into a specific, measurable target.', 60:'Set milestones and checkpoints for that goal.', 90:'Review progress and recalibrate your goals.'}
 };
-/* ---- what to focus on at each stage of the roadmap ---- */
 const STAGE_FOCUS = {
   30:{icon:'🌱', title:'Days 1–30 · Learn the Fundamentals', desc:'Focus on closing the gap fast — get oriented, fix the quick wins, and start learning in your weakest areas.'},
   60:{icon:'🛠️', title:'Days 31–60 · Practice & Apply', desc:'Focus on putting new skills to work — real tasks, mock scenarios, and feedback from people around you.'},
   90:{icon:'🏆', title:'Days 61–90 · Certify & Showcase', desc:'Focus on locking it in — finish a certification, update your resume or portfolio, and show the proof.'}
 };
 
-/* ---- learning channels, matched to the job function chosen at setup, for skill upgrades / learning / certification ---- */
 const FUNCTION_LEARNING_CHANNELS = {
   "Engineering & Technology":[
     {icon:'💻', name:'freeCodeCamp', note:'Free, project-based coding courses with shareable certifications.'},
@@ -1928,6 +2202,20 @@ const DEFAULT_LEARNING_CHANNELS = [
 ];
 const LEARN_STAGE_LABEL = {30:'Skill up', 60:'Learn & practice', 90:'Certify'};
 
+/* ---- book & certification references per category, referenced through the 30/60/90 roadmap ---- */
+const ROADMAP_BOOKS = {
+  burnout:[{t:'"Burnout" by Emily & Amelia Nagoski', s:'Understanding and completing the stress cycle.'},{t:'Certification: Mental Health First Aid', s:'Recognize and respond to burnout in yourself and others.'}],
+  stress:[{t:'"Why Zebras Don\'t Get Ulcers" by Robert Sapolsky', s:'How chronic stress affects the body and mind.'},{t:'Certification: Coursera — "The Science of Well-Being" (Yale)', s:'Evidence-based practices for managing stress.'}],
+  motivation:[{t:'"Drive" by Daniel Pink', s:'What actually motivates people at work.'},{t:'"Atomic Habits" by James Clear', s:'Building momentum through small, consistent habits.'}],
+  focus:[{t:'"Deep Work" by Cal Newport', s:'Building the capacity for sustained, distraction-free focus.'},{t:'"Indistractable" by Nir Eyal', s:'Practical tactics to control distraction.'}],
+  behavior:[{t:'"Crucial Conversations" by Patterson et al.', s:'Staying composed and constructive under pressure.'},{t:'Certification: Coursera — "Emotional Intelligence at Work"', s:'Building resilience in high-pressure moments.'}],
+  resume:[{t:'"Knock \'em Dead Resumes" by Martin Yate', s:'Practical, current resume-writing frameworks.'},{t:'Certification: LinkedIn Learning — "Writing a Resume"', s:'Modern resume standards employers expect.'}],
+  interview:[{t:'"Cracking the Coding Interview" (for technical roles) or "60 Seconds & You\'re Hired!" (general)', s:'Structured interview preparation.'},{t:'Certification: LinkedIn Learning — "Interviewing Techniques"', s:'STAR-method and delivery practice.'}],
+  peerpressure:[{t:'"Crucial Conversations" by Patterson et al.', s:'Navigating high-stakes workplace dynamics.'},{t:'"Radical Candor" by Kim Scott', s:'Giving and receiving direct feedback without damaging relationships.'}],
+  projectchallenges:[{t:'"The Phoenix Project" by Gene Kim et al.', s:'Managing overloaded, high-pressure project pipelines.'},{t:'Certification: PMI — "Certified Associate in Project Management (CAPM)"', s:'Structured project & scope management fundamentals.'}],
+  direction:[{t:'"Designing Your Life" by Bill Burnett & Dave Evans', s:'A structured way to explore and choose a career direction.'},{t:'"Range" by David Epstein', s:'Why breadth of experience can clarify direction.'}],
+  goals:[{t:'"Measure What Matters" by John Doerr', s:'Setting clear, trackable goals (OKRs).'},{t:'"The 12 Week Year" by Moran & Lennington', s:'Turning long-term goals into short, executable cycles.'}]
+};
 function renderRoadmap(){
   const answered = userAnswers.filter(a=>a.key);
   const weakest = answered.slice().sort((a,b)=>a.score-b.score).slice(0,3);
@@ -1936,89 +2224,44 @@ function renderRoadmap(){
   const band = bandFor(overall);
   const paceMap = {critical:'This is a critical window — move on these fast and consider getting outside support.', sensitive:'These are worth steady, deliberate attention over the next 90 days.', medium:'Solid, incremental progress here will close most of your gaps.', normal:'Use this window to sharpen strengths rather than fix fundamentals.'};
 
+  const stage = (document.getElementById('careerStage') || {}).value || '';
+  const isStudent = stage === 'Student';
   const industryVal = (document.getElementById('industry') || {}).value || '';
   const functionVal = (document.getElementById('jobFunction') || {}).value || '';
+  const fosVal = (document.getElementById('fieldOfStudy') || {}).value || '';
   const channels = FUNCTION_LEARNING_CHANNELS[functionVal] || DEFAULT_LEARNING_CHANNELS;
-  const contextBits = [functionVal, industryVal].filter(Boolean);
+  const contextBits = isStudent ? [fosVal].filter(Boolean) : [functionVal, industryVal].filter(Boolean);
   const contextLine = contextBits.length
     ? `Picked for ${contextBits.join(' in ')}, and matched to where your evaluation flagged the biggest gaps — ${focusList.map(f=>f.cat).join(', ')}.`
-    : `Matched to where your evaluation flagged the biggest gaps — ${focusList.map(f=>f.cat).join(', ')}. Choose your industry &amp; function in Diagnostic Setup to sharpen these further.`;
+    : `Matched to where your evaluation flagged the biggest gaps — ${focusList.map(f=>f.cat).join(', ')}. Choose your ${isStudent?'field of study':'industry & function'} in Diagnostic Setup to sharpen these further.`;
 
   ['30','60','90'].forEach(phase=>{
-    const stage = STAGE_FOCUS[phase];
+    const stageInfo = STAGE_FOCUS[phase];
     const tasks = focusList.map((f,i)=>{
       const lib = ROADMAP_LIBRARY[f.key] || {30:`Take one concrete step on ${f.cat}.`,60:`Review progress on ${f.cat}.`,90:`Solidify gains in ${f.cat}.`};
       return `<div class="roadmap-task"><div class="rt-num">${i+1}</div><div class="rt-body"><b>${f.cat}</b><span>${lib[phase]}</span></div></div>`;
     }).join('');
     const learnItems = channels.map(c=>`<div class="learn-item"><div class="li-icon">${c.icon}</div><div class="li-body"><b>${c.name}</b><span>${c.note}</span><div class="li-tag">${LEARN_STAGE_LABEL[phase]}</div></div></div>`).join('');
+    const bookItems = focusList.map(f=>{
+      const books = ROADMAP_BOOKS[f.key] || [];
+      return books.map(b=>`<div class="book-item"><b>${b.t}</b> — ${b.s}</div>`).join('');
+    }).join('');
     document.getElementById('roadmap-'+phase).innerHTML =
-      `<div class="roadmap-stage"><div class="rs-title">${stage.icon} ${stage.title}</div><div class="rs-desc">${stage.desc}</div></div>
+      `<div class="roadmap-stage"><div class="rs-title">${stageInfo.icon} ${stageInfo.title}</div><div class="rs-desc">${stageInfo.desc}</div></div>
        <div class="roadmap-goal">${paceMap[band.tone]}</div>
        ${tasks}
-       <div class="learn-block"><h4>📡 Learning Channels to Refer</h4><div style="font-size:11px; color:var(--ink-soft); margin:-4px 0 8px;">${contextLine}</div>${learnItems}</div>`;
+       <div class="learn-block"><h4>📡 Learning Channels to Refer</h4><div style="font-size:11px; color:var(--ink-soft); margin:-4px 0 8px;">${contextLine}</div>${learnItems}</div>
+       <div class="book-block"><h4>📚 Books &amp; Certifications for Your Gaps</h4>${bookItems || '<div class="book-item">Complete the diagnostic to get book & certification picks for your weakest areas.</div>'}</div>`;
   });
   showRoadmapPhase('30');
-}
-
-/* ---- weekly trend: real history stored per-user in localStorage ---- */
-function historyKey(){ return 'w3m_history_' + (currentUser ? currentUser.username : 'guest'); }
-function loadHistory(){ try{ return JSON.parse(localStorage.getItem(historyKey())) || []; }catch(e){ return []; } }
-function saveHistorySnapshot(){
-  const answered = userAnswers.filter(a=>a.key);
-  if(!answered.length) return;
-  const overall = avgPct(answered.map(a=>a.key));
-  const burnout = pctByKey('burnout'), stress = pctByKey('stress'), motivation = pctByKey('motivation');
-  const hist = loadHistory();
-  hist.push({t: Date.now(), overall, burnout, stress, motivation});
-  try{ localStorage.setItem(historyKey(), JSON.stringify(hist.slice(-12))); }catch(e){}
-}
-function renderWeeklyTrend(){
-  let hist = loadHistory();
-  if(hist.length < 2){
-    // seed a gentle illustrative lead-in so the current point has context, clearly labeled as such
-    const last = hist[hist.length-1] || {overall:60, burnout:60, stress:60, motivation:60};
-    const seed = [];
-    for(let i=3;i>=1;i--){
-      seed.push({
-        t: last.t - i*7*24*3600*1000,
-        overall: Math.max(20, Math.min(95, last.overall - (i*4))),
-        burnout: Math.max(20, Math.min(95, (last.burnout||60) - (i*3))),
-        stress: Math.max(20, Math.min(95, (last.stress||60) - (i*3))),
-        motivation: Math.max(20, Math.min(95, (last.motivation||60) - (i*3)))
-      });
-    }
-    hist = seed.concat(hist);
-  }
-  const series = [
-    {key:'overall', color:'#132A52', label:'Overall'},
-    {key:'burnout', color:'#C1543D', label:'Burnout'},
-    {key:'stress', color:'#C6932A', label:'Stress'},
-    {key:'motivation', color:'#4C8F6B', label:'Motivation'}
-  ];
-  const W=300,H=150,pad=18;
-  const n = hist.length;
-  const x = i => pad + (i/(n-1||1))*(W-2*pad);
-  const y = v => H-pad - ((v||0)/100)*(H-2*pad);
-  let svg = `<line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="var(--line)"/>`;
-  series.forEach(s=>{
-    const pts = hist.map((h,i)=>`${x(i)},${y(h[s.key])}`).join(' ');
-    svg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
-    hist.forEach((h,i)=>{ svg += `<circle cx="${x(i)}" cy="${y(h[s.key])}" r="2.2" fill="${s.color}"/>`; });
-  });
-  document.getElementById('trendSvg').innerHTML = svg;
-  document.getElementById('trendLegend').innerHTML = series.map(s=>`<div class="tl-item"><span class="tl-dot" style="background:${s.color};"></span>${s.label}</div>`).join('');
-  const realCount = loadHistory().length;
-  document.getElementById('trendNote').textContent = realCount >= 2
-    ? `Based on ${realCount} completed diagnostics for this account.`
-    : 'Earlier weeks shown are illustrative until you\'ve completed a few diagnostics — the most recent point is your real result.';
 }
 
 function restartDiagnostic(){ go('setup'); }
 
 /* ================= PAYMENT (UPI) — must clear before booking ================= */
-const PAY_UPI_ID = '9650084311@ptsbi';   // kept out of the visible DOM — only encoded into QR / deep link
+const PAY_UPI_ID = '9650084311@ptsbi';
 const PAY_PAYEE_NAME = 'Neeraj Kapil';
-const PAY_AMOUNT = 999; // INR — edit this constant to change the session fee
+const PAY_AMOUNT = 999;
 let paymentCleared = false;
 
 function buildUpiUri(){
@@ -2189,7 +2432,7 @@ async function demoRunAssessment(){
     const cat = workingCategories[stepIndex];
     if(!cat) break;
     const isLive = i < liveCount;
-    const idx = i===1 ? 0 : Math.min(2 + (i%2), 3); // one deliberately low answer to showcase the follow-up prompt
+    const idx = i===1 ? 0 : Math.min(2 + (i%2), 3);
     try{
       if(isLive){
         setDemoCaption(`Answering: "${cat.title}"…`);
@@ -2253,11 +2496,11 @@ function buildDemoSteps(){
     { caption:"Diagnostic complete — generating the full report now.", duration:1600, run: async()=>{} },
     { caption:"An overall situation rating — Critical, Sensitive, Medium, or Normal — flags how urgently to act.", duration:2800,
       run: async()=>{ document.getElementById('ratingBand')?.scrollIntoView({behavior:'smooth', block:'center'}); } },
-    { caption:"A wellbeing radar covering burnout, stress, behavior, motivation, direction and focus.", duration:2800,
+    { caption:"A wellbeing radar covering burnout, stress, behavior, motivation, direction and focus — with plain-language definitions.", duration:2800,
       run: async()=>{ document.getElementById('radarSvg')?.scrollIntoView({behavior:'smooth', block:'center'}); } },
-    { caption:"Key areas to work on — resume, interview readiness, peer/org pressure, project load.", duration:2800,
+    { caption:"Key areas to work on — each with specific, personalized actions, not just a score.", duration:2800,
       run: async()=>{ document.getElementById('focusAreas')?.scrollIntoView({behavior:'smooth', block:'center'}); } },
-    { caption:"A 30/60/90-day roadmap, auto-built from the weakest areas.", duration:2800,
+    { caption:"A 30/60/90-day roadmap — auto-built from your weakest areas, with books & certifications too.", duration:2800,
       run: async()=>{ document.querySelector('.roadmap-tabs')?.scrollIntoView({behavior:'smooth', block:'center'}); } },
     { caption:"Ready for a coach? Booking a paid call with Neeraj starts right from the report.", duration:2200,
       run: async()=>{ document.getElementById('screen-report')?.querySelector('.btn-gold')?.scrollIntoView({behavior:'smooth', block:'center'}); } },
