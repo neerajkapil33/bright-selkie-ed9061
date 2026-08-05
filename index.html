@@ -101,6 +101,7 @@ h1,h2,h3,.display{font-family:'Fraunces',serif;}
 #screen-provider.provider-microsoft .provider-auth-logo{background:#2564CB; color:#fff;}
 #screen-provider.provider-linkedin .provider-auth-logo{background:#0A66C2; color:#fff;}
 #screen-provider.provider-apple .provider-auth-logo{background:#fff; color:#000;}
+#screen-provider.provider-yahoo .provider-auth-logo{background:#6001D2; color:#fff;}
 #screen-provider h2{font-size:19px; margin:0 0 4px; font-family:'Space Grotesk'; font-weight:700;}
 #screen-provider p{font-size:12.5px; color:#666; margin:0 0 22px;}
 #screen-provider.provider-apple p{color:rgba(255,255,255,.6);}
@@ -112,6 +113,7 @@ h1,h2,h3,.display{font-family:'Fraunces',serif;}
 #screen-provider.provider-microsoft .p-submit{background:#2564CB;}
 #screen-provider.provider-linkedin .p-submit{background:#0A66C2;}
 #screen-provider.provider-apple .p-submit{background:#fff; color:#000;}
+#screen-provider.provider-yahoo .p-submit{background:#6001D2;}
 .p-submit:disabled{opacity:.6; cursor:not-allowed;}
 .p-cancel{margin-top:16px; font-size:12.5px; color:#888; cursor:pointer; text-decoration:underline;}
 #screen-provider.provider-apple .p-cancel{color:rgba(255,255,255,.55);}
@@ -394,6 +396,21 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 .pathway-card .pc-chips{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;}
 .pathway-chip{background:rgba(19,42,82,.06); border:1px solid var(--line); border-radius:20px; padding:3px 9px; font-size:10px; font-weight:600; color:var(--ink);}
 .pathway-phase-note{font-size:10.5px; color:var(--ink-soft); line-height:1.5; margin:0 0 10px; padding:8px 10px; background:rgba(227,178,60,.08); border:1px solid rgba(227,178,60,.25); border-radius:10px;}
+.cert-track{margin-top:8px;}
+.cert-step{display:flex; gap:10px; padding:10px 0; border-bottom:1px dashed var(--line); align-items:flex-start;}
+.cert-step:last-child{border-bottom:none; padding-bottom:0;}
+.cert-step:first-child{padding-top:0;}
+.cert-level{flex-shrink:0; width:72px; text-align:center;}
+.cert-level .cl-badge{display:inline-block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:3px 7px; border-radius:20px; margin-bottom:3px;}
+.cert-level .cl-badge.foundation{background:rgba(76,143,107,.15); color:var(--good);}
+.cert-level .cl-badge.intermediate{background:rgba(198,147,42,.15); color:var(--accent);}
+.cert-level .cl-badge.advanced{background:rgba(19,42,82,.12); color:var(--navy);}
+.cert-level .cl-time{font-size:9px; color:var(--ink-soft); font-family:'IBM Plex Mono';}
+.cert-body{flex:1; min-width:0;}
+.cert-body .cb-name{font-size:12px; font-weight:700; color:var(--ink); line-height:1.35; margin-bottom:2px;}
+.cert-body .cb-provider{font-size:10.5px; color:var(--accent); font-weight:600; margin-bottom:2px;}
+.cert-body .cb-focus{font-size:10.5px; color:var(--ink-soft); line-height:1.45;}
+.cert-track-title{font-size:11px; font-weight:700; color:var(--navy-deep); margin:0 0 6px; display:flex; align-items:center; gap:6px;}
 
 /* ---- payment screen ---- */
 #screen-payment{padding-bottom:100px;}
@@ -424,6 +441,10 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 .cred-item{display:flex; gap:10px; align-items:flex-start; margin-bottom:12px; font-size:12px; color:var(--ink-soft);}
 .cred-item b{color:var(--ink); display:block; font-size:12.5px; margin-bottom:1px;}
 </style>
+<!-- Real OAuth SDKs (safe to load even if Client IDs are empty) -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js" async defer></script>
+<script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async defer></script>
 </head>
 <body>
 <div class="app">
@@ -478,10 +499,11 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
   </div>
   <div class="auth-stack">
     <div class="sso-grid">
-      <button class="sso-btn" onclick="openProviderModal(&#39;google&#39;)">🔵 Google</button>
-      <button class="sso-btn" onclick="openProviderModal(&#39;microsoft&#39;)">🟦 Microsoft</button>
-      <button class="sso-btn" onclick="openProviderModal(&#39;linkedin&#39;)">💼 LinkedIn</button>
-      <button class="sso-btn" onclick="openProviderModal(&#39;apple&#39;)">⬛ Apple</button>
+      <button type="button" class="sso-btn" onclick="openProviderModal('google')"><span style="color:#4285F4;">●</span> Google</button>
+      <button type="button" class="sso-btn" onclick="openProviderModal('microsoft')"><span style="color:#00A4EF;">■</span> Microsoft</button>
+      <button type="button" class="sso-btn" onclick="openProviderModal('linkedin')"><span style="color:#0A66C2;">in</span> LinkedIn</button>
+      <button type="button" class="sso-btn" onclick="openProviderModal('apple')"><span style="color:#fff;"></span> Apple</button>
+      <button type="button" class="sso-btn" onclick="openProviderModal('yahoo')" style="grid-column:1/-1;"><span style="color:#6001D2;">Y!</span> Yahoo</button>
     </div>
     <div class="auth-divider">or continue with username</div>
     <div class="auth-tabs">
@@ -512,10 +534,18 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     <div class="provider-auth-logo" id="paLogo">G</div>
     <h2 id="paTitle">Sign in with Google</h2>
     <p id="paSub">to continue to What's Wrong With Me?</p>
-    <input class="p-field" id="pa-username" placeholder="Email or username">
-    <input class="p-field" id="pa-password" type="password" placeholder="Password">
-    <div class="auth-status" id="pa-status" style="color:var(--danger);"></div>
-    <button class="p-submit" id="paSubmitBtn" onclick="submitProviderAuth()">Sign in</button>
+    <div id="paConsentBox" style="width:100%; text-align:left; margin-bottom:14px;">
+      <div style="font-size:12px; color:#555; line-height:1.55; padding:12px 14px; background:#f5f5f5; border-radius:10px; margin-bottom:12px;" id="paConsentText">
+        This app will receive your name and email address to create your W3M profile. No password is shared with W3M.
+      </div>
+      <!-- Real Google button mounts here when Client ID is configured -->
+      <div id="paGoogleBtnHost" style="display:none;"></div>
+      <div style="font-size:11.5px; color:#666; margin-bottom:8px;" id="paContinueLabel">Continue as</div>
+      <input class="p-field" id="pa-username" placeholder="you@example.com" autocomplete="username email" style="margin-bottom:4px;">
+      <div class="auth-status" id="pa-status" style="color:var(--danger); min-height:16px;"></div>
+    </div>
+    <button class="p-submit" id="paSubmitBtn" onclick="submitProviderAuth()">Continue</button>
+    <div style="font-size:10.5px; color:#888; margin-top:12px; line-height:1.45; max-width:280px;" id="paHint">One-tap SSO for this demo. Production builds connect to real Google / Microsoft / LinkedIn / Apple OAuth.</div>
     <div class="p-cancel" onclick="cancelProviderAuth()">Cancel</div>
   </div>
 </div>
@@ -1190,48 +1220,643 @@ function logout(){ currentUser=null; try{localStorage.removeItem('w3m_session');
   try{ const u = localStorage.getItem('w3m_session'); if(u && DB.users[u]) loginAs(DB.users[u]); }catch(e){}
 })();
 
-/* ================= SSO / PROVIDER LOGIN ================= */
+/* ================= SSO / PROVIDER LOGIN =================
+   Google: real OAuth via Google Identity Services when GOOGLE_CLIENT_ID is set.
+   Other providers: demo consent flow until their client IDs are configured. */
+
+/* ---- PASTE YOUR GOOGLE OAUTH CLIENT ID HERE ----
+   Create one at: https://console.cloud.google.com/apis/credentials
+   Type: OAuth client ID → Web application
+   Authorized JavaScript origins: http://localhost:PORT and your HTTPS domain
+   Authorized redirect URIs: same origins (GIS uses postMessage, origins matter most)
+   Leave empty to keep Google on the demo path. */
+/* =====================================================================
+   W3ME.IN OAUTH SETUP — paste Client IDs below (keep the quotes)
+   Host at https://w3me.in (HTTPS only). OAuth does not work on file://
+   Register https://w3me.in (and www if used) in every provider console.
+   ===================================================================== */
+const OAUTH_CONFIG = {
+  /* Google — console.cloud.google.com → OAuth client (Web)
+     Authorized JavaScript origins: https://w3me.in */
+  GOOGLE_CLIENT_ID: '',
+
+  /* Microsoft — portal.azure.com → App registrations → SPA
+     Redirect URI: https://w3me.in/ */
+  MICROSOFT_CLIENT_ID: '',
+
+  /* LinkedIn — linkedin.com/developers → Auth
+     Redirect URL: https://w3me.in/  + TOKEN_EXCHANGE_URL (server; needs secret) */
+  LINKEDIN_CLIENT_ID: '',
+
+  /* Apple — developer.apple.com → Services ID
+     Domains: w3me.in | Return URLs: https://w3me.in/ */
+  APPLE_CLIENT_ID: '',
+
+  /* Yahoo — developer.yahoo.com → Redirect URI: https://w3me.in/
+     + TOKEN_EXCHANGE_URL (server; needs secret) */
+  YAHOO_CLIENT_ID: '',
+
+  /* Auto-detects https://w3me.in/... when live */
+  REDIRECT_URI: (typeof location !== 'undefined' ? (location.origin + location.pathname) : 'https://w3me.in/'),
+
+  /* LinkedIn & Yahoo real login — points at your exchange API.
+     Leave '' to auto-use https://<host>/api/oauth/exchange (or http://localhost:8787 when on localhost).
+     Override if your API lives elsewhere. */
+  TOKEN_EXCHANGE_URL: ''
+};
+
+/** Resolve token exchange endpoint (LinkedIn / Yahoo). */
+function getTokenExchangeUrl(){
+  const configured = (OAUTH_CONFIG.TOKEN_EXCHANGE_URL || '').trim();
+  if(configured) return configured;
+  try{
+    const host = location.hostname || '';
+    if(host === 'localhost' || host === '127.0.0.1'){
+      return 'http://localhost:8787/api/oauth/exchange';
+    }
+    if(host){
+      return location.origin + '/api/oauth/exchange';
+    }
+  }catch(e){}
+  return 'https://w3me.in/api/oauth/exchange';
+}
+
 const PROVIDERS = {
-  google:{ label:'Google', icon:'G' },
-  microsoft:{ label:'Microsoft', icon:'M' },
-  linkedin:{ label:'LinkedIn', icon:'in' },
-  apple:{ label:'Apple', icon:'🍎' }
+  google:    { label:'Google',    icon:'G',  color:'#4285F4', sample:'you@gmail.com' },
+  microsoft: { label:'Microsoft', icon:'M',  color:'#2564CB', sample:'you@outlook.com' },
+  linkedin:  { label:'LinkedIn',  icon:'in', color:'#0A66C2', sample:'you@company.com' },
+  apple:     { label:'Apple',     icon:'',   color:'#000000', sample:'you@icloud.com' },
+  yahoo:     { label:'Yahoo',     icon:'Y!', color:'#6001D2', sample:'you@yahoo.com' }
 };
 let currentProvider = 'google';
-function openProviderModal(provider){
+let ssoInFlight = false;
+let googleGisReady = false;
+let googleGisInitTried = false;
+let msalInstance = null;
+
+function cfgId(key){
+  const v = (OAUTH_CONFIG[key] || '').trim();
+  return v && !v.includes('YOUR_') ? v : '';
+}
+function isGoogleOAuthConfigured(){ return !!cfgId('GOOGLE_CLIENT_ID'); }
+function isMicrosoftOAuthConfigured(){ return !!cfgId('MICROSOFT_CLIENT_ID'); }
+function isLinkedInOAuthConfigured(){ return !!cfgId('LINKEDIN_CLIENT_ID'); }
+function isAppleOAuthConfigured(){ return !!cfgId('APPLE_CLIENT_ID'); }
+function isYahooOAuthConfigured(){ return !!cfgId('YAHOO_CLIENT_ID'); }
+
+/* ---- PKCE helpers (LinkedIn / Yahoo) ---- */
+function b64url(buf){
+  const bytes = buf instanceof ArrayBuffer ? new Uint8Array(buf) : buf;
+  let s = ''; bytes.forEach(b=> s += String.fromCharCode(b));
+  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function randomVerifier(){
+  const a = new Uint8Array(32); crypto.getRandomValues(a); return b64url(a);
+}
+async function pkceChallenge(verifier){
+  const data = new TextEncoder().encode(verifier);
+  const dig = await crypto.subtle.digest('SHA-256', data);
+  return b64url(dig);
+}
+
+function decodeJwtPayload(token){
+  try{
+    const part = token.split('.')[1];
+    const json = atob(part.replace(/-/g,'+').replace(/_/g,'/'));
+    return JSON.parse(decodeURIComponent(json.split('').map(c=>'%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+  }catch(e){ return null; }
+}
+
+function completeSsoLogin({ name, email, provider, picture }){
+  const lookupKey = (email || '').toLowerCase();
+  let user = null;
+  if(lookupKey && DB.byEmail && DB.byEmail[lookupKey] && DB.users[DB.byEmail[lookupKey]]){
+    user = DB.users[DB.byEmail[lookupKey]];
+  }
+  if(!user && lookupKey && DB.users[lookupKey]) user = DB.users[lookupKey];
+
+  if(!user){
+    const base = lookupKey.includes('@') ? lookupKey.split('@')[0].replace(/[^a-z0-9_.]/g,'') : (provider + '_user');
+    let username = base || (provider + '_user');
+    if(DB.users[username]) username = username + '.' + Math.random().toString(36).slice(2,5);
+    user = {
+      name: name || providerDisplayName(provider, email),
+      email: lookupKey,
+      username,
+      password: '',
+      role: 'Not specified',
+      location: 'Not set',
+      ssoProvider: provider,
+      ssoLinkedAt: new Date().toISOString(),
+      picture: picture || ''
+    };
+    DB.users[username] = user;
+    if(user.email) DB.byEmail[user.email] = username;
+    saveDB();
+  } else {
+    user.ssoProvider = provider;
+    user.ssoLinkedAt = new Date().toISOString();
+    if(name) user.name = name;
+    if(lookupKey) user.email = lookupKey;
+    if(picture) user.picture = picture;
+    saveDB();
+  }
+  ssoInFlight = false;
+  loginAs(user);
+}
+
+function handleGoogleCredentialResponse(response){
+  try{
+    if(!response || !response.credential){
+      toast('Google sign-in was cancelled or failed');
+      ssoInFlight = false;
+      return;
+    }
+    const payload = decodeJwtPayload(response.credential);
+    if(!payload || !payload.email){
+      toast('Could not read Google profile — try again');
+      ssoInFlight = false;
+      return;
+    }
+    completeSsoLogin({
+      name: payload.name || payload.given_name || payload.email.split('@')[0],
+      email: payload.email,
+      provider: 'google',
+      picture: payload.picture || ''
+    });
+  }catch(err){
+    console.error('Google credential handler error', err);
+    toast('Google sign-in error — check console');
+    ssoInFlight = false;
+  }
+}
+
+function initGoogleGis(callback){
+  if(!isGoogleOAuthConfigured()){ if(callback) callback(false); return; }
+  if(typeof google === 'undefined' || !google.accounts || !google.accounts.id){
+    // Script still loading — retry briefly
+    if(!googleGisInitTried){
+      googleGisInitTried = true;
+      let tries = 0;
+      const t = setInterval(()=>{
+        tries++;
+        if(typeof google !== 'undefined' && google.accounts && google.accounts.id){
+          clearInterval(t);
+          initGoogleGis(callback);
+        } else if(tries > 25){
+          clearInterval(t);
+          if(callback) callback(false);
+        }
+      }, 200);
+    } else if(callback) callback(false);
+    return;
+  }
+  try{
+    google.accounts.id.initialize({
+      client_id: OAUTH_CONFIG.GOOGLE_CLIENT_ID.trim(),
+      callback: handleGoogleCredentialResponse,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+      context: 'signin',
+      ux_mode: 'popup'
+    });
+    googleGisReady = true;
+    if(callback) callback(true);
+  }catch(err){
+    console.error('GIS init failed', err);
+    googleGisReady = false;
+    if(callback) callback(false);
+  }
+}
+
+function startRealGoogleSignIn(){
+  if(!isGoogleOAuthConfigured()){
+    openProviderModal('google'); // falls through to demo UI with setup instructions
+    return;
+  }
+  ssoInFlight = true;
+  toast('Opening Google…');
+  initGoogleGis(function(ok){
+    if(!ok){
+      ssoInFlight = false;
+      toast('Google SDK not ready — serve this page over http://localhost and check Client ID');
+      openDemoProvider('google');
+      return;
+    }
+    // Prefer the official button / prompt. prompt() shows One Tap or account chooser.
+    try{
+      // Render into the provider screen as a reliable fallback surface
+      goProviderShell('google');
+      const host = document.getElementById('paGoogleBtnHost');
+      if(host){
+        host.innerHTML = '';
+        host.style.display = 'flex';
+        host.style.justifyContent = 'center';
+        host.style.margin = '8px 0 12px';
+        google.accounts.id.renderButton(host, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'continue_with',
+          shape: 'pill',
+          logo_alignment: 'left',
+          width: 280
+        });
+      }
+      // Also try One Tap / account chooser overlay
+      google.accounts.id.prompt((notification)=>{
+        if(notification && (notification.isNotDisplayed && notification.isNotDisplayed() || notification.isSkippedMoment && notification.isSkippedMoment())){
+          // User will use the rendered button instead
+        }
+      });
+    }catch(err){
+      console.error(err);
+      ssoInFlight = false;
+      toast('Could not start Google Sign-In');
+      openDemoProvider('google');
+    }
+  });
+}
+
+function goProviderShell(provider){
   currentProvider = provider;
   const p = PROVIDERS[provider];
   const screen = document.getElementById('screen-provider');
-  screen.className = 'screen provider-'+provider;
-  document.getElementById('paLogo').textContent = p.icon;
-  document.getElementById('paTitle').textContent = 'Sign in with '+p.label;
-  document.getElementById('pa-username').value = '';
-  document.getElementById('pa-password').value = '';
-  document.getElementById('pa-status').textContent = '';
-  document.getElementById('paSubmitBtn').textContent = 'Sign in';
-  document.getElementById('paSubmitBtn').disabled = false;
-  go('provider');
+  screen.className = 'screen active provider-' + provider;
+  document.querySelectorAll('.screen').forEach(s=>{ if(s!==screen) s.classList.remove('active'); });
+  const tabbar = document.getElementById('tabbar');
+  if(tabbar) tabbar.style.display = 'none';
+  const logo = document.getElementById('paLogo');
+  if(provider==='apple') logo.innerHTML = '';
+  else if(provider==='yahoo') logo.textContent = 'Y!';
+  else logo.textContent = p.icon || p.label.charAt(0);
+  document.getElementById('paTitle').textContent = 'Sign in with ' + p.label;
+  document.getElementById('paSub').textContent = 'to continue to What\'s Wrong With Me?';
+  window.scrollTo(0,0);
 }
-function cancelProviderAuth(){ go('signon'); }
-function submitProviderAuth(){
-  const uname = document.getElementById('pa-username').value.trim();
-  const pass = document.getElementById('pa-password').value;
-  const status = document.getElementById('pa-status');
-  if(!uname || !pass){ status.textContent = 'Enter your email/username and password.'; return; }
-  status.textContent = '';
+
+function openDemoProvider(provider){
+  openProviderModal(provider, true);
+}
+
+function openProviderModal(provider, forceDemo){
+  if(!PROVIDERS[provider]){ toast('Unknown sign-in provider'); return; }
+
+  // Real OAuth paths when configured
+  if(!forceDemo){
+    if(provider === 'google' && isGoogleOAuthConfigured()){ startRealGoogleSignIn(); return; }
+    if(provider === 'microsoft' && isMicrosoftOAuthConfigured()){ startRealMicrosoftSignIn(); return; }
+    if(provider === 'apple' && isAppleOAuthConfigured()){ startRealAppleSignIn(); return; }
+    if(provider === 'linkedin' && isLinkedInOAuthConfigured()){ startRealLinkedInSignIn(); return; }
+    if(provider === 'yahoo' && isYahooOAuthConfigured()){ startRealYahooSignIn(); return; }
+  }
+
+  currentProvider = provider;
+  ssoInFlight = false;
+  const p = PROVIDERS[provider];
+  goProviderShell(provider);
+
+  const consent = document.getElementById('paConsentText');
+  const emailField = document.getElementById('pa-username');
   const btn = document.getElementById('paSubmitBtn');
-  btn.textContent = 'Authorizing…'; btn.disabled = true;
-  setTimeout(()=>{
-    const lookupKey = uname.toLowerCase();
-    let user = DB.users[lookupKey] || (DB.byEmail[lookupKey] ? DB.users[DB.byEmail[lookupKey]] : null);
-    if(!user){
-      const username = lookupKey.includes('@') ? lookupKey.split('@')[0]+'.'+Math.random().toString(36).slice(2,5) : lookupKey;
-      user = { name: PROVIDERS[currentProvider].label+' User', email: lookupKey.includes('@') ? lookupKey : '',
-        username, password: pass, role:'Not specified', location:'Not set' };
-      DB.users[username] = user; if(user.email) DB.byEmail[user.email] = username; saveDB();
+  const hint = document.getElementById('paHint');
+  const gHost = document.getElementById('paGoogleBtnHost');
+  if(gHost){ gHost.innerHTML = ''; gHost.style.display = 'none'; }
+
+  const setupHints = {
+    google: 'Google Cloud Console → Credentials → OAuth client ID (Web) → Authorized JavaScript origins: http://localhost + your domain → paste into OAUTH_CONFIG.GOOGLE_CLIENT_ID',
+    microsoft: 'Azure Portal → App registrations → New registration (SPA) → add redirect URI (Single-page application) matching this page → paste Application (client) ID into OAUTH_CONFIG.MICROSOFT_CLIENT_ID',
+    apple: 'Apple Developer → Identifiers → Services ID → enable Sign in with Apple → configure domains & return URLs → paste Services ID into OAUTH_CONFIG.APPLE_CLIENT_ID',
+    linkedin: 'LinkedIn Developers → My Apps → Auth → add redirect URL → paste Client ID into OAUTH_CONFIG.LINKEDIN_CLIENT_ID. Token exchange needs TOKEN_EXCHANGE_URL (server) because LinkedIn requires a client secret.',
+    yahoo: 'Yahoo Developer Network → Create app → set Redirect URI → paste Client ID (Consumer Key) into OAUTH_CONFIG.YAHOO_CLIENT_ID. Token exchange needs TOKEN_EXCHANGE_URL (server).'
+  };
+
+  if(!forceDemo && setupHints[provider]){
+    if(consent){
+      consent.innerHTML = '<b>' + p.label + ' OAuth is not configured yet.</b><br>Add your Client ID in <code>OAUTH_CONFIG</code>, then reload. Until then you can use demo sign-in below.';
     }
-    loginAs(user);
-  }, 900);
+    if(hint){ hint.innerHTML = 'Setup: ' + setupHints[provider]; }
+  } else {
+    if(consent){
+      consent.textContent = p.label + ' will share your name and email with W3M so we can create your career profile. Your ' + p.label + ' password is never sent to this app.';
+    }
+    if(hint){
+      hint.textContent = 'Demo SSO for ' + p.label + '. Enter any email to continue, or leave blank for a one-tap demo identity.';
+    }
+  }
+
+  emailField.value = '';
+  emailField.placeholder = p.sample;
+  emailField.style.display = 'block';
+  document.getElementById('pa-status').textContent = '';
+  btn.textContent = 'Continue with ' + p.label;
+  btn.disabled = false;
+  btn.style.display = 'block';
+  emailField.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); submitProviderAuth(); } };
+  setTimeout(()=> emailField.focus(), 80);
+}
+
+/* ---- Microsoft (MSAL.js) ---- */
+async function ensureMsal(){
+  if(msalInstance) return msalInstance;
+  if(typeof msal === 'undefined'){
+    await new Promise((resolve, reject)=>{
+      let n=0; const t=setInterval(()=>{
+        n++;
+        if(typeof msal !== 'undefined'){ clearInterval(t); resolve(); }
+        else if(n>30){ clearInterval(t); reject(new Error('MSAL SDK failed to load')); }
+      }, 150);
+    });
+  }
+  msalInstance = new msal.PublicClientApplication({
+    auth: {
+      clientId: cfgId('MICROSOFT_CLIENT_ID'),
+      authority: 'https://login.microsoftonline.com/common',
+      redirectUri: OAUTH_CONFIG.REDIRECT_URI || window.location.origin
+    },
+    cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
+  });
+  if(msalInstance.initialize) await msalInstance.initialize();
+  return msalInstance;
+}
+async function startRealMicrosoftSignIn(){
+  ssoInFlight = true;
+  toast('Opening Microsoft…');
+  try{
+    const app = await ensureMsal();
+    const result = await app.loginPopup({
+      scopes: ['openid', 'profile', 'email', 'User.Read'],
+      prompt: 'select_account'
+    });
+    const acc = result.account || (app.getAllAccounts && app.getAllAccounts()[0]);
+    const email = (acc && (acc.username || acc.name)) || '';
+    const name = (acc && acc.name) || email.split('@')[0] || 'Microsoft User';
+    // Prefer Graph email when username is a GUID-style UPN
+    let finalEmail = email;
+    let finalName = name;
+    try{
+      if(result.accessToken){
+        const r = await fetch('https://graph.microsoft.com/v1.0/me', {
+          headers: { Authorization: 'Bearer ' + result.accessToken }
+        });
+        if(r.ok){
+          const me = await r.json();
+          finalEmail = me.mail || me.userPrincipalName || finalEmail;
+          finalName = me.displayName || finalName;
+        }
+      }
+    }catch(e){}
+    completeSsoLogin({ name: finalName, email: finalEmail, provider: 'microsoft' });
+  }catch(err){
+    console.error('Microsoft SSO', err);
+    ssoInFlight = false;
+    if(err && err.errorCode === 'user_cancelled'){ toast('Microsoft sign-in cancelled'); }
+    else { toast('Microsoft sign-in failed — check Client ID & redirect URI'); openDemoProvider('microsoft'); }
+  }
+}
+
+/* ---- Apple ---- */
+async function startRealAppleSignIn(){
+  ssoInFlight = true;
+  toast('Opening Apple…');
+  try{
+    if(typeof AppleID === 'undefined'){
+      await new Promise((resolve, reject)=>{
+        let n=0; const t=setInterval(()=>{
+          n++;
+          if(typeof AppleID !== 'undefined'){ clearInterval(t); resolve(); }
+          else if(n>30){ clearInterval(t); reject(new Error('Apple SDK failed to load')); }
+        }, 150);
+      });
+    }
+    AppleID.auth.init({
+      clientId: cfgId('APPLE_CLIENT_ID'),
+      scope: 'name email',
+      redirectURI: OAUTH_CONFIG.REDIRECT_URI || (window.location.origin + window.location.pathname),
+      usePopup: true
+    });
+    const res = await AppleID.auth.signIn();
+    const idToken = res && res.authorization && res.authorization.id_token;
+    const payload = idToken ? decodeJwtPayload(idToken) : null;
+    let name = '';
+    if(res.user && res.user.name){
+      name = [res.user.name.firstName, res.user.name.lastName].filter(Boolean).join(' ');
+    }
+    const email = (payload && payload.email) || (res.user && res.user.email) || '';
+    if(!email && !payload){
+      throw new Error('No identity returned from Apple');
+    }
+    completeSsoLogin({
+      name: name || (email ? email.split('@')[0] : 'Apple User'),
+      email: email || ('apple.' + (payload.sub || 'user') + '@privaterelay.appleid.com'),
+      provider: 'apple'
+    });
+  }catch(err){
+    console.error('Apple SSO', err);
+    ssoInFlight = false;
+    toast('Apple sign-in failed — check Services ID & return URL');
+    openDemoProvider('apple');
+  }
+}
+
+/* ---- LinkedIn / Yahoo via authorize popup + optional token exchange ---- */
+async function startOAuthCodePopup(provider, authBase, clientId, scope){
+  const verifier = randomVerifier();
+  const challenge = await pkceChallenge(verifier);
+  const state = b64url(crypto.getRandomValues(new Uint8Array(16)));
+  sessionStorage.setItem('w3m_oauth_pkce', JSON.stringify({ provider, verifier, state }));
+  const redirect = OAUTH_CONFIG.REDIRECT_URI || (window.location.origin + window.location.pathname);
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: clientId,
+    redirect_uri: redirect,
+    scope: scope,
+    state: state,
+    code_challenge: challenge,
+    code_challenge_method: 'S256'
+  });
+  // LinkedIn uses slightly different param names historically; PKCE supported on newer apps
+  if(provider === 'linkedin'){
+    params.delete('code_challenge'); params.delete('code_challenge_method');
+    // LinkedIn classic still works with code only; store verifier for exchange proxy if added later
+  }
+  const url = authBase + '?' + params.toString();
+  const w = 520, h = 640;
+  const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+  const popup = window.open(url, 'w3m_oauth_' + provider, `width=${w},height=${h},left=${left},top=${top}`);
+  if(!popup){ throw new Error('Popup blocked — allow popups for this site'); }
+
+  return new Promise((resolve, reject)=>{
+    const timer = setInterval(()=>{
+      if(popup.closed){ clearInterval(timer); reject(new Error('Sign-in window closed')); return; }
+      try{
+        const href = popup.location.href;
+        if(href && href.indexOf(window.location.origin) === 0 && (href.indexOf('code=') >= 0 || href.indexOf('error=') >= 0)){
+          clearInterval(timer);
+          const u = new URL(href);
+          popup.close();
+          if(u.searchParams.get('error')){
+            reject(new Error(u.searchParams.get('error_description') || u.searchParams.get('error')));
+            return;
+          }
+          const code = u.searchParams.get('code');
+          const st = u.searchParams.get('state');
+          const saved = JSON.parse(sessionStorage.getItem('w3m_oauth_pkce') || '{}');
+          if(saved.state && st && saved.state !== st){ reject(new Error('OAuth state mismatch')); return; }
+          resolve({ code, verifier: saved.verifier, provider });
+        }
+      }catch(e){ /* cross-origin until redirect returns */ }
+    }, 400);
+    setTimeout(()=>{ clearInterval(timer); try{ popup.close(); }catch(e){} reject(new Error('Sign-in timed out')); }, 120000);
+  });
+}
+
+async function exchangeCodeForProfile({ provider, code, verifier }){
+  const url = getTokenExchangeUrl();
+  if(!url){
+    throw new Error('Token exchange URL missing. Deploy /api/oauth/exchange or set OAUTH_CONFIG.TOKEN_EXCHANGE_URL.');
+  }
+  const redirect = OAUTH_CONFIG.REDIRECT_URI || (window.location.origin + window.location.pathname);
+  let r;
+  try{
+    r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        provider,
+        code,
+        code_verifier: verifier || '',
+        redirect_uri: redirect
+      })
+    });
+  }catch(netErr){
+    throw new Error('Cannot reach token exchange at ' + url + ' — is the API running?');
+  }
+  let data = {};
+  try{ data = await r.json(); }catch(e){}
+  if(!r.ok){
+    throw new Error(data.error || ('Token exchange failed (' + r.status + ')'));
+  }
+  if(!data.email){
+    throw new Error('Exchange succeeded but no email was returned');
+  }
+  return {
+    email: data.email,
+    name: data.name || data.email.split('@')[0],
+    picture: data.picture || ''
+  };
+}
+
+async function startRealLinkedInSignIn(){
+  ssoInFlight = true;
+  toast('Opening LinkedIn…');
+  try{
+    const { code, verifier } = await startOAuthCodePopup(
+      'linkedin',
+      'https://www.linkedin.com/oauth/v2/authorization',
+      cfgId('LINKEDIN_CLIENT_ID'),
+      'openid profile email'
+    );
+    const profile = await exchangeCodeForProfile({ provider: 'linkedin', code, verifier });
+    completeSsoLogin({
+      name: profile.name || profile.given_name || 'LinkedIn User',
+      email: profile.email,
+      provider: 'linkedin',
+      picture: profile.picture || ''
+    });
+  }catch(err){
+    console.error('LinkedIn SSO', err);
+    ssoInFlight = false;
+    toast(err.message || 'LinkedIn sign-in failed');
+    openDemoProvider('linkedin');
+  }
+}
+
+async function startRealYahooSignIn(){
+  ssoInFlight = true;
+  toast('Opening Yahoo…');
+  try{
+    const { code, verifier } = await startOAuthCodePopup(
+      'yahoo',
+      'https://api.login.yahoo.com/oauth2/request_auth',
+      cfgId('YAHOO_CLIENT_ID'),
+      'openid profile email'
+    );
+    const profile = await exchangeCodeForProfile({ provider: 'yahoo', code, verifier });
+    completeSsoLogin({
+      name: profile.name || profile.given_name || 'Yahoo User',
+      email: profile.email,
+      provider: 'yahoo',
+      picture: profile.picture || ''
+    });
+  }catch(err){
+    console.error('Yahoo SSO', err);
+    ssoInFlight = false;
+    toast(err.message || 'Yahoo sign-in failed');
+    openDemoProvider('yahoo');
+  }
+}
+
+function cancelProviderAuth(){
+  ssoInFlight = false;
+  go('signon');
+}
+
+function providerDisplayName(provider, email){
+  const p = PROVIDERS[provider];
+  if(email && email.includes('@')){
+    const local = email.split('@')[0].replace(/[._]/g,' ').trim();
+    if(local){
+      return local.split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+    }
+  }
+  return p.label + ' User';
+}
+
+function submitProviderAuth(){
+  if(ssoInFlight) return;
+  const p = PROVIDERS[currentProvider];
+  if(!p){ toast('Provider not available'); return; }
+  const status = document.getElementById('pa-status');
+  const emailField = document.getElementById('pa-username');
+  let email = (emailField.value || '').trim().toLowerCase();
+
+  // Allow one-tap with blank email → synthetic demo identity
+  if(!email){
+    email = 'demo.' + currentProvider + '@w3me.in';
+  } else if(!isValidEmail(email)){
+    status.textContent = 'Enter a valid email address, or leave blank for a quick demo sign-in.';
+    status.style.color = 'var(--danger)';
+    return;
+  }
+
+  status.textContent = '';
+  ssoInFlight = true;
+  const btn = document.getElementById('paSubmitBtn');
+  btn.textContent = 'Connecting to ' + p.label + '…';
+  btn.disabled = true;
+
+  setTimeout(()=>{
+    try{
+      btn.textContent = 'Signed in ✓';
+      status.textContent = 'Authenticated via ' + p.label + ' (demo)';
+      status.style.color = 'var(--good)';
+      setTimeout(()=>{
+        completeSsoLogin({
+          name: providerDisplayName(currentProvider, email),
+          email: email,
+          provider: currentProvider
+        });
+      }, 350);
+    }catch(err){
+      console.error('SSO error', err);
+      ssoInFlight = false;
+      btn.disabled = false;
+      btn.textContent = 'Continue with ' + p.label;
+      status.textContent = 'Sign-in failed — please try again.';
+      status.style.color = 'var(--danger)';
+    }
+  }, 600);
 }
 
 /* ================= BIOMETRIC (FACE + VOICE) LOGIN ================= */
@@ -2373,6 +2998,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Job Function', category:'Technology & Engineering',
     coreSkills:['Cloud Architecture','System Design','DevOps','Cybersecurity'],
     courses:['AWS Certified Solutions Architect Professional','TOGAF EA Practitioner','CISSP'],
+    certTracks:[
+      {level:'foundation', name:'AWS Certified Cloud Practitioner', provider:'Amazon Web Services', time:'2–4 weeks', focus:'Cloud basics, shared responsibility, core AWS services — start here if new to cloud.'},
+      {level:'intermediate', name:'AWS Solutions Architect – Associate', provider:'Amazon Web Services', time:'6–10 weeks', focus:'Design resilient, cost-optimized architectures on AWS.'},
+      {level:'advanced', name:'AWS Solutions Architect – Professional + CISSP or TOGAF EA', provider:'AWS / (ISC)² / The Open Group', time:'3–6 months', focus:'Complex multi-account design, enterprise architecture, or security leadership.'}
+    ],
     books:['Designing Data-Intensive Applications','The Phoenix Project','Accelerate'],
     authors:['Martin Kleppmann','Gene Kim','Martin Fowler'],
     companies:['Microsoft','Google','AWS','Oracle','IBM','Cisco'],
@@ -2381,6 +3011,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Job Function', category:'Data Science & AI Analytics',
     coreSkills:['Predictive Modeling','Prompt Engineering','Business Intelligence','Data Pipelines'],
     courses:['Stanford Machine Learning Engineering (Coursera)','MIT Sloan AI Strategy','IBM Data Science Professional'],
+    certTracks:[
+      {level:'foundation', name:'IBM Data Science Professional Certificate', provider:'IBM (Coursera)', time:'3–4 months', focus:'Python, SQL, data viz, and intro ML — strong portfolio projects.'},
+      {level:'intermediate', name:'Stanford Machine Learning / DeepLearning.AI ML Specialization', provider:'Stanford / DeepLearning.AI', time:'2–3 months', focus:'Supervised learning, neural nets, practical ML engineering.'},
+      {level:'advanced', name:'MIT Sloan AI Strategy + Applied AI / MLOps track', provider:'MIT / various', time:'3–5 months', focus:'AI strategy for leaders, production ML systems, prompt & agent design.'}
+    ],
     books:['Competing on Analytics','Hands-On Machine Learning','The Book of Why'],
     authors:['Andrew Ng','Aurélien Géron','Thomas H. Davenport'],
     companies:['OpenAI','Palantir','Snowflake','Meta','Anthropic'],
@@ -2389,6 +3024,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Job Function', category:'Product Management & Design',
     coreSkills:['Product Strategy','Roadmap Architecture','UX Research','Product Analytics'],
     courses:['Product Faculty Advanced Product Management','Product School CPM','Pragmatic Institute Framework'],
+    certTracks:[
+      {level:'foundation', name:'Product School Certified Product Manager (CPM)', provider:'Product School', time:'6–8 weeks', focus:'Core PM process: discovery, prioritization, roadmaps, stakeholder work.'},
+      {level:'intermediate', name:'Pragmatic Institute Framework / Reforge Product Strategy', provider:'Pragmatic / Reforge', time:'2–3 months', focus:'Market-driven product strategy and growth loops.'},
+      {level:'advanced', name:'Product Faculty Advanced Product Management', provider:'Product Faculty', time:'8–12 weeks', focus:'Senior/PM-lead level: org design, platform strategy, executive communication.'}
+    ],
     books:['INSPIRED','Escaping the Build Trap','Empowered'],
     authors:['Marty Cagan','Melissa Perri','Don Norman'],
     companies:['Apple','Stripe','Airbnb','Uber','Atlassian'],
@@ -2397,6 +3037,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Job Function', category:'Project Management & Agile',
     coreSkills:['Enterprise Scaling','Scrum Master','Operational Delivery','Resource Optimization'],
     courses:['PMI Project Management Professional (PMP)','Scrum.org PSM II','Scaled Agile Academy SAFe Agilist'],
+    certTracks:[
+      {level:'foundation', name:'Scrum.org Professional Scrum Master I (PSM I)', provider:'Scrum.org', time:'2–4 weeks', focus:'Scrum roles, events, artifacts — practical team facilitation.'},
+      {level:'intermediate', name:'PMI Project Management Professional (PMP)', provider:'Project Management Institute', time:'3–5 months', focus:'Predictive + agile delivery, risk, stakeholder, and scope mastery.'},
+      {level:'advanced', name:'SAFe Agilist + PSM II', provider:'Scaled Agile / Scrum.org', time:'1–2 months', focus:'Enterprise agile scaling and advanced Scrum mastery.'}
+    ],
     books:['PMBOK Guide','Scrum: The Art of Doing Twice the Work','Coaching Agile Teams'],
     authors:['Jeff Sutherland','Mike Cohn','Eliyahu M. Goldratt'],
     companies:['Accenture','Deloitte','Infosys','Capgemini','PwC'],
@@ -2405,6 +3050,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Job Function', category:'Marketing & Growth Strategy',
     coreSkills:['Growth Hacking','CAC Optimization','Brand Positioning','Digital Analytics'],
     courses:['CXL Growth Marketing Minidegree','Wharton Digital Marketing Certificate','Google Advanced Data Analytics'],
+    certTracks:[
+      {level:'foundation', name:'Google Digital Marketing & E-commerce / Skillshop', provider:'Google', time:'3–6 weeks', focus:'Ads, analytics, SEO fundamentals with free certifications.'},
+      {level:'intermediate', name:'Wharton Digital Marketing Certificate', provider:'Wharton (Coursera)', time:'3–4 months', focus:'Strategy, branding, and data-driven marketing decisions.'},
+      {level:'advanced', name:'CXL Growth Marketing Minidegree', provider:'CXL Institute', time:'3–4 months', focus:'Experimentation, CRO, acquisition systems used by growth teams.'}
+    ],
     books:['Building a StoryBrand','Contagious','Hacking Growth'],
     authors:['Seth Godin','Jonah Berger','Scott Galloway'],
     companies:['Procter & Gamble','Netflix','HubSpot','Coca-Cola','Nike'],
@@ -2413,6 +3063,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Job Function', category:'Sales & Business Development',
     coreSkills:['Enterprise Account Mapping','Consultative Selling','Revenue Operations (RevOps)'],
     courses:['Miller Heiman Strategic Selling','Kellogg Sales Leadership Executive Program','Sales Enablement Collective'],
+    certTracks:[
+      {level:'foundation', name:'HubSpot Sales Software / Inbound Sales', provider:'HubSpot Academy', time:'2–4 weeks', focus:'Pipeline hygiene, inbound methodology, CRM fundamentals.'},
+      {level:'intermediate', name:'Miller Heiman Strategic Selling / Challenger Selling', provider:'Miller Heiman / Challenger Inc.', time:'4–8 weeks', focus:'Complex B2B deals, buying influences, commercial teaching.'},
+      {level:'advanced', name:'Kellogg Sales Leadership Executive Program', provider:'Northwestern Kellogg', time:'1–2 weeks intensive', focus:'Leading sales orgs, forecasting, and revenue strategy.'}
+    ],
     books:['The Challenger Sale','SPIN Selling','Predictable Revenue'],
     authors:['Neil Rackham','Matthew Dixon','Jeb Blount'],
     companies:['Salesforce','SAP','Oracle','LinkedIn','HubSpot'],
@@ -2421,6 +3076,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Job Function', category:'Finance, Accounting & Risk',
     coreSkills:['Financial Modeling','Corporate Valuation','Asset Management','Risk Mitigation'],
     courses:['CFI Financial Modeling & Valuation Analyst (FMVA)','CFA Charter Program','GARP FRM Exam Track'],
+    certTracks:[
+      {level:'foundation', name:'CFI Financial Modeling & Valuation Analyst (FMVA)', provider:'Corporate Finance Institute', time:'3–6 months', focus:'Excel modeling, DCF, comps, LBO — practical analyst toolkit.'},
+      {level:'intermediate', name:'CFA Level I (or full Charter track)', provider:'CFA Institute', time:'6–12 months per level', focus:'Ethics, quant, economics, portfolio and equity analysis.'},
+      {level:'advanced', name:'GARP FRM + CFA Level II/III or CFA Charter', provider:'GARP / CFA Institute', time:'6–18 months', focus:'Market, credit, and operational risk; advanced portfolio management.'}
+    ],
     books:['The Intelligent Investor','Corporate Finance (Ross)','McKinsey Valuation'],
     authors:['Aswath Damodaran','Nassim Nicholas Taleb','Benjamin Graham'],
     companies:['Goldman Sachs','JPMorgan Chase','Morgan Stanley','McKinsey'],
@@ -2429,6 +3089,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Job Function', category:'Human Resources & Talent',
     coreSkills:['Strategic Workforce Planning','People Analytics','Total Rewards Architecture'],
     courses:['SHRM Senior Certified Professional (SHRM-SCP)','Wharton People Analytics','AIHR Certified HRBP'],
+    certTracks:[
+      {level:'foundation', name:'AIHR Certified HR Business Partner / SHRM-CP', provider:'AIHR / SHRM', time:'2–4 months', focus:'HRBP skills, employee lifecycle, policy and compliance basics.'},
+      {level:'intermediate', name:'Wharton People Analytics', provider:'Wharton (Coursera)', time:'3–4 months', focus:'Data-driven talent decisions, experiments, and workforce metrics.'},
+      {level:'advanced', name:'SHRM Senior Certified Professional (SHRM-SCP)', provider:'SHRM', time:'3–6 months prep', focus:'Strategic HR leadership, org design, and executive partnership.'}
+    ],
     books:['Work Rules!','HR from the Outside In','Think Again'],
     authors:['Dave Ulrich','Laszlo Bock','Adam Grant'],
     companies:['Workday','Deloitte','Accenture','Alphabet','Mercer'],
@@ -2437,6 +3102,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Job Function', category:'Supply Chain & Operations',
     coreSkills:['Inventory Optimization','Logistics Resilience','Six Sigma Quality Control'],
     courses:['ASCM Certified Supply Chain Professional (CSCP)','MITx Supply Chain MicroMasters','Lean Six Sigma Black Belt'],
+    certTracks:[
+      {level:'foundation', name:'Lean Six Sigma Green Belt', provider:'ASQ / various accredited', time:'6–10 weeks', focus:'DMAIC, process mapping, basic stats for operational improvement.'},
+      {level:'intermediate', name:'MITx Supply Chain MicroMasters', provider:'MIT (edX)', time:'8–12 months', focus:'End-to-end supply chain design, analytics, and systems.'},
+      {level:'advanced', name:'ASCM CSCP + Lean Six Sigma Black Belt', provider:'ASCM / ASQ', time:'4–8 months', focus:'Global supply chain strategy and advanced process excellence.'}
+    ],
     books:['The Goal','Supply Chain Management (Chopra)','The Resilient Enterprise'],
     authors:['Sunil Chopra','Yossi Sheffi','W. Edwards Deming'],
     companies:['Amazon','FedEx','DHL','Apple','Walmart','Maersk'],
@@ -2445,6 +3115,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Job Function', category:'Corporate Strategy',
     coreSkills:['Market Entry Analysis','M&A Strategy','ESG Framework Integration','Valuation'],
     courses:['HBS Online Strategy Package','INSEAD Business Strategy Specialization','Wharton ESG Executive'],
+    certTracks:[
+      {level:'foundation', name:'HBS Online Strategy Essentials / Disruptive Strategy', provider:'Harvard Business School Online', time:'4–6 weeks', focus:'Competitive advantage, disruption, and strategy frameworks.'},
+      {level:'intermediate', name:'INSEAD Business Strategy Specialization', provider:'INSEAD (Coursera)', time:'3–4 months', focus:'Corporate strategy, diversification, and international expansion.'},
+      {level:'advanced', name:'Wharton ESG Executive + HBS Strategy Package', provider:'Wharton / HBS', time:'2–4 months', focus:'ESG integration, board-level strategy, and M&A logic.'}
+    ],
     books:['Competitive Strategy','Blue Ocean Strategy','Good Strategy/Bad Strategy'],
     authors:['Michael Porter','Richard Rumelt','W. Chan Kim'],
     companies:['Boston Consulting Group (BCG)','Bain & Company','McKinsey'],
@@ -2453,6 +3128,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Job Function', category:'Leadership & Management',
     coreSkills:['Change Management','Corporate Governance','Executive Influence','Turnarounds'],
     courses:['Oxford Executive Leadership Programme','Cambridge High Impact Leadership','Prosci CCMP'],
+    certTracks:[
+      {level:'foundation', name:'Prosci Change Management Practitioner / CCMP prep', provider:'Prosci / ACMP', time:'3–6 weeks', focus:'Structured change adoption — ADKAR and stakeholder mapping.'},
+      {level:'intermediate', name:'Cambridge High Impact Leadership', provider:'University of Cambridge', time:'6–10 weeks', focus:'Influence, team leadership, and decision quality under pressure.'},
+      {level:'advanced', name:'Oxford Executive Leadership Programme', provider:'University of Oxford Saïd', time:'6–12 weeks', focus:'C-suite ready leadership, governance, and organizational turnarounds.'}
+    ],
     books:['Good to Great','The First 90 Days','Radical Candor'],
     authors:['Jim Collins','Michael Watkins','Simon Sinek'],
     companies:['General Electric','Unilever','Siemens','Alphabet'],
@@ -2460,7 +3140,12 @@ const LEARNING_PATHWAYS = [
     matchKeys:{functions:['Executive & Leadership'], industries:[], skills:['Leadership','Communication','Public Speaking'] } },
   { dim:'Industry', category:'SaaS & Enterprise Software',
     coreSkills:['Product-Led Growth (PLG)','Churn Reduction','DevOps Architecture','ARR Growth'],
-    courses:['Product Faculty APM + CXL Growth Marketing Minidegree + AWS Certified Solutions Architect'],
+    courses:['Product Faculty APM','CXL Growth Marketing Minidegree','AWS Certified Solutions Architect'],
+    certTracks:[
+      {level:'foundation', name:'AWS Cloud Practitioner + HubSpot / Product-led basics', provider:'AWS / HubSpot', time:'3–5 weeks', focus:'Cloud + PLG vocabulary used across SaaS GTM teams.'},
+      {level:'intermediate', name:'Product Faculty APM or Product School CPM', provider:'Product Faculty / Product School', time:'6–10 weeks', focus:'SaaS product process, activation, and retention levers.'},
+      {level:'advanced', name:'CXL Growth + AWS Solutions Architect Associate', provider:'CXL / AWS', time:'3–5 months', focus:'Growth systems + technical credibility for product-led SaaS.'}
+    ],
     books:['Product-Led Growth (Bush)','Lean Startup (Ries)'],
     authors:['Wes Bush','Eric Ries'],
     companies:['Salesforce','Adobe','Zoom','ServiceNow','HubSpot'],
@@ -2468,7 +3153,12 @@ const LEARNING_PATHWAYS = [
     matchKeys:{functions:['Engineering & Technology','Product & Design','Sales & Business Development'], industries:['Technology / IT'], skills:['AWS','Product Strategy','Sales'] } },
   { dim:'Industry', category:'FinTech & Digital Banking',
     coreSkills:['Quantitative Risk','Blockchain Compliance','Algorithmic Financial Modeling'],
-    courses:['CFA Institute Digital Hub + Wharton Quantitative Finance Certificate + CISSP'],
+    courses:['CFA Institute Digital Hub','Wharton Quantitative Finance Certificate','CISSP'],
+    certTracks:[
+      {level:'foundation', name:'CFI FMVA or CFA Level I', provider:'CFI / CFA Institute', time:'3–6 months', focus:'Modeling and markets foundation used in FinTech product & risk roles.'},
+      {level:'intermediate', name:'Wharton Quantitative Finance Certificate', provider:'Wharton', time:'3–4 months', focus:'Quant methods, derivatives, and risk for digital finance products.'},
+      {level:'advanced', name:'CISSP or GARP FRM + blockchain compliance modules', provider:'(ISC)² / GARP', time:'4–8 months', focus:'Security and risk leadership for regulated digital banking.'}
+    ],
     books:['The Business of Venture Capital','Mastering Bitcoin'],
     authors:['Andreas Antonopoulos','Andrew Metrick'],
     companies:['Stripe','Revolut','Adyen','Block','Plaid'],
@@ -2476,7 +3166,12 @@ const LEARNING_PATHWAYS = [
     matchKeys:{functions:['Finance & Accounting','Data & AI'], industries:['Finance & Banking'], skills:['Financial Modeling','Cybersecurity','Machine Learning'] } },
   { dim:'Industry', category:'Healthcare & Pharma',
     coreSkills:['Agile Project Management','Regulatory Compliance','Tech-Adjacent Data Analysis'],
-    courses:['PMI-PMP Certification + Harvard VPAL Data Science Certificate'],
+    courses:['PMI-PMP Certification','Harvard VPAL Data Science Certificate'],
+    certTracks:[
+      {level:'foundation', name:'Lean Six Sigma Green Belt or CAPM', provider:'ASQ / PMI', time:'4–8 weeks', focus:'Process discipline valued in clinical ops and health-tech delivery.'},
+      {level:'intermediate', name:'PMI PMP + intro regulatory (GxP) awareness', provider:'PMI / various', time:'3–5 months', focus:'Delivery leadership in regulated environments.'},
+      {level:'advanced', name:'Harvard VPAL Data Science + domain cert (e.g. clinical research)', provider:'Harvard / ACR', time:'4–8 months', focus:'Data + domain depth for digital health and pharma analytics roles.'}
+    ],
     books:['Bad Blood','The Innovator\'s Prescription'],
     authors:['Clayton Christensen','Eric Topol'],
     companies:['Pfizer','Johnson & Johnson','Novartis','Roche'],
@@ -2484,7 +3179,12 @@ const LEARNING_PATHWAYS = [
     matchKeys:{functions:['Healthcare','Data & AI','Operations & Supply Chain'], industries:['Healthcare & Pharma','Biotechnology'], skills:['Project Management','Data Analysis','Agile / Scrum'] } },
   { dim:'Industry', category:'Logistics & Retail',
     coreSkills:['Operational Excellence','Multi-Channel Logistics','Inventory Scale Management'],
-    courses:['Lean Six Sigma Black Belt + ASCM CSCP Track + MITx Supply Chain MicroMasters'],
+    courses:['Lean Six Sigma Black Belt','ASCM CSCP','MITx Supply Chain MicroMasters'],
+    certTracks:[
+      {level:'foundation', name:'Lean Six Sigma Green Belt', provider:'ASQ / IASSC', time:'6–10 weeks', focus:'Waste reduction and process control for warehouses and stores.'},
+      {level:'intermediate', name:'ASCM CSCP or CPIM module', provider:'ASCM', time:'4–6 months', focus:'End-to-end supply chain and inventory planning.'},
+      {level:'advanced', name:'MITx Supply Chain MicroMasters + Black Belt', provider:'MIT / ASQ', time:'8–14 months', focus:'Analytics-driven, resilient retail & logistics systems.'}
+    ],
     books:['The Toyota Way','Retail Analytics (Cox)'],
     authors:['Jeffrey Liker'],
     companies:['Amazon','Walmart','Target','Home Depot','IKEA'],
@@ -2493,6 +3193,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Geography', category:'North America (East Coast)',
     coreSkills:['Finance','Corporate Marketing','Biotech','Higher Ed Leadership'],
     courses:['Harvard VPAL Online','Wharton Online','Cornell eCornell Programs'],
+    certTracks:[
+      {level:'foundation', name:'Wharton or Cornell online fundamentals (role-matched)', provider:'Wharton / Cornell eCornell', time:'4–8 weeks', focus:'Ivy-backed signal valued by East Coast employers.'},
+      {level:'intermediate', name:'Harvard VPAL certificate in your domain', provider:'Harvard VPAL', time:'3–6 months', focus:'Domain depth with Boston/NYC network adjacency.'},
+      {level:'advanced', name:'Executive education (HBS / Wharton / Columbia short programs)', provider:'Ivy League schools', time:'1–4 weeks intensive', focus:'Senior leadership signal and peer network in finance, biotech, consulting.'}
+    ],
     books:['HBR Guides','Executive Framework Manuals'],
     authors:['Ivy League Faculty','Regional Experts'],
     companies:['Goldman Sachs','Pfizer','IBM','Boston Consulting Group'],
@@ -2501,6 +3206,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Geography', category:'North America (West Coast)',
     coreSkills:['AI Infrastructure','Cloud Architecture','Software Product Innovation'],
     courses:['Stanford Online','UC Berkeley Executive Education','Product School Digital'],
+    certTracks:[
+      {level:'foundation', name:'Product School or Google/AWS associate-level cert', provider:'Product School / AWS / Google', time:'4–8 weeks', focus:'West Coast product & cloud language.'},
+      {level:'intermediate', name:'Stanford Online or Berkeley Executive certificate', provider:'Stanford / UC Berkeley', time:'2–4 months', focus:'AI, product, or engineering leadership coursework.'},
+      {level:'advanced', name:'Stanford / Berkeley executive or specialized AI programs', provider:'Stanford / UC Berkeley', time:'1–3 months', focus:'Deep tech and product leadership credibility in the Bay Area & Seattle.'}
+    ],
     books:['The Lean Product Playbook','High Output Management'],
     authors:['Silicon Valley Executives','Stanford Faculty'],
     companies:['Google','Apple','Meta','OpenAI','Nvidia'],
@@ -2509,6 +3219,11 @@ const LEARNING_PATHWAYS = [
   { dim:'Geography', category:'Europe & UK',
     coreSkills:['Global Governance','Strategic Management','FinTech Compliance','Cross-Border Ops'],
     courses:['Oxford Saïd Online','INSEAD Digital','LSE Online Leadership Programs'],
+    certTracks:[
+      {level:'foundation', name:'LSE Online or similar EU/UK foundation certificate', provider:'LSE Online', time:'4–8 weeks', focus:'Governance, economics, and policy framing common in EU/UK roles.'},
+      {level:'intermediate', name:'INSEAD Digital / Business Strategy programs', provider:'INSEAD', time:'2–4 months', focus:'Cross-border strategy and leadership with European peer networks.'},
+      {level:'advanced', name:'Oxford Saïd Executive Leadership / specialised FinTech compliance', provider:'University of Oxford', time:'6–12 weeks', focus:'Senior leadership and regulated-industry credibility across Europe.'}
+    ],
     books:['Blue Ocean Strategy','Capital in the Twenty-First Century'],
     authors:['Thomas Piketty','INSEAD / Oxford Faculty'],
     companies:['HSBC','Unilever','Shell','SAP','Siemens'],
@@ -2561,37 +3276,60 @@ function matchLearningPathway(){
   return { pathway: best, score: bestScore, matched: true };
 }
 
+function renderCertTrackHtml(tracks, phase){
+  if(!tracks || !tracks.length) return '';
+  // Phase emphasis: 30 highlights foundation, 60 intermediate, 90 advanced — others still visible
+  const emphasize = phase==='30' ? 'foundation' : phase==='60' ? 'intermediate' : 'advanced';
+  const steps = tracks.map(t=>{
+    const active = t.level === emphasize;
+    return `<div class="cert-step" style="${active ? 'background:rgba(227,178,60,.08); margin:0 -8px; padding-left:8px; padding-right:8px; border-radius:10px;' : ''}">
+      <div class="cert-level">
+        <span class="cl-badge ${t.level}">${t.level}</span>
+        <div class="cl-time">${t.time||''}</div>
+      </div>
+      <div class="cert-body">
+        <div class="cb-name">${t.name}${active ? ' · recommended now' : ''}</div>
+        <div class="cb-provider">${t.provider||''}</div>
+        <div class="cb-focus">${t.focus||''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="pathway-card">
+    <div class="cert-track-title">🎓 Certification Track · Foundation → Intermediate → Advanced</div>
+    <div class="cert-track">${steps}</div>
+  </div>`;
+}
+
 function renderPathwayWidget(phase){
   const { pathway: p, matched } = matchLearningPathway();
   if(!p) return '';
   const phaseNotes = {
-    '30': `Days 1–30 focus: enroll in one foundational course from the list below and start the first essential book. Build the skill base before depth.`,
-    '60': `Days 31–60 focus: apply concepts from courses/books on a real project or mock case. Study one primary thought leader deeply.`,
-    '90': `Days 61–90 focus: complete a certification, align your resume toward the target Tier-1 companies, and network toward the anchor hub if relevant.`
+    '30': `Days 1–30 focus: start the Foundation cert step below and open the first essential book. Build the base before depth.`,
+    '60': `Days 31–60 focus: move into the Intermediate cert step, apply learning on a real project, and study one thought leader deeply.`,
+    '90': `Days 61–90 focus: complete or showcase the Advanced cert, align your resume toward Tier-1 companies, and network toward the anchor hub.`
   };
   const skillsChips = (p.coreSkills||[]).map(s=>`<span class="pathway-chip">${s}</span>`).join('');
   const companyChips = (p.companies||[]).map(c=>`<span class="pathway-chip">${c}</span>`).join('');
-  const courseList = (p.courses||[]).map(c=>`<div class="book-item"><b>${c}</b></div>`).join('');
   const bookList = (p.books||[]).map(b=>`<div class="book-item"><b>${b}</b></div>`).join('');
   const authorList = (p.authors||[]).map(a=>`<span class="pathway-chip">${a}</span>`).join('');
+  const certHtml = renderCertTrackHtml(p.certTracks, phase);
 
-  // Phase emphasis: 30 → courses primary, 60 → books+authors, 90 → companies+hub
   let primaryCards = '';
   if(phase === '30'){
     primaryCards = `
-      <div class="pathway-card"><div class="pc-label">Top Online Courses &amp; Certifications</div><div class="pc-body">${courseList || '—'}</div></div>
+      ${certHtml}
       <div class="pathway-card"><div class="pc-label">Core Skill Set to Build</div><div class="pc-chips">${skillsChips}</div></div>
       <div class="pathway-card"><div class="pc-label">Essential Books (start one)</div><div class="pc-body">${bookList || '—'}</div></div>`;
   } else if(phase === '60'){
     primaryCards = `
+      ${certHtml}
       <div class="pathway-card"><div class="pc-label">Essential Books &amp; References</div><div class="pc-body">${bookList || '—'}</div></div>
-      <div class="pathway-card"><div class="pc-label">Primary Authors &amp; Thought Leaders</div><div class="pc-chips">${authorList}</div></div>
-      <div class="pathway-card"><div class="pc-label">Courses to Progress</div><div class="pc-body">${courseList || '—'}</div></div>`;
+      <div class="pathway-card"><div class="pc-label">Primary Authors &amp; Thought Leaders</div><div class="pc-chips">${authorList}</div></div>`;
   } else {
     primaryCards = `
+      ${certHtml}
       <div class="pathway-card"><div class="pc-label">Target Tier-1 Companies</div><div class="pc-chips">${companyChips}</div></div>
-      <div class="pathway-card"><div class="pc-label">Anchor Global Hub</div><div class="pc-title">${p.hub || '—'}</div><div class="pc-body">Use this as a north-star for networking, conferences, and relocation signals.</div></div>
-      <div class="pathway-card"><div class="pc-label">Certifications to Showcase</div><div class="pc-body">${courseList || '—'}</div></div>`;
+      <div class="pathway-card"><div class="pc-label">Anchor Global Hub</div><div class="pc-title">${p.hub || '—'}</div><div class="pc-body">Use this as a north-star for networking, conferences, and relocation signals.</div></div>`;
   }
 
   return `<div class="pathway-block">
