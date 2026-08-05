@@ -102,6 +102,7 @@ h1,h2,h3,.display{font-family:'Fraunces',serif;}
 #screen-provider.provider-linkedin .provider-auth-logo{background:#0A66C2; color:#fff;}
 #screen-provider.provider-apple .provider-auth-logo{background:#fff; color:#000;}
 #screen-provider.provider-yahoo .provider-auth-logo{background:#6001D2; color:#fff;}
+#screen-provider.provider-github .provider-auth-logo{background:#24292f; color:#fff;}
 #screen-provider h2{font-size:19px; margin:0 0 4px; font-family:'Space Grotesk'; font-weight:700;}
 #screen-provider p{font-size:12.5px; color:#666; margin:0 0 22px;}
 #screen-provider.provider-apple p{color:rgba(255,255,255,.6);}
@@ -114,6 +115,7 @@ h1,h2,h3,.display{font-family:'Fraunces',serif;}
 #screen-provider.provider-linkedin .p-submit{background:#0A66C2;}
 #screen-provider.provider-apple .p-submit{background:#fff; color:#000;}
 #screen-provider.provider-yahoo .p-submit{background:#6001D2;}
+#screen-provider.provider-github .p-submit{background:#24292f;}
 .p-submit:disabled{opacity:.6; cursor:not-allowed;}
 .p-cancel{margin-top:16px; font-size:12.5px; color:#888; cursor:pointer; text-decoration:underline;}
 #screen-provider.provider-apple .p-cancel{color:rgba(255,255,255,.55);}
@@ -503,7 +505,8 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
       <button type="button" class="sso-btn" onclick="openProviderModal('microsoft')"><span style="color:#00A4EF;">■</span> Microsoft</button>
       <button type="button" class="sso-btn" onclick="openProviderModal('linkedin')"><span style="color:#0A66C2;">in</span> LinkedIn</button>
       <button type="button" class="sso-btn" onclick="openProviderModal('apple')"><span style="color:#fff;"></span> Apple</button>
-      <button type="button" class="sso-btn" onclick="openProviderModal('yahoo')" style="grid-column:1/-1;"><span style="color:#6001D2;">Y!</span> Yahoo</button>
+      <button type="button" class="sso-btn" onclick="openProviderModal('github')"><span style="color:#fff;">⌘</span> GitHub</button>
+      <button type="button" class="sso-btn" onclick="openProviderModal('yahoo')"><span style="color:#6001D2;">Y!</span> Yahoo</button>
     </div>
     <div class="auth-divider">or continue with username</div>
     <div class="auth-tabs">
@@ -523,6 +526,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     <div class="auth-status" id="au-status"></div>
     <button class="btn btn-gold" id="au-submit" onclick="submitAuth()">Log In</button>
     <div class="auth-divider">or</div>
+    <button class="bio-btn" id="passkeySignInBtn" onclick="startPasskeySignIn()" style="margin-bottom:8px;">🔑 Sign in with Passkey</button>
     <button class="bio-btn" onclick="startBiometricScreen()">🪪 Sign in with Face &amp; Voice ID</button>
     <div class="auth-toggle">Just exploring? <b onclick="demoLogin()">Try a demo account →</b></div>
   </div>
@@ -829,7 +833,13 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
       <div style="font-family:&#39;Fraunces&#39;; font-weight:700; font-size:16px;" id="profileName">—</div>
       <div style="font-size:12px; color:var(--ink-soft); margin-top:3px;" id="profileMeta">—</div>
     </div>
-    <div class="btn-row"><button class="btn btn-outline" onclick="logout()">Log Out</button></div>
+    <div class="btn-row" style="flex-direction:column; gap:8px;">
+      <button class="btn btn-gold" type="button" onclick="enrollPasskeyFromProfile()">🔑 Add Passkey on this device</button>
+      <button class="btn btn-outline" onclick="logout()">Log Out</button>
+    </div>
+    <div style="font-size:11px; color:var(--ink-soft); margin-top:10px; line-height:1.45; text-align:center;">
+      Passkeys use your device unlock (Face ID, Touch ID, Windows Hello). Works on HTTPS only.
+    </div>
   </div>
 </div>
 
@@ -1214,6 +1224,22 @@ function loginAs(user){
   document.getElementById('profileAvatar').textContent = initials(user.name);
   toast(`Signed in as ${user.name.split(' ')[0]}`);
   go('home');
+  // One-time soft nudge to enroll a passkey when supported and none stored yet
+  try{
+    if(webauthnSupported()){
+      const store = loadPasskeyStore();
+      const has = store.byUser && store.byUser[user.username] && store.byUser[user.username].length;
+      const nudged = sessionStorage.getItem('w3m_passkey_nudge');
+      if(!has && !nudged){
+        sessionStorage.setItem('w3m_passkey_nudge', '1');
+        setTimeout(()=>{
+          if(currentUser && currentUser.username === user.username){
+            toast('Tip: add a Passkey in Profile for 1-tap sign-in');
+          }
+        }, 1800);
+      }
+    }
+  }catch(e){}
 }
 function logout(){ currentUser=null; try{localStorage.removeItem('w3m_session');}catch(e){} go('entry'); }
 (function restoreSession(){
@@ -1256,6 +1282,11 @@ const OAUTH_CONFIG = {
      + TOKEN_EXCHANGE_URL (server; needs secret) */
   YAHOO_CLIENT_ID: '',
 
+  /* GitHub — github.com/settings/developers → OAuth Apps
+     Homepage: https://w3me.in | Callback: https://w3me.in/ (exact page URL)
+     Client ID here; Client Secret only on the token-exchange server */
+  GITHUB_CLIENT_ID: '',
+
   /* Auto-detects https://w3me.in/... when live */
   REDIRECT_URI: (typeof location !== 'undefined' ? (location.origin + location.pathname) : 'https://w3me.in/'),
 
@@ -1266,6 +1297,32 @@ const OAUTH_CONFIG = {
 };
 
 /** Resolve token exchange endpoint (LinkedIn / Yahoo). */
+
+/** Refresh access token via server (rotation + reuse detection). */
+async function refreshOAuthTokens(provider, refreshToken){
+  const base = getTokenExchangeUrl();
+  if(!base) throw new Error('Token exchange URL not configured');
+  const url = base.replace(/\/exchange\/?$/, '/refresh');
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ provider, refresh_token: refreshToken })
+  });
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error || ('Refresh failed (' + r.status + ')'));
+  if(data.tokens){
+    try{
+      sessionStorage.setItem('w3m_oauth_tokens', JSON.stringify({
+        provider,
+        tokens: data.tokens,
+        rotation: data.rotation || null,
+        savedAt: Date.now()
+      }));
+    }catch(e){}
+  }
+  return data;
+}
+
 function getTokenExchangeUrl(){
   const configured = (OAUTH_CONFIG.TOKEN_EXCHANGE_URL || '').trim();
   if(configured) return configured;
@@ -1286,7 +1343,8 @@ const PROVIDERS = {
   microsoft: { label:'Microsoft', icon:'M',  color:'#2564CB', sample:'you@outlook.com' },
   linkedin:  { label:'LinkedIn',  icon:'in', color:'#0A66C2', sample:'you@company.com' },
   apple:     { label:'Apple',     icon:'',   color:'#000000', sample:'you@icloud.com' },
-  yahoo:     { label:'Yahoo',     icon:'Y!', color:'#6001D2', sample:'you@yahoo.com' }
+  yahoo:     { label:'Yahoo',     icon:'Y!', color:'#6001D2', sample:'you@yahoo.com' },
+  github:    { label:'GitHub',    icon:'⌘',  color:'#24292f', sample:'you@users.noreply.github.com' }
 };
 let currentProvider = 'google';
 let ssoInFlight = false;
@@ -1303,6 +1361,7 @@ function isMicrosoftOAuthConfigured(){ return !!cfgId('MICROSOFT_CLIENT_ID'); }
 function isLinkedInOAuthConfigured(){ return !!cfgId('LINKEDIN_CLIENT_ID'); }
 function isAppleOAuthConfigured(){ return !!cfgId('APPLE_CLIENT_ID'); }
 function isYahooOAuthConfigured(){ return !!cfgId('YAHOO_CLIENT_ID'); }
+function isGitHubOAuthConfigured(){ return !!cfgId('GITHUB_CLIENT_ID'); }
 
 /* ---- PKCE helpers (LinkedIn / Yahoo) ---- */
 function b64url(buf){
@@ -1489,6 +1548,7 @@ function goProviderShell(provider){
   const logo = document.getElementById('paLogo');
   if(provider==='apple') logo.innerHTML = '';
   else if(provider==='yahoo') logo.textContent = 'Y!';
+  else if(provider==='github') logo.textContent = 'GH';
   else logo.textContent = p.icon || p.label.charAt(0);
   document.getElementById('paTitle').textContent = 'Sign in with ' + p.label;
   document.getElementById('paSub').textContent = 'to continue to What\'s Wrong With Me?';
@@ -1502,13 +1562,15 @@ function openDemoProvider(provider){
 function openProviderModal(provider, forceDemo){
   if(!PROVIDERS[provider]){ toast('Unknown sign-in provider'); return; }
 
-  // Real OAuth paths when configured
+  // Real OAuth: Google / Microsoft / LinkedIn / Yahoo → Authorization Code + PKCE
+  // Apple → Sign in with Apple JS (platform-specific; not standard OAuth PKCE)
   if(!forceDemo){
-    if(provider === 'google' && isGoogleOAuthConfigured()){ startRealGoogleSignIn(); return; }
-    if(provider === 'microsoft' && isMicrosoftOAuthConfigured()){ startRealMicrosoftSignIn(); return; }
+    if(provider === 'google' && isGoogleOAuthConfigured()){ startPkceSignIn('google'); return; }
+    if(provider === 'microsoft' && isMicrosoftOAuthConfigured()){ startPkceSignIn('microsoft'); return; }
+    if(provider === 'linkedin' && isLinkedInOAuthConfigured()){ startPkceSignIn('linkedin'); return; }
+    if(provider === 'yahoo' && isYahooOAuthConfigured()){ startPkceSignIn('yahoo'); return; }
+    if(provider === 'github' && isGitHubOAuthConfigured()){ startPkceSignIn('github'); return; }
     if(provider === 'apple' && isAppleOAuthConfigured()){ startRealAppleSignIn(); return; }
-    if(provider === 'linkedin' && isLinkedInOAuthConfigured()){ startRealLinkedInSignIn(); return; }
-    if(provider === 'yahoo' && isYahooOAuthConfigured()){ startRealYahooSignIn(); return; }
   }
 
   currentProvider = provider;
@@ -1528,7 +1590,8 @@ function openProviderModal(provider, forceDemo){
     microsoft: 'Azure Portal → App registrations → New registration (SPA) → add redirect URI (Single-page application) matching this page → paste Application (client) ID into OAUTH_CONFIG.MICROSOFT_CLIENT_ID',
     apple: 'Apple Developer → Identifiers → Services ID → enable Sign in with Apple → configure domains & return URLs → paste Services ID into OAUTH_CONFIG.APPLE_CLIENT_ID',
     linkedin: 'LinkedIn Developers → My Apps → Auth → add redirect URL → paste Client ID into OAUTH_CONFIG.LINKEDIN_CLIENT_ID. Token exchange needs TOKEN_EXCHANGE_URL (server) because LinkedIn requires a client secret.',
-    yahoo: 'Yahoo Developer Network → Create app → set Redirect URI → paste Client ID (Consumer Key) into OAUTH_CONFIG.YAHOO_CLIENT_ID. Token exchange needs TOKEN_EXCHANGE_URL (server).'
+    yahoo: 'Yahoo Developer Network → Create app → set Redirect URI → paste Client ID (Consumer Key) into OAUTH_CONFIG.YAHOO_CLIENT_ID. Token exchange needs TOKEN_EXCHANGE_URL (server).',
+    github: 'GitHub → Settings → Developer settings → OAuth Apps → New OAuth App → Homepage https://w3me.in → Authorization callback URL https://w3me.in/ → paste Client ID into OAUTH_CONFIG.GITHUB_CLIENT_ID. Client Secret only on the exchange server (GITHUB_CLIENT_SECRET).'
   };
 
   if(!forceDemo && setupHints[provider]){
@@ -1660,12 +1723,86 @@ async function startRealAppleSignIn(){
 }
 
 /* ---- LinkedIn / Yahoo via authorize popup + optional token exchange ---- */
-async function startOAuthCodePopup(provider, authBase, clientId, scope){
+/* ---- Unified Authorization Code + PKCE for Google, Microsoft, LinkedIn, Yahoo ---- */
+const PKCE_PROVIDERS = {
+  google: {
+    authBase: 'https://accounts.google.com/o/oauth2/v2/auth',
+    clientKey: 'GOOGLE_CLIENT_ID',
+    scope: 'openid email profile',
+    extra: { access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true' }
+  },
+  microsoft: {
+    authBase: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    clientKey: 'MICROSOFT_CLIENT_ID',
+    scope: 'openid profile email User.Read offline_access',
+    extra: { response_mode: 'query', prompt: 'select_account' }
+  },
+  linkedin: {
+    authBase: 'https://www.linkedin.com/oauth/v2/authorization',
+    clientKey: 'LINKEDIN_CLIENT_ID',
+    scope: 'openid profile email',
+    extra: {}
+  },
+  yahoo: {
+    authBase: 'https://api.login.yahoo.com/oauth2/request_auth',
+    clientKey: 'YAHOO_CLIENT_ID',
+    scope: 'openid profile email',
+    extra: { language: 'en-us' }
+  },
+  github: {
+    authBase: 'https://github.com/login/oauth/authorize',
+    clientKey: 'GITHUB_CLIENT_ID',
+    scope: 'read:user user:email',
+    extra: { allow_signup: 'true' }
+  }
+};
+
+function getPkceStartUrl(){
+  const exchange = getTokenExchangeUrl();
+  if(!exchange) return '';
+  return exchange.replace(/\/exchange\/?$/, '/pkce/start');
+}
+
+async function registerPkceOnServer({ state, provider, challenge, redirect }){
+  const startUrl = getPkceStartUrl();
+  if(!startUrl) return false;
+  try{
+    const r = await fetch(startUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        state,
+        provider,
+        code_challenge: challenge,
+        code_challenge_method: 'S256',
+        redirect_uri: redirect
+      })
+    });
+    if(!r.ok){
+      const data = await r.json().catch(()=>({}));
+      console.warn('PKCE start registration failed', data.error || r.status);
+      return false;
+    }
+    return true;
+  }catch(e){
+    console.warn('PKCE start unreachable — server will validate verifier+challenge on exchange only', e.message);
+    return false;
+  }
+}
+
+async function startOAuthCodePopup(provider, authBase, clientId, scope, extraParams){
   const verifier = randomVerifier();
   const challenge = await pkceChallenge(verifier);
   const state = b64url(crypto.getRandomValues(new Uint8Array(16)));
-  sessionStorage.setItem('w3m_oauth_pkce', JSON.stringify({ provider, verifier, state }));
   const redirect = OAUTH_CONFIG.REDIRECT_URI || (window.location.origin + window.location.pathname);
+
+  // Server-side PKCE bind (state → challenge) for replay protection
+  await registerPkceOnServer({ state, provider, challenge, redirect });
+
+  sessionStorage.setItem('w3m_oauth_pkce', JSON.stringify({
+    provider, verifier, challenge, state, redirect, ts: Date.now()
+  }));
+
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
@@ -1675,15 +1812,13 @@ async function startOAuthCodePopup(provider, authBase, clientId, scope){
     code_challenge: challenge,
     code_challenge_method: 'S256'
   });
-  // LinkedIn uses slightly different param names historically; PKCE supported on newer apps
-  if(provider === 'linkedin'){
-    params.delete('code_challenge'); params.delete('code_challenge_method');
-    // LinkedIn classic still works with code only; store verifier for exchange proxy if added later
+  if(extraParams){
+    Object.keys(extraParams).forEach(k=>{ if(extraParams[k] != null) params.set(k, extraParams[k]); });
   }
   const url = authBase + '?' + params.toString();
-  const w = 520, h = 640;
-  const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
-  const popup = window.open(url, 'w3m_oauth_' + provider, `width=${w},height=${h},left=${left},top=${top}`);
+  const w = 520, h = 680;
+  const left = Math.max(0, (screen.width - w) / 2), top = Math.max(0, (screen.height - h) / 2);
+  const popup = window.open(url, 'w3m_oauth_' + provider, `width=${w},height=${h},left=${left},top=${top},scrollbars=yes`);
   if(!popup){ throw new Error('Popup blocked — allow popups for this site'); }
 
   return new Promise((resolve, reject)=>{
@@ -1703,15 +1838,22 @@ async function startOAuthCodePopup(provider, authBase, clientId, scope){
           const st = u.searchParams.get('state');
           const saved = JSON.parse(sessionStorage.getItem('w3m_oauth_pkce') || '{}');
           if(saved.state && st && saved.state !== st){ reject(new Error('OAuth state mismatch')); return; }
-          resolve({ code, verifier: saved.verifier, provider });
+          if(!code){ reject(new Error('No authorization code returned')); return; }
+          resolve({
+            code,
+            verifier: saved.verifier,
+            challenge: saved.challenge,
+            state: saved.state || st,
+            provider
+          });
         }
-      }catch(e){ /* cross-origin until redirect returns */ }
-    }, 400);
-    setTimeout(()=>{ clearInterval(timer); try{ popup.close(); }catch(e){} reject(new Error('Sign-in timed out')); }, 120000);
+      }catch(e){ /* cross-origin until redirect returns to our origin */ }
+    }, 350);
+    setTimeout(()=>{ clearInterval(timer); try{ popup.close(); }catch(e){} reject(new Error('Sign-in timed out')); }, 180000);
   });
 }
 
-async function exchangeCodeForProfile({ provider, code, verifier }){
+async function exchangeCodeForProfile({ provider, code, verifier, challenge, state }){
   const url = getTokenExchangeUrl();
   if(!url){
     throw new Error('Token exchange URL missing. Deploy /api/oauth/exchange or set OAUTH_CONFIG.TOKEN_EXCHANGE_URL.');
@@ -1726,6 +1868,9 @@ async function exchangeCodeForProfile({ provider, code, verifier }){
         provider,
         code,
         code_verifier: verifier || '',
+        code_challenge: challenge || '',
+        code_challenge_method: 'S256',
+        state: state || '',
         redirect_uri: redirect
       })
     });
@@ -1743,59 +1888,60 @@ async function exchangeCodeForProfile({ provider, code, verifier }){
   return {
     email: data.email,
     name: data.name || data.email.split('@')[0],
-    picture: data.picture || ''
+    picture: data.picture || '',
+    tokens: data.tokens || null
   };
 }
 
-async function startRealLinkedInSignIn(){
+async function startPkceSignIn(provider){
+  const meta = PKCE_PROVIDERS[provider];
+  if(!meta){ toast('Unsupported provider'); return; }
+  const clientId = cfgId(meta.clientKey);
+  if(!clientId){
+    openDemoProvider(provider);
+    return;
+  }
   ssoInFlight = true;
-  toast('Opening LinkedIn…');
+  const label = (PROVIDERS[provider] && PROVIDERS[provider].label) || provider;
+  toast('Opening ' + label + ' (PKCE)…');
   try{
-    const { code, verifier } = await startOAuthCodePopup(
-      'linkedin',
-      'https://www.linkedin.com/oauth/v2/authorization',
-      cfgId('LINKEDIN_CLIENT_ID'),
-      'openid profile email'
+    const { code, verifier, challenge, state } = await startOAuthCodePopup(
+      provider,
+      meta.authBase,
+      clientId,
+      meta.scope,
+      meta.extra || {}
     );
-    const profile = await exchangeCodeForProfile({ provider: 'linkedin', code, verifier });
+    const profile = await exchangeCodeForProfile({ provider, code, verifier, challenge, state });
+    if (profile.tokens) {
+      try {
+        sessionStorage.setItem('w3m_oauth_tokens', JSON.stringify({
+          provider,
+          tokens: profile.tokens,
+          savedAt: Date.now()
+        }));
+      } catch (e) {}
+    }
     completeSsoLogin({
-      name: profile.name || profile.given_name || 'LinkedIn User',
+      name: profile.name || label + ' User',
       email: profile.email,
-      provider: 'linkedin',
+      provider,
       picture: profile.picture || ''
     });
   }catch(err){
-    console.error('LinkedIn SSO', err);
+    console.error(label + ' PKCE SSO', err);
     ssoInFlight = false;
-    toast(err.message || 'LinkedIn sign-in failed');
-    openDemoProvider('linkedin');
+    toast(err.message || (label + ' sign-in failed'));
+    openDemoProvider(provider);
   }
 }
 
-async function startRealYahooSignIn(){
-  ssoInFlight = true;
-  toast('Opening Yahoo…');
-  try{
-    const { code, verifier } = await startOAuthCodePopup(
-      'yahoo',
-      'https://api.login.yahoo.com/oauth2/request_auth',
-      cfgId('YAHOO_CLIENT_ID'),
-      'openid profile email'
-    );
-    const profile = await exchangeCodeForProfile({ provider: 'yahoo', code, verifier });
-    completeSsoLogin({
-      name: profile.name || profile.given_name || 'Yahoo User',
-      email: profile.email,
-      provider: 'yahoo',
-      picture: profile.picture || ''
-    });
-  }catch(err){
-    console.error('Yahoo SSO', err);
-    ssoInFlight = false;
-    toast(err.message || 'Yahoo sign-in failed');
-    openDemoProvider('yahoo');
-  }
-}
+/* Back-compat aliases */
+function startRealGoogleSignIn(){ return startPkceSignIn('google'); }
+function startRealMicrosoftSignIn(){ return startPkceSignIn('microsoft'); }
+function startRealLinkedInSignIn(){ return startPkceSignIn('linkedin'); }
+function startRealYahooSignIn(){ return startPkceSignIn('yahoo'); }
+function startRealGitHubSignIn(){ return startPkceSignIn('github'); }
 
 function cancelProviderAuth(){
   ssoInFlight = false;
@@ -1858,6 +2004,226 @@ function submitProviderAuth(){
     }
   }, 600);
 }
+
+/* ================= WEBAUTHN / PASSKEYS =================
+   Passwordless sign-in via platform authenticators (Touch ID, Windows Hello,
+   phone passkeys). Requires HTTPS (or localhost). Credentials are device-bound.
+   Production: prefer server-generated challenges at /api/webauthn/* ;
+   client-side challenges work for single-device enroll on this SPA. */
+const PASSKEY_RP_NAME = 'What\'s Wrong With Me?';
+const PASSKEY_STORAGE_KEY = 'w3m_passkeys_v1';
+
+function webauthnSupported(){
+  return !!(window.PublicKeyCredential
+    && navigator.credentials
+    && typeof navigator.credentials.create === 'function'
+    && typeof navigator.credentials.get === 'function'
+    && window.isSecureContext);
+}
+
+function b64urlToBuf(b64url){
+  const pad = '='.repeat((4 - (b64url.length % 4)) % 4);
+  const b64 = (b64url + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64);
+  const buf = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
+  return buf.buffer;
+}
+function bufToB64url(buf){
+  const bytes = buf instanceof ArrayBuffer ? new Uint8Array(buf) : new Uint8Array(buf.buffer || buf);
+  let s = '';
+  bytes.forEach(b => s += String.fromCharCode(b));
+  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function randomChallenge(len){
+  const a = new Uint8Array(len || 32);
+  crypto.getRandomValues(a);
+  return a.buffer;
+}
+
+function loadPasskeyStore(){
+  try{
+    return JSON.parse(localStorage.getItem(PASSKEY_STORAGE_KEY) || '{"byCred":{},"byUser":{}}');
+  }catch(e){
+    return { byCred:{}, byUser:{} };
+  }
+}
+function savePasskeyStore(store){
+  try{ localStorage.setItem(PASSKEY_STORAGE_KEY, JSON.stringify(store)); }catch(e){}
+}
+
+function passkeyRpId(){
+  try{
+    const h = location.hostname;
+    if(!h || h === 'localhost' || h === '127.0.0.1') return h || 'localhost';
+    return h;
+  }catch(e){ return 'w3me.in'; }
+}
+
+async function registerPasskeyForUser(user){
+  if(!webauthnSupported()){
+    toast('Passkeys need HTTPS and a supported browser');
+    return false;
+  }
+  if(!user || !user.username){
+    toast('Sign in first, then add a passkey');
+    return false;
+  }
+  const userId = user.username;
+  const challenge = randomChallenge(32);
+  const userIdBytes = new TextEncoder().encode(userId);
+
+  const publicKey = {
+    challenge,
+    rp: { name: PASSKEY_RP_NAME, id: passkeyRpId() },
+    user: {
+      id: userIdBytes,
+      name: user.email || user.username,
+      displayName: user.name || user.username
+    },
+    pubKeyCredParams: [
+      { type: 'public-key', alg: -7 },   // ES256
+      { type: 'public-key', alg: -257 }  // RS256
+    ],
+    authenticatorSelection: {
+      authenticatorAttachment: 'platform',
+      userVerification: 'preferred',
+      residentKey: 'preferred',
+      requireResidentKey: false
+    },
+    timeout: 120000,
+    attestation: 'none',
+    excludeCredentials: listExcludeCredentials(userId)
+  };
+
+  try{
+    const cred = await navigator.credentials.create({ publicKey });
+    if(!cred){ toast('Passkey creation cancelled'); return false; }
+    const credId = bufToB64url(cred.rawId);
+    const store = loadPasskeyStore();
+    store.byCred[credId] = {
+      username: userId,
+      name: user.name || userId,
+      email: user.email || '',
+      createdAt: new Date().toISOString(),
+      rpId: passkeyRpId(),
+      transports: (cred.response && cred.response.getTransports) ? cred.response.getTransports() : []
+    };
+    if(!store.byUser[userId]) store.byUser[userId] = [];
+    if(!store.byUser[userId].includes(credId)) store.byUser[userId].push(credId);
+    savePasskeyStore(store);
+    try{ localStorage.setItem('w3m_biometric_user', userId); }catch(e){}
+    toast('Passkey saved on this device');
+    return true;
+  }catch(err){
+    console.error('WebAuthn register', err);
+    if(err && (err.name === 'NotAllowedError' || err.name === 'AbortError')){
+      toast('Passkey registration cancelled');
+    } else if(err && err.name === 'InvalidStateError'){
+      toast('A passkey already exists for this account on this device');
+    } else {
+      toast('Could not create passkey — use HTTPS and a supported device');
+    }
+    return false;
+  }
+}
+
+function listExcludeCredentials(username){
+  const store = loadPasskeyStore();
+  const ids = (store.byUser && store.byUser[username]) || [];
+  return ids.map(id => ({
+    type: 'public-key',
+    id: b64urlToBuf(id)
+  }));
+}
+
+function listAllowCredentials(){
+  const store = loadPasskeyStore();
+  return Object.keys(store.byCred || {}).map(id => {
+    const meta = store.byCred[id] || {};
+    const item = { type: 'public-key', id: b64urlToBuf(id) };
+    if(meta.transports && meta.transports.length) item.transports = meta.transports;
+    return item;
+  });
+}
+
+async function startPasskeySignIn(){
+  if(!webauthnSupported()){
+    toast('Passkeys require HTTPS (w3me.in) and a modern browser');
+    return;
+  }
+  const allow = listAllowCredentials();
+  if(!allow.length){
+    toast('No passkey on this device yet — sign in, then add one from your profile');
+    return;
+  }
+
+  const challenge = randomChallenge(32);
+  const publicKey = {
+    challenge,
+    rpId: passkeyRpId(),
+    timeout: 120000,
+    userVerification: 'preferred',
+    allowCredentials: allow
+  };
+
+  try{
+    toast('Waiting for passkey…');
+    const assertion = await navigator.credentials.get({ publicKey });
+    if(!assertion){ toast('Passkey sign-in cancelled'); return; }
+    const credId = bufToB64url(assertion.rawId);
+    const store = loadPasskeyStore();
+    const meta = store.byCred[credId];
+    if(!meta || !meta.username){
+      toast('Unknown passkey — register again after signing in');
+      return;
+    }
+    let user = DB.users[meta.username];
+    if(!user){
+      user = {
+        name: meta.name || meta.username,
+        email: meta.email || '',
+        username: meta.username,
+        password: '',
+        role: 'Not specified',
+        location: 'Not set',
+        passkey: true
+      };
+      DB.users[meta.username] = user;
+      if(user.email) DB.byEmail[user.email] = meta.username;
+      saveDB();
+    }
+    user.passkeyLastUsed = new Date().toISOString();
+    saveDB();
+    loginAs(user);
+  }catch(err){
+    console.error('WebAuthn assert', err);
+    if(err && (err.name === 'NotAllowedError' || err.name === 'AbortError')){
+      toast('Passkey sign-in cancelled');
+    } else {
+      toast('Passkey failed — try another sign-in method');
+    }
+  }
+}
+
+async function enrollPasskeyFromProfile(){
+  if(!currentUser){
+    toast('Sign in first to add a passkey');
+    go('entry');
+    return;
+  }
+  await registerPasskeyForUser(currentUser);
+}
+
+(function initPasskeyUi(){
+  try{
+    const btn = document.getElementById('passkeySignInBtn');
+    if(btn && !webauthnSupported()){
+      btn.style.opacity = '0.55';
+      btn.title = 'Passkeys need HTTPS and a supported browser/device';
+    }
+  }catch(e){}
+})();
 
 /* ================= BIOMETRIC (FACE + VOICE) LOGIN ================= */
 let bioStream = null, bioTimer = null;
