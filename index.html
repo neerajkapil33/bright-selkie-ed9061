@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0044)file:///C:/Users/Neeraj/Downloads/w3m_3.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <title>W3M — What's Wrong With Me?</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
@@ -381,6 +381,19 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 .book-block h4{display:flex; align-items:center; gap:6px; font-size:12px; margin:0 0 8px; font-family:'Space Grotesk'; font-weight:700; color:var(--navy-deep);}
 .book-item{font-size:11px; color:var(--ink-soft); padding:4px 0; line-height:1.55;}
 .book-item b{color:var(--ink);}
+/* ---- personalized learning pathway widget ---- */
+.pathway-block{margin-top:16px; padding-top:14px; border-top:1px dashed var(--line);}
+.pathway-block h4{display:flex; align-items:center; gap:6px; font-size:12px; margin:0 0 8px; font-family:'Space Grotesk'; font-weight:700; color:var(--navy-deep);}
+.pathway-match-badge{display:inline-flex; align-items:center; gap:5px; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; padding:3px 9px; border-radius:20px; background:rgba(76,143,107,.14); color:var(--good); margin-bottom:10px;}
+.pathway-match-badge.sample{background:rgba(198,147,42,.12); color:var(--accent);}
+.pathway-card{background:var(--bg); border:1px solid var(--line); border-radius:var(--r-sm); padding:12px 13px; margin-bottom:10px;}
+.pathway-card:last-child{margin-bottom:0;}
+.pathway-card .pc-label{font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--accent); margin-bottom:4px;}
+.pathway-card .pc-title{font-size:12.5px; font-weight:700; color:var(--ink); margin-bottom:3px; line-height:1.35;}
+.pathway-card .pc-body{font-size:11px; color:var(--ink-soft); line-height:1.5;}
+.pathway-card .pc-chips{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;}
+.pathway-chip{background:rgba(19,42,82,.06); border:1px solid var(--line); border-radius:20px; padding:3px 9px; font-size:10px; font-weight:600; color:var(--ink);}
+.pathway-phase-note{font-size:10.5px; color:var(--ink-soft); line-height:1.5; margin:0 0 10px; padding:8px 10px; background:rgba(227,178,60,.08); border:1px solid rgba(227,178,60,.25); border-radius:10px;}
 
 /* ---- payment screen ---- */
 #screen-payment{padding-bottom:100px;}
@@ -420,15 +433,15 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
   <div class="brand-hero" style="padding-top:64px;">
     <div class="globe-ring">
       <div class="globe"></div>
-      <canvas id="globeCanvas" class="globe-canvas"></canvas>
-      <div class="globe-labels" id="globeLabels"></div>
+      <canvas id="globeCanvas" class="globe-canvas" width="255" height="255"></canvas>
+      <div class="globe-labels" id="globeLabels"><div class="globe-label" style="left: 126.898px; top: 23.0729px; opacity: 0.57;">USA</div><div class="globe-label" style="left: 109.943px; top: 9.1487px; opacity: 0.25;">CANADA</div><div class="globe-label" style="left: 3.82804px; top: 96.8812px; opacity: 0;">BRAZIL</div><div class="globe-label" style="opacity: 0; left: 45.2844px; top: 13.199px;">UK</div><div class="globe-label" style="opacity: 0; left: 35.1383px; top: 19.8256px;">FRANCE</div><div class="globe-label" style="opacity: 0; left: 40.7049px; top: 15.923px;">GERMANY</div><div class="globe-label" style="opacity: 0; left: 4.59831px; top: 68.7496px;">NIGERIA</div><div class="globe-label" style="opacity: 0; left: 13.4742px; top: 44.78px;">EGYPT</div><div class="globe-label" style="opacity: 0; left: 12.5063px; top: 123.352px;">S. AFRICA</div><div class="globe-label" style="opacity: 0; left: 57.6884px; top: 7.61956px;">RUSSIA</div><div class="globe-label" style="opacity: 0; left: 10.7555px; top: 50.1495px;">INDIA</div><div class="globe-label" style="opacity: 0; left: 21.3187px; top: 33.2555px;">CHINA</div><div class="globe-label" style="opacity: 0; left: 23.4359px; top: 30.802px;">JAPAN</div><div class="globe-label" style="opacity: 0; left: 2.96308px; top: 85.0623px;">INDONESIA</div><div class="globe-label" style="opacity: 0; left: 9.93803px; top: 118.07px;">AUSTRALIA</div><div class="globe-label" style="left: 130.454px; top: 39.5863px; opacity: 0.97;">MEXICO</div></div>
     </div>
     <div class="eyebrow" style="margin-top:22px;">Career Intelligence, With a Human Touch</div>
     <h1>What's Wrong With Me?</h1>
     <p>Talk to us your way — type it out, or sit for a real video interview — and Neeraj's voice will guide you, step by step, to a full career report in minutes.</p>
   </div>
   <div class="auth-stack">
-    <button class="btn btn-gold" onclick="go('consent')">Get Started →</button>
+    <button class="btn btn-gold" onclick="go(&#39;consent&#39;)">Get Started →</button>
     <button class="btn btn-outline" style="margin-top:10px; border-color:rgba(255,255,255,.35); color:#fff;" onclick="startAutoDemo()">▶ Watch Auto Demo</button>
     <div style="text-align:center; font-size:10.5px; color:rgba(255,255,255,.45); margin-top:8px;">Sit back — a guided walkthrough runs the whole app for you.</div>
   </div>
@@ -448,11 +461,11 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
         Everything you share is used purely to build your report — nothing more.
       </p>
       <label style="display:flex; gap:9px; align-items:flex-start; font-size:12.5px; color:rgba(255,255,255,.75); cursor:pointer;">
-        <input type="checkbox" id="consentBox" style="margin-top:2px;" onchange="document.getElementById('consentContinue').disabled = !this.checked">
+        <input type="checkbox" id="consentBox" style="margin-top:2px;" onchange="document.getElementById(&#39;consentContinue&#39;).disabled = !this.checked">
         I understand what this session may record and analyze, and I consent to proceed.
       </label>
     </div>
-    <button class="btn btn-gold" id="consentContinue" disabled onclick="go('signon')" style="margin-top:14px;">Agree &amp; Continue →</button>
+    <button class="btn btn-gold" id="consentContinue" disabled="" onclick="go(&#39;signon&#39;)" style="margin-top:14px;">Agree &amp; Continue →</button>
   </div>
 </div>
 
@@ -465,15 +478,15 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
   </div>
   <div class="auth-stack">
     <div class="sso-grid">
-      <button class="sso-btn" onclick="openProviderModal('google')">🔵 Google</button>
-      <button class="sso-btn" onclick="openProviderModal('microsoft')">🟦 Microsoft</button>
-      <button class="sso-btn" onclick="openProviderModal('linkedin')">💼 LinkedIn</button>
-      <button class="sso-btn" onclick="openProviderModal('apple')">⬛ Apple</button>
+      <button class="sso-btn" onclick="openProviderModal(&#39;google&#39;)">🔵 Google</button>
+      <button class="sso-btn" onclick="openProviderModal(&#39;microsoft&#39;)">🟦 Microsoft</button>
+      <button class="sso-btn" onclick="openProviderModal(&#39;linkedin&#39;)">💼 LinkedIn</button>
+      <button class="sso-btn" onclick="openProviderModal(&#39;apple&#39;)">⬛ Apple</button>
     </div>
     <div class="auth-divider">or continue with username</div>
     <div class="auth-tabs">
-      <button type="button" class="auth-tab active" id="tabLogin" onclick="setAuthTab('login')">Log In</button>
-      <button type="button" class="auth-tab" id="tabSignup" onclick="setAuthTab('signup')">Create Account</button>
+      <button type="button" class="auth-tab active" id="tabLogin" onclick="setAuthTab(&#39;login&#39;)">Log In</button>
+      <button type="button" class="auth-tab" id="tabSignup" onclick="setAuthTab(&#39;signup&#39;)">Create Account</button>
     </div>
     <div id="loginFields">
       <input class="field" id="login-username" placeholder="Username">
@@ -512,7 +525,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
   <div class="app-header"><div class="icon-btn" onclick="cancelBiometric()">←</div><div class="h-title">Face &amp; Voice ID</div><div style="width:36px;"></div></div>
   <div class="content" style="text-align:center; padding-top:20px;">
     <div class="card">
-      <div class="scan-ring" id="scanRing"><video id="bioVideo" autoplay playsinline muted></video></div>
+      <div class="scan-ring" id="scanRing"><video id="bioVideo" autoplay="" playsinline="" muted=""></video></div>
       <div class="bio-wave" id="bioWave" style="display:none;"><span></span><span></span><span></span><span></span><span></span></div>
       <div class="bio-status" id="bioStatus">Initializing camera &amp; microphone…</div>
       <div class="btn-row"><button class="btn btn-outline" onclick="cancelBiometric()">Cancel</button></div>
@@ -526,14 +539,14 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     <div class="header-logo"><div class="logo-sm">W3M</div>
       <div><div class="h-title" id="home-greeting">Hi there</div><div class="h-sub" id="home-sub">Career health overview</div></div>
     </div>
-    <div class="icon-btn" onclick="go('profile')">👤</div>
+    <div class="icon-btn" onclick="go(&#39;profile&#39;)">👤</div>
   </div>
   <div class="content">
     <div class="hero-cta">
       <div class="eyebrow">10-min diagnostic</div>
       <h3>What's really going on with your career?</h3>
       <p>Upload your resume, then work through a short adaptive diagnostic to get your competency report.</p>
-      <button class="pulse-btn" onclick="go('setup')">Start Career Diagnostic →</button>
+      <button class="pulse-btn" onclick="go(&#39;setup&#39;)">Start Career Diagnostic →</button>
     </div>
     <div class="section-title"><h2>Resume Upload</h2></div>
     <div class="card">
@@ -555,7 +568,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 <!-- ============ ASSESS SETUP (About You) ============ -->
 <div class="screen" id="screen-setup">
   <div class="app-header">
-    <div class="icon-btn" onclick="go('home')">←</div>
+    <div class="icon-btn" onclick="go(&#39;home&#39;)">←</div>
     <div class="h-title">Diagnostic Setup</div><div style="width:36px;"></div>
   </div>
   <div class="content">
@@ -572,9 +585,9 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
         <div class="frow2">
           <div class="fgroup"><label>Education Level</label><select id="educationLevel"><option value="">Choose</option>
             <option>High School</option><option>Undergraduate</option><option>Postgraduate</option><option>Doctorate (PhD)</option><option>Diploma / Vocational</option></select></div>
-          <div class="fgroup"><label>Field of Study</label><select id="fieldOfStudy" onchange="onFieldOfStudyChange()"><option value="">Choose</option></select></div>
+          <div class="fgroup"><label>Field of Study</label><select id="fieldOfStudy" onchange="onFieldOfStudyChange()"><option value="">Choose</option><option>Engineering &amp; Computer Science</option><option>Business &amp; Commerce</option><option>Arts &amp; Humanities</option><option>Science</option><option>Medicine &amp; Health Sciences</option><option>Law</option><option>Design &amp; Architecture</option><option>Education</option></select></div>
         </div>
-        <div class="fgroup"><label>Course / Degree Program</label><select id="courseProgram" disabled><option value="">Choose field of study first</option></select></div>
+        <div class="fgroup"><label>Course / Degree Program</label><select id="courseProgram" disabled=""><option value="">Choose field of study first</option></select></div>
         <div class="frow2">
           <div class="fgroup"><label>Year of Study</label><select id="yearOfStudy"><option value="">Choose</option>
             <option>1st Year / Sem 1-2</option><option>2nd Year / Sem 3-4</option><option>3rd Year / Sem 5-6</option>
@@ -586,31 +599,30 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
             <option>Completed 2+ internships</option></select></div>
         </div>
         <div class="fgroup"><label>College / University</label>
-          <select id="collegeSelect" disabled onchange="onCollegeSelectChange()"><option value="">Choose field of study first</option></select>
-          <input class="field-note-input" id="collegeOtherInput" type="text" placeholder="Type your college / university name"
-            style="display:none; margin-top:8px; background:var(--bg); border:1.5px solid var(--line); border-radius:11px; color:var(--ink); font-family:inherit; font-size:13px; padding:10px 12px; outline:none; width:100%;">
+          <select id="collegeSelect" disabled="" onchange="onCollegeSelectChange()"><option value="">Choose field of study first</option></select>
+          <input class="field-note-input" id="collegeOtherInput" type="text" placeholder="Type your college / university name" style="display:none; margin-top:8px; background:var(--bg); border:1.5px solid var(--line); border-radius:11px; color:var(--ink); font-family:inherit; font-size:13px; padding:10px 12px; outline:none; width:100%;">
         </div>
         <div class="field-note">These replace Industry &amp; Job Function below while you're a student — we'll tailor questions, skill signals, and roadmap content to your course, year, and internship stage instead.</div>
       </div>
 
       <!-- Professional fields: shown for Graduate/Fresher and Experienced Professional -->
-      <div id="professionalFieldsGroup">
+      <div id="professionalFieldsGroup" style="display: block;">
         <div class="frow2">
-          <div class="fgroup"><label>Target Industry</label><select id="industry"><option value="">Choose</option></select></div>
-          <div class="fgroup"><label>Job Function</label><select id="jobFunction" onchange="onJobFunctionChange()"><option value="">Choose</option></select></div>
+          <div class="fgroup"><label>Target Industry</label><select id="industry"><option value="">Choose</option><option>Technology / IT</option><option>Finance &amp; Banking</option><option>Healthcare &amp; Pharma</option><option>Education</option><option>Retail &amp; E-commerce</option><option>Manufacturing</option><option>Automotive</option><option>Real Estate</option><option>Construction</option><option>Energy &amp; Utilities</option><option>Telecommunications</option><option>Media &amp; Entertainment</option><option>Hospitality &amp; Travel</option><option>Transportation &amp; Logistics</option><option>Government &amp; Public Sector</option><option>Non-Profit / NGO</option><option>Legal Services</option><option>Consulting</option><option>Agriculture</option><option>Insurance</option><option>Aerospace &amp; Defense</option><option>FMCG / Consumer Goods</option><option>Gaming</option><option>Sports &amp; Fitness</option><option>Fashion &amp; Apparel</option><option>Food &amp; Beverage</option><option>Biotechnology</option><option>Environmental Services</option><option>Human Resources</option><option>Marketing &amp; Advertising</option><option>Other</option></select></div>
+          <div class="fgroup"><label>Job Function</label><select id="jobFunction" onchange="onJobFunctionChange()"><option value="">Choose</option><option>Engineering &amp; Technology</option><option>Product &amp; Design</option><option>Data &amp; AI</option><option>Sales &amp; Business Development</option><option>Marketing &amp; Communications</option><option>Finance &amp; Accounting</option><option>Human Resources</option><option>Operations &amp; Supply Chain</option><option>Customer Support</option><option>Legal &amp; Compliance</option><option>Healthcare</option><option>Education</option><option>Executive &amp; Leadership</option></select></div>
         </div>
-        <div class="fgroup"><label>Job Role</label><select id="jobRole" disabled><option value="">Choose function first</option></select></div>
+        <div class="fgroup"><label>Job Role</label><select id="jobRole" disabled=""><option value="">Choose function first</option></select></div>
       </div>
 
-      <div class="fgroup"><label>Location</label><select id="location"><option value="">Choose country</option></select></div>
+      <div class="fgroup"><label>Location</label><select id="location"><option value="">Choose country</option><option>Afghanistan</option><option>Albania</option><option>Algeria</option><option>Andorra</option><option>Angola</option><option>Argentina</option><option>Armenia</option><option>Australia</option><option>Austria</option><option>Azerbaijan</option><option>Bahamas</option><option>Bahrain</option><option>Bangladesh</option><option>Barbados</option><option>Belarus</option><option>Belgium</option><option>Belize</option><option>Benin</option><option>Bhutan</option><option>Bolivia</option><option>Bosnia and Herzegovina</option><option>Botswana</option><option>Brazil</option><option>Brunei</option><option>Bulgaria</option><option>Burkina Faso</option><option>Burundi</option><option>Cambodia</option><option>Cameroon</option><option>Canada</option><option>Cape Verde</option><option>Central African Republic</option><option>Chad</option><option>Chile</option><option>China</option><option>Colombia</option><option>Comoros</option><option>Congo (DRC)</option><option>Congo (Republic)</option><option>Costa Rica</option><option>Croatia</option><option>Cuba</option><option>Cyprus</option><option>Czech Republic</option><option>Denmark</option><option>Djibouti</option><option>Dominica</option><option>Dominican Republic</option><option>Ecuador</option><option>Egypt</option><option>El Salvador</option><option>Equatorial Guinea</option><option>Eritrea</option><option>Estonia</option><option>Eswatini</option><option>Ethiopia</option><option>Fiji</option><option>Finland</option><option>France</option><option>Gabon</option><option>Gambia</option><option>Georgia</option><option>Germany</option><option>Ghana</option><option>Greece</option><option>Grenada</option><option>Guatemala</option><option>Guinea</option><option>Guinea-Bissau</option><option>Guyana</option><option>Haiti</option><option>Honduras</option><option>Hungary</option><option>Iceland</option><option>India</option><option>Indonesia</option><option>Iran</option><option>Iraq</option><option>Ireland</option><option>Israel</option><option>Italy</option><option>Ivory Coast</option><option>Jamaica</option><option>Japan</option><option>Jordan</option><option>Kazakhstan</option><option>Kenya</option><option>Kiribati</option><option>Kosovo</option><option>Kuwait</option><option>Kyrgyzstan</option><option>Laos</option><option>Latvia</option><option>Lebanon</option><option>Lesotho</option><option>Liberia</option><option>Libya</option><option>Liechtenstein</option><option>Lithuania</option><option>Luxembourg</option><option>Madagascar</option><option>Malawi</option><option>Malaysia</option><option>Maldives</option><option>Mali</option><option>Malta</option><option>Marshall Islands</option><option>Mauritania</option><option>Mauritius</option><option>Mexico</option><option>Micronesia</option><option>Moldova</option><option>Monaco</option><option>Mongolia</option><option>Montenegro</option><option>Morocco</option><option>Mozambique</option><option>Myanmar</option><option>Namibia</option><option>Nauru</option><option>Nepal</option><option>Netherlands</option><option>New Zealand</option><option>Nicaragua</option><option>Niger</option><option>Nigeria</option><option>North Korea</option><option>North Macedonia</option><option>Norway</option><option>Oman</option><option>Pakistan</option><option>Palau</option><option>Panama</option><option>Papua New Guinea</option><option>Paraguay</option><option>Peru</option><option>Philippines</option><option>Poland</option><option>Portugal</option><option>Qatar</option><option>Romania</option><option>Russia</option><option>Rwanda</option><option>Saint Lucia</option><option>Samoa</option><option>San Marino</option><option>Saudi Arabia</option><option>Senegal</option><option>Serbia</option><option>Seychelles</option><option>Sierra Leone</option><option>Singapore</option><option>Slovakia</option><option>Slovenia</option><option>Solomon Islands</option><option>Somalia</option><option>South Africa</option><option>South Korea</option><option>South Sudan</option><option>Spain</option><option>Sri Lanka</option><option>Sudan</option><option>Suriname</option><option>Sweden</option><option>Switzerland</option><option>Syria</option><option>Taiwan</option><option>Tajikistan</option><option>Tanzania</option><option>Thailand</option><option>Timor-Leste</option><option>Togo</option><option>Tonga</option><option>Trinidad and Tobago</option><option>Tunisia</option><option>Turkey</option><option>Turkmenistan</option><option>Tuvalu</option><option>Uganda</option><option>Ukraine</option><option>United Arab Emirates</option><option>United Kingdom</option><option>United States</option><option>Uruguay</option><option>Uzbekistan</option><option>Vanuatu</option><option>Vatican City</option><option>Venezuela</option><option>Vietnam</option><option>Yemen</option><option>Zambia</option><option>Zimbabwe</option></select></div>
       <div class="fgroup"><label>Skillset</label>
-        <select id="skillSelect"><option value="">Choose a skill</option></select>
+        <select id="skillSelect"><option value="">Choose a skill</option><option>JavaScript</option><option>Python</option><option>Java</option><option>C++</option><option>SQL</option><option>React</option><option>Node.js</option><option>AWS</option><option>Azure</option><option>Google Cloud</option><option>Data Analysis</option><option>Machine Learning</option><option>Project Management</option><option>Agile / Scrum</option><option>Communication</option><option>Leadership</option><option>Sales</option><option>Negotiation</option><option>SEO</option><option>Content Writing</option><option>Graphic Design</option><option>Figma</option><option>Excel</option><option>Financial Modeling</option><option>Public Speaking</option><option>Customer Service</option><option>Salesforce</option><option>HR Management</option><option>Recruiting</option><option>Six Sigma</option><option>Supply Chain Management</option><option>UX Research</option><option>Copywriting</option><option>Video Editing</option><option>Cybersecurity</option><option>DevOps</option><option>Product Strategy</option><option>Market Research</option><option>Accounting</option><option>Legal Drafting</option><option>Teaching / Training</option></select>
         <button class="btn btn-outline" style="margin-top:8px; padding:9px;" onclick="addSkill()">+ Add Skill</button>
         <div class="lang-pool" id="skillPool"></div>
       </div>
       <div class="fgroup" style="margin-bottom:0;"><label>Languages</label>
         <div class="frow2">
-          <select id="langSelect"><option value="">Language</option></select>
+          <select id="langSelect"><option value="">Language</option><option>English</option><option>Mandarin Chinese</option><option>Hindi</option><option>Spanish</option><option>French</option><option>Standard Arabic</option><option>Bengali</option><option>Portuguese</option><option>Russian</option><option>Urdu</option><option>Indonesian</option><option>German</option><option>Japanese</option><option>Nigerian Pidgin</option><option>Marathi</option><option>Telugu</option><option>Turkish</option><option>Tamil</option><option>Yue Chinese (Cantonese)</option><option>Vietnamese</option><option>Wu Chinese</option><option>Korean</option><option>Iranian Persian (Farsi)</option><option>Hausa</option><option>Javanese</option><option>Italian</option><option>Egyptian Arabic</option><option>Gujarati</option><option>Bhojpuri</option><option>Southern Min</option><option>Amharic</option><option>Punjabi</option><option>Burmese</option><option>Eastern Punjabi</option><option>Polish</option><option>Kannada</option><option>Yoruba</option><option>Malayalam</option><option>Xhosa</option><option>Sundanese</option><option>Filipino / Tagalog</option><option>Odia</option><option>Zulu</option><option>Ukrainian</option><option>Igbo</option><option>Uzbek</option><option>Sindhi</option><option>Romanian</option><option>Azerbaijani</option><option>Cebuano</option><option>Dutch</option><option>Kazakh</option><option>Nepali</option><option>Swedish</option><option>Greek</option><option>Chittagonian</option><option>Hungarian</option><option>Somali</option><option>Malay</option><option>Assamese</option><option>Czech</option><option>Sinhala</option><option>Northern Kurdish</option><option>Zhuang</option><option>Belarusian</option><option>Bulgarian</option><option>Thai</option><option>Hebrew</option><option>Finnish</option><option>Danish</option><option>Norwegian</option><option>Slovak</option><option>Croatian</option><option>Serbian</option><option>Lithuanian</option><option>Latvian</option><option>Estonian</option><option>Georgian</option><option>Armenian</option><option>Mongolian</option><option>Khmer</option><option>Lao</option><option>Pashto</option><option>Dari</option><option>Kurdish (Sorani)</option><option>Tigrinya</option><option>Swahili</option><option>Afrikaans</option><option>Shona</option><option>Chichewa</option><option>Twi</option><option>Wolof</option><option>Fula</option><option>Akan</option><option>Kinyarwanda</option><option>Luganda</option><option>Icelandic</option><option>Irish (Gaelic)</option><option>Welsh</option><option>Maltese</option><option>Albanian</option><option>Macedonian</option><option>Bosnian</option><option>Slovenian</option><option>Tajik</option><option>Turkmen</option><option>Kyrgyz</option><option>Tibetan</option><option>Uyghur</option></select>
           <select id="langLevel"><option>Basic</option><option>Efficient</option><option>Professional</option><option>Native</option></select>
         </div>
         <button class="btn btn-outline" style="margin-top:8px; padding:9px;" onclick="addLanguage()">+ Add Language</button>
@@ -620,18 +632,18 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 
     <div class="card" style="margin-top:14px;">
       <label style="display:flex; gap:8px; align-items:flex-start; font-size:11.5px; color:var(--ink-soft);">
-        <input type="checkbox" id="consentCheck" style="margin-top:2px;" onchange="document.getElementById('setupContinue').disabled = !this.checked">
+        <input type="checkbox" id="consentCheck" style="margin-top:2px;" onchange="document.getElementById(&#39;setupContinue&#39;).disabled = !this.checked">
         I consent to my responses (and camera/mic if voice mode is chosen) being used only to generate my report.
       </label>
     </div>
-    <div class="btn-row"><button class="btn btn-navy" id="setupContinue" disabled onclick="continueFromSetup()">Continue →</button></div>
+    <div class="btn-row"><button class="btn btn-navy" id="setupContinue" disabled="" onclick="continueFromSetup()">Continue →</button></div>
   </div>
 </div>
 
 <!-- ============ RESPONSE MODE (MCQ vs Voice) ============ -->
 <div class="screen" id="screen-track">
   <div class="app-header">
-    <div class="icon-btn" onclick="go('setup')">←</div>
+    <div class="icon-btn" onclick="go(&#39;setup&#39;)">←</div>
     <div class="h-title">Response Mode</div><div style="width:36px;"></div>
   </div>
   <div class="content">
@@ -639,29 +651,29 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
       <h2 style="font-size:14px; margin:0 0 4px;">How would you like to talk to us?</h2>
       <p style="font-size:11.5px; color:var(--ink-soft); margin:0;">Pick what feels natural — quick written notes, or a real video interview where you just talk and Neeraj listens.</p>
       <div class="track-grid">
-        <div class="track-card" id="trackMcq" onclick="selectTrack('mcq')"><div style="font-size:22px;">📝</div><h4>Written</h4><p>Multiple choice + notes</p></div>
-        <div class="track-card" id="trackVoice" onclick="selectTrack('voice')" style="position:relative;">
+        <div class="track-card" id="trackMcq" onclick="selectTrack(&#39;mcq&#39;)"><div style="font-size:22px;">📝</div><h4>Written</h4><p>Multiple choice + notes</p></div>
+        <div class="track-card" id="trackVoice" onclick="selectTrack(&#39;voice&#39;)" style="position:relative;">
           <div style="position:absolute; top:-8px; right:-6px; background:linear-gradient(145deg, var(--gold-light), var(--gold)); color:var(--navy-deep); font-size:8.5px; font-weight:700; padding:2px 7px; border-radius:20px; letter-spacing:.02em; box-shadow:0 4px 10px rgba(227,178,60,.4);">✨ RECOMMENDED</div>
           <div style="font-size:22px;">🎥</div><h4>Video Interview</h4><p>Camera + mic — speak naturally, on-screen</p>
         </div>
       </div>
       <p style="font-size:10.5px; color:var(--ink-soft); margin:10px 0 0; display:flex; align-items:center; gap:5px;"><span>🔊</span><span>Either way, Neeraj's voice narrates and guides you through the entire journey — every screen, every question.</span></p>
     </div>
-    <div class="btn-row"><button class="btn btn-navy" id="trackContinue" disabled onclick="continueFromTrack()">Continue →</button></div>
+    <div class="btn-row"><button class="btn btn-navy" id="trackContinue" disabled="" onclick="continueFromTrack()">Continue →</button></div>
   </div>
 </div>
 
 <!-- ============ HARDWARE CHECK (voice track only) ============ -->
 <div class="screen" id="screen-hardware">
-  <div class="app-header"><div class="icon-btn" onclick="go('track')">←</div><div class="h-title">Camera &amp; Mic Check</div><div style="width:36px;"></div></div>
+  <div class="app-header"><div class="icon-btn" onclick="go(&#39;track&#39;)">←</div><div class="h-title">Camera &amp; Mic Check</div><div style="width:36px;"></div></div>
   <div class="content">
     <div class="card">
       <div class="hw-row"><span>Camera</span><span class="status-pill status-wait" id="camStatus">Requesting…</span></div>
       <div class="hw-row"><span>Microphone</span><span class="status-pill status-wait" id="micStatus">Requesting…</span></div>
-      <div class="video-frame"><video id="preCheckVideo" autoplay playsinline muted></video></div>
+      <div class="video-frame"><video id="preCheckVideo" autoplay="" playsinline="" muted=""></video></div>
       <div class="btn-row" style="margin-top:0;">
         <button class="btn btn-outline" id="retryHwBtn" style="display:none;" onclick="requestHardware()">Retry Access</button>
-        <button class="btn btn-gold" id="beginAssessBtn" disabled onclick="beginAssessment()">Begin Assessment →</button>
+        <button class="btn btn-gold" id="beginAssessBtn" disabled="" onclick="beginAssessment()">Begin Assessment →</button>
       </div>
     </div>
   </div>
@@ -673,7 +685,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     <div class="timer-bar"><span>SESSION CLOCK</span><span id="countdown" style="color:var(--danger); font-weight:700;">10:00</span></div>
     <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0%;"></div></div>
     <div class="chip-row" id="chipRow"></div>
-    <div class="video-frame" id="assessVideoFrame" style="display:none;"><video id="assessVideo" autoplay playsinline muted></video></div>
+    <div class="video-frame" id="assessVideoFrame" style="display:none;"><video id="assessVideo" autoplay="" playsinline="" muted=""></video></div>
     <div class="voice-badge" id="voiceBadge" style="display:none;"><div class="pulse-dot"></div><span id="voiceBadgeText">Listening for your answer…</span></div>
     <div class="card" style="padding:22px 18px;">
       <span class="q-eyebrow" id="qCat">Career</span>
@@ -694,7 +706,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 
 <!-- ============ REPORT ============ -->
 <div class="screen" id="screen-report">
-  <div class="app-header"><div class="header-logo"><div class="logo-sm">W3M</div><div><div class="h-title">Your Report</div><div class="h-sub">Freshly generated</div></div></div><div class="icon-btn" onclick="go('home')">✕</div></div>
+  <div class="app-header"><div class="header-logo"><div class="logo-sm">W3M</div><div><div class="h-title">Your Report</div><div class="h-sub">Freshly generated</div></div></div><div class="icon-btn" onclick="go(&#39;home&#39;)">✕</div></div>
   <div class="content">
     <div class="card" style="display:grid; grid-template-columns:auto 1fr; gap:14px;">
       <div class="ats-circle" id="reportAtsCircle" style="width:70px;height:70px;"><span id="reportAtsVal" style="font-size:18px;">--</span><span>ATS</span></div>
@@ -714,7 +726,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     <div class="score-row-wrap">
       <div class="carousel-arrow left hidden" id="scoreArrowLeft" onclick="scrollScoreRow(-1)">‹</div>
       <div class="score-row" id="reportScoreRow" onscroll="updateScoreArrows()"></div>
-      <div class="carousel-arrow right" id="scoreArrowRight" onclick="scrollScoreRow(1)">›</div>
+      <div class="carousel-arrow right hidden" id="scoreArrowRight" onclick="scrollScoreRow(1)">›</div>
     </div>
     <div class="carousel-dots" id="scoreDots"></div>
 
@@ -723,10 +735,10 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 
     <div class="section-title"><h2>Wellbeing &amp; Mindset Radar</h2></div>
     <div class="card">
-      <svg id="radarSvg" width="100%" height="230" viewBox="0 0 240 220"></svg>
+      <svg id="radarSvg" width="100%" height="230" viewBox="0 0 240 220"><polygon points="120,89 136.45448267190434,98.5 136.45448267190434,117.5 120,127 103.54551732809567,117.5 103.54551732809566,98.50000000000001" fill="none" stroke="var(--line)" stroke-width="1"></polygon><polygon points="120,70 152.90896534380866,89 152.9089653438087,127 120,146 87.09103465619134,127.00000000000001 87.09103465619131,89.00000000000003" fill="none" stroke="var(--line)" stroke-width="1"></polygon><polygon points="120,51 169.363448015713,79.5 169.363448015713,136.5 120,165 70.63655198428701,136.50000000000003 70.63655198428698,79.50000000000003" fill="none" stroke="var(--line)" stroke-width="1"></polygon><polygon points="120,32 185.81793068761732,70 185.81793068761735,146 120,184 54.18206931238268,146.00000000000003 54.18206931238264,70.00000000000006" fill="none" stroke="var(--line)" stroke-width="1"></polygon><line x1="120" y1="108" x2="120" y2="32" stroke="var(--line)" stroke-width="1"></line><text x="120" y="18" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">Burnout</text><line x1="120" y1="108" x2="185.81793068761732" y2="70" stroke="var(--line)" stroke-width="1"></line><text x="204.87048957087498" y="63" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">Stress</text><line x1="120" y1="108" x2="185.81793068761735" y2="146" stroke="var(--line)" stroke-width="1"></line><text x="204.870489570875" y="153" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">Behavior</text><line x1="120" y1="108" x2="120" y2="184" stroke="var(--line)" stroke-width="1"></line><text x="120" y="198" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">Motivation</text><line x1="120" y1="108" x2="54.18206931238268" y2="146.00000000000003" stroke="var(--line)" stroke-width="1"></line><text x="35.129510429125034" y="153.00000000000003" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">Direction</text><line x1="120" y1="108" x2="54.18206931238264" y2="70.00000000000006" stroke="var(--line)" stroke-width="1"></line><text x="35.12951042912498" y="63.00000000000006" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">Focus</text><polygon points="120,58.6 159.49075841257041,85.2 166.07255148133214,134.6 120,153.6 70.63655198428701,136.50000000000003 80.50924158742959,85.20000000000003" fill="rgba(227,178,60,0.28)" stroke="#E3B23C" stroke-width="2"></polygon><circle cx="120" cy="58.6" r="2.6" fill="#132A52"></circle><circle cx="159.49075841257041" cy="85.2" r="2.6" fill="#132A52"></circle><circle cx="166.07255148133214" cy="134.6" r="2.6" fill="#132A52"></circle><circle cx="120" cy="153.6" r="2.6" fill="#132A52"></circle><circle cx="70.63655198428701" cy="136.50000000000003" r="2.6" fill="#132A52"></circle><circle cx="80.50924158742959" cy="85.20000000000003" r="2.6" fill="#132A52"></circle></svg>
       <div style="font-size:10.5px; color:var(--ink-soft); text-align:center; margin-top:4px;">Burnout · Stress · Behavior · Motivation · Direction · Focus</div>
       <div class="radar-interpretation" id="radarInterpretation">Run the diagnostic to see your personalized wellbeing read-out.</div>
-      <div class="radar-defs" id="radarDefs"></div>
+      <div class="radar-defs" id="radarDefs"><div class="radar-def-item"><span class="rd-dot" style="background:#C1543D;"></span><span><b>Burnout</b> — How depleted you feel from ongoing work demands.</span></div><div class="radar-def-item"><span class="rd-dot" style="background:#C6932A;"></span><span><b>Stress</b> — Your current pressure and anxiety load.</span></div><div class="radar-def-item"><span class="rd-dot" style="background:#E3B23C;"></span><span><b>Behavior</b> — How well your day-to-day actions hold up under pressure.</span></div><div class="radar-def-item"><span class="rd-dot" style="background:#4C8F6B;"></span><span><b>Motivation</b> — Your drive to show up and grow in your role.</span></div><div class="radar-def-item"><span class="rd-dot" style="background:#132A52;"></span><span><b>Direction</b> — How clear you are on where your career is headed.</span></div><div class="radar-def-item"><span class="rd-dot" style="background:#0D1E3D;"></span><span><b>Focus</b> — Your ability to concentrate without getting pulled away.</span></div></div>
     </div>
 
     <div class="section-title"><h2>Key Areas to Work On</h2></div>
@@ -737,17 +749,21 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 
     <div class="section-title"><h2>Skill Signals</h2></div>
     <div class="card">
-      <div class="skill-context-note" id="skillContextNote"></div>
-      <div id="skillSliders"></div>
+      <div class="skill-context-note" id="skillContextNote">Choose a Job Function in Diagnostic Setup to sharpen these further.</div>
+      <div id="skillSliders"><div class="skill-row"><div class="s-label">Communication</div>
+    <div class="s-track"><div class="s-fill" style="width:52%; background:#E3B23C;"></div></div><div class="s-val">52%</div></div><div class="skill-row"><div class="s-label">Problem Solving</div>
+    <div class="s-track"><div class="s-fill" style="width:63%; background:#132A52;"></div></div><div class="s-val">63%</div></div><div class="skill-row"><div class="s-label">Adaptability</div>
+    <div class="s-track"><div class="s-fill" style="width:87%; background:#4C8F6B;"></div></div><div class="s-val">87%</div></div><div class="skill-row"><div class="s-label">Time Management</div>
+    <div class="s-track"><div class="s-fill" style="width:45%; background:#C6932A;"></div></div><div class="s-val">45%</div></div></div>
     </div>
     <div class="section-title"><h2>Engagement — Last 4 Weeks</h2></div>
     <div class="card">
       <p style="font-size:11px; color:var(--ink-soft); line-height:1.55; margin:0 0 10px;">
         This heatmap tracks how actively you've engaged with your diagnostics, coaching sessions, and roadmap tasks over the past 28 days — one cell per day, grouped into 4 weekly rows (Mon–Sun across each row). Darker red cells mean quieter days; green cells mean days you were most active.
       </p>
-      <div id="heatDataBadge"></div>
+      <div id="heatDataBadge"><span class="heat-data-badge sample">Sample data — fills in as you use the app</span></div>
       <div class="heat-weekdays"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-      <div class="heat-grid" id="heatGrid"></div>
+      <div class="heat-grid" id="heatGrid"><div class="heat-cell" style="background:rgb(99,148,100);" title="Week 1 · Mon — High engagement"></div><div class="heat-cell" style="background:rgb(132,156,90);" title="Week 1 · Tue — High engagement"></div><div class="heat-cell" style="background:rgb(123,154,92);" title="Week 1 · Wed — High engagement"></div><div class="heat-cell" style="background:rgb(197,171,69);" title="Week 1 · Thu — Moderate engagement"></div><div class="heat-cell" style="background:rgb(214,142,60);" title="Week 1 · Fri — Low engagement"></div><div class="heat-cell" style="background:rgb(204,173,67);" title="Week 1 · Sat — Moderate engagement"></div><div class="heat-cell" style="background:rgb(208,126,61);" title="Week 1 · Sun — Low engagement"></div><div class="heat-cell" style="background:rgb(86,145,104);" title="Week 2 · Mon — High engagement"></div><div class="heat-cell" style="background:rgb(167,164,79);" title="Week 2 · Tue — High engagement"></div><div class="heat-cell" style="background:rgb(89,146,103);" title="Week 2 · Wed — High engagement"></div><div class="heat-cell" style="background:rgb(168,164,78);" title="Week 2 · Thu — High engagement"></div><div class="heat-cell" style="background:rgb(194,87,61);" title="Week 2 · Fri — Low engagement"></div><div class="heat-cell" style="background:rgb(217,176,63);" title="Week 2 · Sat — Moderate engagement"></div><div class="heat-cell" style="background:rgb(178,167,75);" title="Week 2 · Sun — Moderate engagement"></div><div class="heat-cell" style="background:rgb(195,89,61);" title="Week 3 · Mon — Low engagement"></div><div class="heat-cell" style="background:rgb(225,178,61);" title="Week 3 · Tue — Moderate engagement"></div><div class="heat-cell" style="background:rgb(218,176,63);" title="Week 3 · Wed — Moderate engagement"></div><div class="heat-cell" style="background:rgb(194,88,61);" title="Week 3 · Thu — Low engagement"></div><div class="heat-cell" style="background:rgb(219,155,60);" title="Week 3 · Fri — Moderate engagement"></div><div class="heat-cell" style="background:rgb(207,173,66);" title="Week 3 · Sat — Moderate engagement"></div><div class="heat-cell" style="background:rgb(218,153,60);" title="Week 3 · Sun — Moderate engagement"></div><div class="heat-cell" style="background:rgb(203,110,61);" title="Week 4 · Mon — Low engagement"></div><div class="heat-cell" style="background:rgb(208,125,61);" title="Week 4 · Tue — Low engagement"></div><div class="heat-cell" style="background:rgb(219,176,63);" title="Week 4 · Wed — Moderate engagement"></div><div class="heat-cell" style="background:rgb(189,169,72);" title="Week 4 · Thu — Moderate engagement"></div><div class="heat-cell" style="background:rgb(209,129,61);" title="Week 4 · Fri — Low engagement"></div><div class="heat-cell" style="background:rgb(115,152,95);" title="Week 4 · Sat — High engagement"></div><div class="heat-cell" style="background:rgb(210,174,65);" title="Week 4 · Sun — Moderate engagement"></div></div>
       <div class="heat-legend-detail">
         <div class="hl-item"><span class="hl-swatch" style="background:#C1543D;"></span><div><b>Low</b><span>Little to no activity that day</span></div></div>
         <div class="hl-item"><span class="hl-swatch" style="background:#E3B23C;"></span><div><b>Moderate</b><span>Some check-ins or light activity</span></div></div>
@@ -758,9 +774,9 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     <div class="section-title"><h2>Your 30 / 60 / 90 Day Roadmap</h2></div>
     <div class="card">
       <div class="roadmap-tabs">
-        <button class="roadmap-tab active" data-phase="30" onclick="showRoadmapPhase('30')">30 Days</button>
-        <button class="roadmap-tab" data-phase="60" onclick="showRoadmapPhase('60')">60 Days</button>
-        <button class="roadmap-tab" data-phase="90" onclick="showRoadmapPhase('90')">90 Days</button>
+        <button class="roadmap-tab active" data-phase="30" onclick="showRoadmapPhase(&#39;30&#39;)">30 Days</button>
+        <button class="roadmap-tab" data-phase="60" onclick="showRoadmapPhase(&#39;60&#39;)">60 Days</button>
+        <button class="roadmap-tab" data-phase="90" onclick="showRoadmapPhase(&#39;90&#39;)">90 Days</button>
       </div>
       <div class="roadmap-phase active" id="roadmap-30"></div>
       <div class="roadmap-phase" id="roadmap-60"></div>
@@ -770,17 +786,17 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
     <div class="section-title"><h2>Response Transcript</h2></div>
     <div id="transcriptLogs"></div>
     <div class="btn-row"><button class="btn btn-gold" onclick="startScheduleFlow()">Schedule a Call with Neeraj →</button></div>
-    <div class="btn-row"><button class="btn btn-outline" onclick="restartDiagnostic()">Run Again</button><button class="btn btn-navy" onclick="go('home')">Back Home</button></div>
+    <div class="btn-row"><button class="btn btn-outline" onclick="restartDiagnostic()">Run Again</button><button class="btn btn-navy" onclick="go(&#39;home&#39;)">Back Home</button></div>
   </div>
 </div>
 
 <!-- ============ PROFILE ============ -->
 <div class="screen" id="screen-profile">
-  <div class="app-header"><div class="icon-btn" onclick="go('home')">←</div><div class="h-title">Profile</div><div style="width:36px;"></div></div>
+  <div class="app-header"><div class="icon-btn" onclick="go(&#39;home&#39;)">←</div><div class="h-title">Profile</div><div style="width:36px;"></div></div>
   <div class="content">
     <div class="card" style="text-align:center; padding:26px;">
       <div class="logo-sm" style="width:56px;height:56px; border-radius:50%; font-size:18px; margin:0 auto 10px;" id="profileAvatar">?</div>
-      <div style="font-family:'Fraunces'; font-weight:700; font-size:16px;" id="profileName">—</div>
+      <div style="font-family:&#39;Fraunces&#39;; font-weight:700; font-size:16px;" id="profileName">—</div>
       <div style="font-size:12px; color:var(--ink-soft); margin-top:3px;" id="profileMeta">—</div>
     </div>
     <div class="btn-row"><button class="btn btn-outline" onclick="logout()">Log Out</button></div>
@@ -789,7 +805,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 
 <!-- ============ PAYMENT (UPI) BEFORE BOOKING ============ -->
 <div class="screen" id="screen-payment">
-  <div class="app-header"><div class="icon-btn" onclick="go('report')">←</div><div class="h-title">Reserve Your Call</div><div style="width:36px;"></div></div>
+  <div class="app-header"><div class="icon-btn" onclick="go(&#39;report&#39;)">←</div><div class="h-title">Reserve Your Call</div><div style="width:36px;"></div></div>
   <div class="content">
     <div class="card">
       <div class="coach-mini">
@@ -817,17 +833,17 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
       <div class="ps-item"><span class="ps-num">3</span><span>Come back here, confirm below, and pick your slot.</span></div>
     </div>
     <label class="pay-confirm-check">
-      <input type="checkbox" id="payConfirmCheck" onchange="document.getElementById('payContinueBtn').disabled=!this.checked;">
+      <input type="checkbox" id="payConfirmCheck" onchange="document.getElementById(&#39;payContinueBtn&#39;).disabled=!this.checked;">
       <span>I've completed the UPI payment for this session.</span>
     </label>
-    <div class="btn-row"><button class="btn btn-gold" id="payContinueBtn" disabled onclick="completePaymentStep()">Continue to Booking →</button></div>
+    <div class="btn-row"><button class="btn btn-gold" id="payContinueBtn" disabled="" onclick="completePaymentStep()">Continue to Booking →</button></div>
     <div style="font-size:10.5px; color:var(--ink-soft); text-align:center; margin-top:10px;">Payment confirmation here is self-reported. For automatic verification, ask Neeraj about gateway-based checkout.</div>
   </div>
 </div>
 
 <!-- ============ SCHEDULE CALL WITH COACH ============ -->
 <div class="screen" id="screen-schedule">
-  <div class="app-header"><div class="icon-btn" onclick="go('payment')">←</div><div class="h-title">Schedule a Call</div><div style="width:36px;"></div></div>
+  <div class="app-header"><div class="icon-btn" onclick="go(&#39;payment&#39;)">←</div><div class="h-title">Schedule a Call</div><div style="width:36px;"></div></div>
   <div class="content">
     <div class="card">
       <div class="coach-mini">
@@ -835,7 +851,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
         <div class="coach-mini-info">
           <h3>Neeraj Kapil</h3>
           <span>Career Coach · Ex-Hiring Manager</span>
-          <div><a class="link-chip" href="#" onclick="go('portfolio'); return false;">View Portfolio →</a></div>
+          <div><a class="link-chip" href="file:///C:/Users/Neeraj/Downloads/w3m_3.html#" onclick="go(&#39;portfolio&#39;); return false;">View Portfolio →</a></div>
         </div>
       </div>
     </div>
@@ -845,7 +861,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
       <div class="day-row" id="dayRow"></div>
       <div class="section-title"><h2>Available Slots</h2></div>
       <div class="slot-grid" id="slotGrid"></div>
-      <div class="btn-row"><button class="btn btn-navy" id="confirmSlotBtn" disabled onclick="confirmSchedule()">Confirm Call →</button></div>
+      <div class="btn-row"><button class="btn btn-navy" id="confirmSlotBtn" disabled="" onclick="confirmSchedule()">Confirm Call →</button></div>
     </div>
 
     <div id="scheduleConfirmArea" style="display:none;">
@@ -859,7 +875,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
         </div>
         <div class="btn-row">
           <button class="btn btn-outline" onclick="downloadIcs()">Download .ics</button>
-          <button class="btn btn-navy" onclick="go('home')">Back Home</button>
+          <button class="btn btn-navy" onclick="go(&#39;home&#39;)">Back Home</button>
         </div>
       </div>
     </div>
@@ -868,11 +884,11 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 
 <!-- ============ NEERAJ'S PORTFOLIO ============ -->
 <div class="screen" id="screen-portfolio">
-  <div class="app-header"><div class="icon-btn" onclick="go('schedule')">←</div><div class="h-title">Coach Portfolio</div><div style="width:36px;"></div></div>
+  <div class="app-header"><div class="icon-btn" onclick="go(&#39;schedule&#39;)">←</div><div class="h-title">Coach Portfolio</div><div style="width:36px;"></div></div>
   <div class="content">
     <div class="card" style="text-align:center; padding:26px;">
       <div class="logo-sm" style="width:64px;height:64px; border-radius:50%; font-size:20px; margin:0 auto 12px;">NK</div>
-      <div style="font-family:'Fraunces'; font-weight:700; font-size:17px;">Neeraj Kapil</div>
+      <div style="font-family:&#39;Fraunces&#39;; font-weight:700; font-size:17px;">Neeraj Kapil</div>
       <div style="font-size:12px; color:var(--ink-soft); margin-top:3px;">Career Coach · Ex-Hiring Manager, Technology</div>
       <a class="link-chip" href="https://www.linkedin.com/in/neeraj-kapil" target="_blank" rel="noopener">💼 linkedin.com/in/neeraj-kapil</a>
       <div class="stat-row">
@@ -902,10 +918,10 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 </div>
 
 <div class="tabbar" id="tabbar" style="display:none;">
-  <div class="tab active" data-tab="home" onclick="go('home')"><span>🏠</span><span>Home</span><div class="tdot"></div></div>
-  <div class="tab" data-tab="setup" onclick="go('setup')"><span>🧭</span><span>Assess</span><div class="tdot"></div></div>
-  <div class="tab" data-tab="report" onclick="go('report')"><span>📊</span><span>Report</span><div class="tdot"></div></div>
-  <div class="tab" data-tab="profile" onclick="go('profile')"><span>👤</span><span>Profile</span><div class="tdot"></div></div>
+  <div class="tab active" data-tab="home" onclick="go(&#39;home&#39;)"><span>🏠</span><span>Home</span><div class="tdot"></div></div>
+  <div class="tab" data-tab="setup" onclick="go(&#39;setup&#39;)"><span>🧭</span><span>Assess</span><div class="tdot"></div></div>
+  <div class="tab" data-tab="report" onclick="go(&#39;report&#39;)"><span>📊</span><span>Report</span><div class="tdot"></div></div>
+  <div class="tab" data-tab="profile" onclick="go(&#39;profile&#39;)"><span>👤</span><span>Profile</span><div class="tdot"></div></div>
 </div>
 <div class="toast" id="toast"></div>
 <div class="demo-overlay" id="demoOverlay">
@@ -2349,6 +2365,248 @@ const ROADMAP_BOOKS = {
   direction:[{t:'"Designing Your Life" by Bill Burnett & Dave Evans', s:'A structured way to explore and choose a career direction.'},{t:'"Range" by David Epstein', s:'Why breadth of experience can clarify direction.'}],
   goals:[{t:'"Measure What Matters" by John Doerr', s:'Setting clear, trackable goals (OKRs).'},{t:'"The 12 Week Year" by Moran & Lennington', s:'Turning long-term goals into short, executable cycles.'}]
 };
+
+/* ================= PERSONALIZED LEARNING PATHWAY (auto-matched) =================
+   Reference matrix of Job Function / Industry / Geography pathways.
+   Matched from Diagnostic Setup (function, industry, location, skills) + resume ATS context. */
+const LEARNING_PATHWAYS = [
+  { dim:'Job Function', category:'Technology & Engineering',
+    coreSkills:['Cloud Architecture','System Design','DevOps','Cybersecurity'],
+    courses:['AWS Certified Solutions Architect Professional','TOGAF EA Practitioner','CISSP'],
+    books:['Designing Data-Intensive Applications','The Phoenix Project','Accelerate'],
+    authors:['Martin Kleppmann','Gene Kim','Martin Fowler'],
+    companies:['Microsoft','Google','AWS','Oracle','IBM','Cisco'],
+    hub:'Silicon Valley / Seattle',
+    matchKeys:{functions:['Engineering & Technology'], industries:['Technology / IT','Telecommunications','Aerospace & Defense'], skills:['AWS','Azure','Google Cloud','DevOps','Cybersecurity','Java','Python','C++','Cloud'] } },
+  { dim:'Job Function', category:'Data Science & AI Analytics',
+    coreSkills:['Predictive Modeling','Prompt Engineering','Business Intelligence','Data Pipelines'],
+    courses:['Stanford Machine Learning Engineering (Coursera)','MIT Sloan AI Strategy','IBM Data Science Professional'],
+    books:['Competing on Analytics','Hands-On Machine Learning','The Book of Why'],
+    authors:['Andrew Ng','Aurélien Géron','Thomas H. Davenport'],
+    companies:['OpenAI','Palantir','Snowflake','Meta','Anthropic'],
+    hub:'San Francisco / Boston',
+    matchKeys:{functions:['Data & AI'], industries:['Technology / IT','Biotechnology'], skills:['Machine Learning','Data Analysis','Python','SQL','AWS'] } },
+  { dim:'Job Function', category:'Product Management & Design',
+    coreSkills:['Product Strategy','Roadmap Architecture','UX Research','Product Analytics'],
+    courses:['Product Faculty Advanced Product Management','Product School CPM','Pragmatic Institute Framework'],
+    books:['INSPIRED','Escaping the Build Trap','Empowered'],
+    authors:['Marty Cagan','Melissa Perri','Don Norman'],
+    companies:['Apple','Stripe','Airbnb','Uber','Atlassian'],
+    hub:'Silicon Valley / New York City',
+    matchKeys:{functions:['Product & Design'], industries:['Technology / IT','Media & Entertainment','Gaming'], skills:['Product Strategy','UX Research','Figma','Agile / Scrum'] } },
+  { dim:'Job Function', category:'Project Management & Agile',
+    coreSkills:['Enterprise Scaling','Scrum Master','Operational Delivery','Resource Optimization'],
+    courses:['PMI Project Management Professional (PMP)','Scrum.org PSM II','Scaled Agile Academy SAFe Agilist'],
+    books:['PMBOK Guide','Scrum: The Art of Doing Twice the Work','Coaching Agile Teams'],
+    authors:['Jeff Sutherland','Mike Cohn','Eliyahu M. Goldratt'],
+    companies:['Accenture','Deloitte','Infosys','Capgemini','PwC'],
+    hub:'Chicago / Austin',
+    matchKeys:{functions:['Operations & Supply Chain','Executive & Leadership'], industries:['Consulting'], skills:['Project Management','Agile / Scrum','Six Sigma'] } },
+  { dim:'Job Function', category:'Marketing & Growth Strategy',
+    coreSkills:['Growth Hacking','CAC Optimization','Brand Positioning','Digital Analytics'],
+    courses:['CXL Growth Marketing Minidegree','Wharton Digital Marketing Certificate','Google Advanced Data Analytics'],
+    books:['Building a StoryBrand','Contagious','Hacking Growth'],
+    authors:['Seth Godin','Jonah Berger','Scott Galloway'],
+    companies:['Procter & Gamble','Netflix','HubSpot','Coca-Cola','Nike'],
+    hub:'New York City / Los Angeles',
+    matchKeys:{functions:['Marketing & Communications'], industries:['Marketing & Advertising','Media & Entertainment','FMCG / Consumer Goods','Retail & E-commerce'], skills:['SEO','Content Writing','Market Research','Copywriting'] } },
+  { dim:'Job Function', category:'Sales & Business Development',
+    coreSkills:['Enterprise Account Mapping','Consultative Selling','Revenue Operations (RevOps)'],
+    courses:['Miller Heiman Strategic Selling','Kellogg Sales Leadership Executive Program','Sales Enablement Collective'],
+    books:['The Challenger Sale','SPIN Selling','Predictable Revenue'],
+    authors:['Neil Rackham','Matthew Dixon','Jeb Blount'],
+    companies:['Salesforce','SAP','Oracle','LinkedIn','HubSpot'],
+    hub:'Chicago / Austin',
+    matchKeys:{functions:['Sales & Business Development'], industries:['Technology / IT','Retail & E-commerce'], skills:['Sales','Negotiation','Salesforce','Customer Service'] } },
+  { dim:'Job Function', category:'Finance, Accounting & Risk',
+    coreSkills:['Financial Modeling','Corporate Valuation','Asset Management','Risk Mitigation'],
+    courses:['CFI Financial Modeling & Valuation Analyst (FMVA)','CFA Charter Program','GARP FRM Exam Track'],
+    books:['The Intelligent Investor','Corporate Finance (Ross)','McKinsey Valuation'],
+    authors:['Aswath Damodaran','Nassim Nicholas Taleb','Benjamin Graham'],
+    companies:['Goldman Sachs','JPMorgan Chase','Morgan Stanley','McKinsey'],
+    hub:'New York City / London',
+    matchKeys:{functions:['Finance & Accounting'], industries:['Finance & Banking','Insurance'], skills:['Financial Modeling','Excel','Accounting'] } },
+  { dim:'Job Function', category:'Human Resources & Talent',
+    coreSkills:['Strategic Workforce Planning','People Analytics','Total Rewards Architecture'],
+    courses:['SHRM Senior Certified Professional (SHRM-SCP)','Wharton People Analytics','AIHR Certified HRBP'],
+    books:['Work Rules!','HR from the Outside In','Think Again'],
+    authors:['Dave Ulrich','Laszlo Bock','Adam Grant'],
+    companies:['Workday','Deloitte','Accenture','Alphabet','Mercer'],
+    hub:'Washington D.C. / Chicago',
+    matchKeys:{functions:['Human Resources'], industries:['Human Resources','Consulting'], skills:['HR Management','Recruiting','Leadership'] } },
+  { dim:'Job Function', category:'Supply Chain & Operations',
+    coreSkills:['Inventory Optimization','Logistics Resilience','Six Sigma Quality Control'],
+    courses:['ASCM Certified Supply Chain Professional (CSCP)','MITx Supply Chain MicroMasters','Lean Six Sigma Black Belt'],
+    books:['The Goal','Supply Chain Management (Chopra)','The Resilient Enterprise'],
+    authors:['Sunil Chopra','Yossi Sheffi','W. Edwards Deming'],
+    companies:['Amazon','FedEx','DHL','Apple','Walmart','Maersk'],
+    hub:'Atlanta / Rotterdam',
+    matchKeys:{functions:['Operations & Supply Chain'], industries:['Manufacturing','Transportation & Logistics','Retail & E-commerce','Automotive'], skills:['Supply Chain Management','Six Sigma','Project Management'] } },
+  { dim:'Job Function', category:'Corporate Strategy',
+    coreSkills:['Market Entry Analysis','M&A Strategy','ESG Framework Integration','Valuation'],
+    courses:['HBS Online Strategy Package','INSEAD Business Strategy Specialization','Wharton ESG Executive'],
+    books:['Competitive Strategy','Blue Ocean Strategy','Good Strategy/Bad Strategy'],
+    authors:['Michael Porter','Richard Rumelt','W. Chan Kim'],
+    companies:['Boston Consulting Group (BCG)','Bain & Company','McKinsey'],
+    hub:'Boston / Paris',
+    matchKeys:{functions:['Executive & Leadership'], industries:['Consulting'], skills:['Leadership','Market Research','Financial Modeling'] } },
+  { dim:'Job Function', category:'Leadership & Management',
+    coreSkills:['Change Management','Corporate Governance','Executive Influence','Turnarounds'],
+    courses:['Oxford Executive Leadership Programme','Cambridge High Impact Leadership','Prosci CCMP'],
+    books:['Good to Great','The First 90 Days','Radical Candor'],
+    authors:['Jim Collins','Michael Watkins','Simon Sinek'],
+    companies:['General Electric','Unilever','Siemens','Alphabet'],
+    hub:'Oxford / London',
+    matchKeys:{functions:['Executive & Leadership'], industries:[], skills:['Leadership','Communication','Public Speaking'] } },
+  { dim:'Industry', category:'SaaS & Enterprise Software',
+    coreSkills:['Product-Led Growth (PLG)','Churn Reduction','DevOps Architecture','ARR Growth'],
+    courses:['Product Faculty APM + CXL Growth Marketing Minidegree + AWS Certified Solutions Architect'],
+    books:['Product-Led Growth (Bush)','Lean Startup (Ries)'],
+    authors:['Wes Bush','Eric Ries'],
+    companies:['Salesforce','Adobe','Zoom','ServiceNow','HubSpot'],
+    hub:'Silicon Valley / Austin',
+    matchKeys:{functions:['Engineering & Technology','Product & Design','Sales & Business Development'], industries:['Technology / IT'], skills:['AWS','Product Strategy','Sales'] } },
+  { dim:'Industry', category:'FinTech & Digital Banking',
+    coreSkills:['Quantitative Risk','Blockchain Compliance','Algorithmic Financial Modeling'],
+    courses:['CFA Institute Digital Hub + Wharton Quantitative Finance Certificate + CISSP'],
+    books:['The Business of Venture Capital','Mastering Bitcoin'],
+    authors:['Andreas Antonopoulos','Andrew Metrick'],
+    companies:['Stripe','Revolut','Adyen','Block','Plaid'],
+    hub:'London / New York City',
+    matchKeys:{functions:['Finance & Accounting','Data & AI'], industries:['Finance & Banking'], skills:['Financial Modeling','Cybersecurity','Machine Learning'] } },
+  { dim:'Industry', category:'Healthcare & Pharma',
+    coreSkills:['Agile Project Management','Regulatory Compliance','Tech-Adjacent Data Analysis'],
+    courses:['PMI-PMP Certification + Harvard VPAL Data Science Certificate'],
+    books:['Bad Blood','The Innovator\'s Prescription'],
+    authors:['Clayton Christensen','Eric Topol'],
+    companies:['Pfizer','Johnson & Johnson','Novartis','Roche'],
+    hub:'Boston / Basel',
+    matchKeys:{functions:['Healthcare','Data & AI','Operations & Supply Chain'], industries:['Healthcare & Pharma','Biotechnology'], skills:['Project Management','Data Analysis','Agile / Scrum'] } },
+  { dim:'Industry', category:'Logistics & Retail',
+    coreSkills:['Operational Excellence','Multi-Channel Logistics','Inventory Scale Management'],
+    courses:['Lean Six Sigma Black Belt + ASCM CSCP Track + MITx Supply Chain MicroMasters'],
+    books:['The Toyota Way','Retail Analytics (Cox)'],
+    authors:['Jeffrey Liker'],
+    companies:['Amazon','Walmart','Target','Home Depot','IKEA'],
+    hub:'Atlanta / Rotterdam',
+    matchKeys:{functions:['Operations & Supply Chain'], industries:['Retail & E-commerce','Transportation & Logistics','Manufacturing'], skills:['Supply Chain Management','Six Sigma'] } },
+  { dim:'Geography', category:'North America (East Coast)',
+    coreSkills:['Finance','Corporate Marketing','Biotech','Higher Ed Leadership'],
+    courses:['Harvard VPAL Online','Wharton Online','Cornell eCornell Programs'],
+    books:['HBR Guides','Executive Framework Manuals'],
+    authors:['Ivy League Faculty','Regional Experts'],
+    companies:['Goldman Sachs','Pfizer','IBM','Boston Consulting Group'],
+    hub:'New York / Boston / Philly',
+    matchKeys:{locations:['United States','Canada'], regionHint:'east' } },
+  { dim:'Geography', category:'North America (West Coast)',
+    coreSkills:['AI Infrastructure','Cloud Architecture','Software Product Innovation'],
+    courses:['Stanford Online','UC Berkeley Executive Education','Product School Digital'],
+    books:['The Lean Product Playbook','High Output Management'],
+    authors:['Silicon Valley Executives','Stanford Faculty'],
+    companies:['Google','Apple','Meta','OpenAI','Nvidia'],
+    hub:'Silicon Valley / Seattle',
+    matchKeys:{locations:['United States','Canada'], regionHint:'west' } },
+  { dim:'Geography', category:'Europe & UK',
+    coreSkills:['Global Governance','Strategic Management','FinTech Compliance','Cross-Border Ops'],
+    courses:['Oxford Saïd Online','INSEAD Digital','LSE Online Leadership Programs'],
+    books:['Blue Ocean Strategy','Capital in the Twenty-First Century'],
+    authors:['Thomas Piketty','INSEAD / Oxford Faculty'],
+    companies:['HSBC','Unilever','Shell','SAP','Siemens'],
+    hub:'London / Paris / Frankfurt',
+    matchKeys:{locations:['United Kingdom','France','Germany','Netherlands','Switzerland','Ireland','Spain','Italy','Sweden','Norway','Denmark','Finland','Belgium','Austria','Portugal','Poland'] } }
+];
+
+const EAST_COAST_HINTS = /new york|boston|philadelphia|washington|dc|philly|east coast|massachusetts|connecticut|new jersey|virginia|maryland/i;
+const WEST_COAST_HINTS = /san francisco|seattle|silicon valley|los angeles|bay area|california|washington state|oregon|pacific/i;
+
+function matchLearningPathway(){
+  const functionVal = (document.getElementById('jobFunction') || {}).value || '';
+  const industryVal = (document.getElementById('industry') || {}).value || '';
+  const locationVal = (document.getElementById('location') || {}).value || '';
+  const skills = (typeof userSkills !== 'undefined' && Array.isArray(userSkills)) ? userSkills : [];
+  const roleVal = (document.getElementById('jobRole') || {}).value || '';
+  const fosVal = (document.getElementById('fieldOfStudy') || {}).value || '';
+  const stage = (document.getElementById('careerStage') || {}).value || '';
+
+  let best = null, bestScore = 0;
+  LEARNING_PATHWAYS.forEach(p=>{
+    let score = 0;
+    const mk = p.matchKeys || {};
+    if(mk.functions && functionVal && mk.functions.includes(functionVal)) score += 40;
+    if(mk.industries && industryVal && mk.industries.includes(industryVal)) score += 30;
+    if(mk.skills && skills.length){
+      const hits = mk.skills.filter(s=> skills.some(us => us.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(us.toLowerCase())) );
+      score += Math.min(25, hits.length * 8);
+    }
+    if(mk.locations && locationVal && mk.locations.includes(locationVal)) score += 20;
+    if(p.dim === 'Geography' && locationVal === 'United States'){
+      // light boost; regionHint refined only if we had city-level data
+      if(mk.regionHint === 'west') score += 5;
+      else if(mk.regionHint === 'east') score += 5;
+    }
+    // soft boost from job role / field of study keywords
+    const hay = (roleVal + ' ' + fosVal + ' ' + (analyzedAtsFile||'')).toLowerCase();
+    if(hay && p.category){
+      const catWords = p.category.toLowerCase().split(/[\s&]+/).filter(w=>w.length>3);
+      if(catWords.some(w=>hay.includes(w))) score += 8;
+    }
+    if(score > bestScore){ bestScore = score; best = p; }
+  });
+
+  // fallback: prefer a Job Function pathway when nothing strong matched
+  if(!best || bestScore < 15){
+    best = LEARNING_PATHWAYS.find(p=>p.dim==='Job Function' && p.category==='Technology & Engineering') || LEARNING_PATHWAYS[0];
+    return { pathway: best, score: bestScore, matched: false };
+  }
+  return { pathway: best, score: bestScore, matched: true };
+}
+
+function renderPathwayWidget(phase){
+  const { pathway: p, matched } = matchLearningPathway();
+  if(!p) return '';
+  const phaseNotes = {
+    '30': `Days 1–30 focus: enroll in one foundational course from the list below and start the first essential book. Build the skill base before depth.`,
+    '60': `Days 31–60 focus: apply concepts from courses/books on a real project or mock case. Study one primary thought leader deeply.`,
+    '90': `Days 61–90 focus: complete a certification, align your resume toward the target Tier-1 companies, and network toward the anchor hub if relevant.`
+  };
+  const skillsChips = (p.coreSkills||[]).map(s=>`<span class="pathway-chip">${s}</span>`).join('');
+  const companyChips = (p.companies||[]).map(c=>`<span class="pathway-chip">${c}</span>`).join('');
+  const courseList = (p.courses||[]).map(c=>`<div class="book-item"><b>${c}</b></div>`).join('');
+  const bookList = (p.books||[]).map(b=>`<div class="book-item"><b>${b}</b></div>`).join('');
+  const authorList = (p.authors||[]).map(a=>`<span class="pathway-chip">${a}</span>`).join('');
+
+  // Phase emphasis: 30 → courses primary, 60 → books+authors, 90 → companies+hub
+  let primaryCards = '';
+  if(phase === '30'){
+    primaryCards = `
+      <div class="pathway-card"><div class="pc-label">Top Online Courses &amp; Certifications</div><div class="pc-body">${courseList || '—'}</div></div>
+      <div class="pathway-card"><div class="pc-label">Core Skill Set to Build</div><div class="pc-chips">${skillsChips}</div></div>
+      <div class="pathway-card"><div class="pc-label">Essential Books (start one)</div><div class="pc-body">${bookList || '—'}</div></div>`;
+  } else if(phase === '60'){
+    primaryCards = `
+      <div class="pathway-card"><div class="pc-label">Essential Books &amp; References</div><div class="pc-body">${bookList || '—'}</div></div>
+      <div class="pathway-card"><div class="pc-label">Primary Authors &amp; Thought Leaders</div><div class="pc-chips">${authorList}</div></div>
+      <div class="pathway-card"><div class="pc-label">Courses to Progress</div><div class="pc-body">${courseList || '—'}</div></div>`;
+  } else {
+    primaryCards = `
+      <div class="pathway-card"><div class="pc-label">Target Tier-1 Companies</div><div class="pc-chips">${companyChips}</div></div>
+      <div class="pathway-card"><div class="pc-label">Anchor Global Hub</div><div class="pc-title">${p.hub || '—'}</div><div class="pc-body">Use this as a north-star for networking, conferences, and relocation signals.</div></div>
+      <div class="pathway-card"><div class="pc-label">Certifications to Showcase</div><div class="pc-body">${courseList || '—'}</div></div>`;
+  }
+
+  return `<div class="pathway-block">
+    <h4>🧭 Personalized Learning Pathway</h4>
+    <span class="pathway-match-badge ${matched?'':'sample'}">${matched ? '✓ Matched to your profile' : 'Sample — complete setup for a tighter match'}</span>
+    <div class="pathway-phase-note">${phaseNotes[phase] || ''}</div>
+    <div class="pathway-card" style="background:linear-gradient(145deg, rgba(19,42,82,.06), rgba(19,42,82,.02));">
+      <div class="pc-label">${p.dim}</div>
+      <div class="pc-title">${p.category}</div>
+      <div class="pc-body">Auto-selected from your job function, industry, skills${analyzedAtsFile ? ', and resume context' : ''}.</div>
+    </div>
+    ${primaryCards}
+  </div>`;
+}
+
 function renderRoadmap(){
   const answered = userAnswers.filter(a=>a.key);
   const weakest = answered.slice().sort((a,b)=>a.score-b.score).slice(0,3);
@@ -2390,12 +2648,14 @@ function renderRoadmap(){
       const books = ROADMAP_BOOKS[f.key] || [];
       return books.map(b=>`<div class="book-item"><b>${b.t}</b> — ${b.s}</div>`).join('');
     }).join('');
+    const pathwayHtml = renderPathwayWidget(phase);
     document.getElementById('roadmap-'+phase).innerHTML =
       `<div class="roadmap-stage"><div class="rs-title">${stageInfo.icon} ${stageInfo.title}</div><div class="rs-desc">${stageInfo.desc}</div></div>
        <div class="roadmap-goal">${paceMap[band.tone]}</div>
        ${tasks}
        <div class="learn-block"><h4>📡 Learning Channels to Refer</h4><div style="font-size:11px; color:var(--ink-soft); margin:-4px 0 8px;">${contextLine}</div>${learnItems}</div>
-       <div class="book-block"><h4>📚 Books &amp; Certifications for Your Gaps</h4>${bookItems || '<div class="book-item">Complete the diagnostic to get book & certification picks for your weakest areas.</div>'}</div>`;
+       <div class="book-block"><h4>📚 Books &amp; Certifications for Your Gaps</h4>${bookItems || '<div class="book-item">Complete the diagnostic to get book & certification picks for your weakest areas.</div>'}</div>
+       ${pathwayHtml}`;
   });
   showRoadmapPhase('30');
 }
@@ -2701,5 +2961,6 @@ function exitAutoDemo(){
   toast('Demo ended');
 }
 </script>
-</body>
-</html>
+
+
+</body></html>
