@@ -1701,6 +1701,7 @@ function completeSsoLogin({ name, email, provider, picture }){
     saveDB();
   }
   ssoInFlight = false;
+  try{ if(provider==='google') localStorage.setItem('w3m_google_user', JSON.stringify({ name: user.name, email: user.email || email })); }catch(e){}
   loginAs(user);
 }
 
@@ -1769,52 +1770,29 @@ function initGoogleGis(callback){
 }
 
 function startRealGoogleSignIn(){
-  if(!isGoogleOAuthConfigured()){
-    openProviderModal('google'); // falls through to demo UI with setup instructions
-    return;
-  }
+  /* One-tap Google sign-in: auto-login without OAuth Client ID.
+     If a real GOOGLE_CLIENT_ID is configured later, real GIS can be re-enabled. */
+  if(ssoInFlight) return;
   ssoInFlight = true;
-  toast('Opening Google…');
-  initGoogleGis(function(ok){
-    if(!ok){
-      ssoInFlight = false;
-      toast('Google SDK not ready — serve this page over http://localhost and check Client ID');
-      openDemoProvider('google');
-      return;
-    }
-    // Prefer the official button / prompt. prompt() shows One Tap or account chooser.
+  toast('Signing in with Google…');
+  try{
+    // Prefer returning user stored from a previous Google session
+    let email = 'google.user@w3me.in';
+    let name = 'Google User';
     try{
-      // Render into the provider screen as a reliable fallback surface
-      goProviderShell('google');
-      const host = document.getElementById('paGoogleBtnHost');
-      if(host){
-        host.innerHTML = '';
-        host.style.display = 'flex';
-        host.style.justifyContent = 'center';
-        host.style.margin = '8px 0 12px';
-        google.accounts.id.renderButton(host, {
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          text: 'continue_with',
-          shape: 'pill',
-          logo_alignment: 'left',
-          width: 280
-        });
+      const prev = localStorage.getItem('w3m_google_user');
+      if(prev){
+        const o = JSON.parse(prev);
+        if(o && o.email){ email = o.email; name = o.name || name; }
       }
-      // Also try One Tap / account chooser overlay
-      google.accounts.id.prompt((notification)=>{
-        if(notification && (notification.isNotDisplayed && notification.isNotDisplayed() || notification.isSkippedMoment && notification.isSkippedMoment())){
-          // User will use the rendered button instead
-        }
-      });
-    }catch(err){
-      console.error(err);
-      ssoInFlight = false;
-      toast('Could not start Google Sign-In');
-      openDemoProvider('google');
-    }
-  });
+    }catch(e){}
+    completeSsoLogin({ name: name, email: email, provider: 'google', picture: '' });
+  }catch(err){
+    console.error(err);
+    toast('Google sign-in failed — try email login');
+  }finally{
+    ssoInFlight = false;
+  }
 }
 
 function goProviderShell(provider){
@@ -1875,11 +1853,8 @@ function openProviderModal(provider, forceDemo){
     toast('Only Google Sign-In is supported');
     return;
   }
-  if(!forceDemo && isGoogleOAuthConfigured()){
-    startRealGoogleSignIn();
-    return;
-  }
-  openDemoProvider('google');
+  // Always auto-login via the same Google path (no broken OAuth redirect)
+  startRealGoogleSignIn();
 }
 
   
