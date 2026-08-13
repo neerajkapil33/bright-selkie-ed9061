@@ -14,7 +14,7 @@ body{font-family:'Space Grotesk',sans-serif; background:
 h1,h2,h3,.display{font-family:'Fraunces',serif;}
 .mono{font-family:'IBM Plex Mono',monospace;}
 .app{width:100%; max-width:430px; min-height:100vh; position:relative; display:flex; flex-direction:column;}
-.screen{display:none; flex-direction:column; flex:1; min-height:100vh; padding-bottom:100px; animation:fadeUp .4s ease;}
+.screen{display:none; flex-direction:column; flex:1; min-height:100vh; padding-bottom:calc(130px + env(safe-area-inset-bottom, 0px)); animation:fadeUp .4s ease;}
 .screen.active{display:flex;}
 @keyframes fadeUp{from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);}}
 .card{background:var(--card); border-radius:var(--r-md); box-shadow:var(--shadow); border:1px solid var(--line); padding:18px;}
@@ -132,7 +132,7 @@ h1,h2,h3,.display{font-family:'Fraunces',serif;}
 .h-sub{font-size:10px; color:var(--ink-soft); margin-top:-2px;}
 .icon-btn{width:36px;height:36px;border-radius:11px; border:1px solid var(--line); background:var(--card);
   display:flex; align-items:center; justify-content:center; cursor:pointer;}
-.tabbar{position:fixed; bottom:14px; left:50%; transform:translateX(-50%); width:calc(100% - 36px); max-width:394px;
+.tabbar{position:fixed; bottom:calc(14px + env(safe-area-inset-bottom, 0px)); left:50%; transform:translateX(-50%); width:calc(100% - 36px); max-width:394px;
   display:flex; justify-content:space-around; background:var(--card); border-radius:20px; box-shadow:var(--shadow);
   padding:10px 6px; z-index:30; border:1px solid var(--line);}
 .tab{display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:var(--ink-soft); flex:1; font-size:10px; font-weight:600;}
