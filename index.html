@@ -5865,47 +5865,109 @@ const CoachModule = (() => {
       || /\b(yes\s+please|one more|something else)\b/i.test(t||'');
   }
 
-  /** Thoughtful answer + optional one soft follow-up — not a rapid quiz */
+  /** Professional adaptive coach — proactive, logical, situation-aware */
+  function coachContext(){
+    const bits = [];
+    try{
+      if(typeof currentUser !== 'undefined' && currentUser){
+        if(currentUser.name) bits.push('Name: '+currentUser.name);
+        if(currentUser.role) bits.push('Role: '+currentUser.role);
+        if(currentUser.location) bits.push('Location: '+currentUser.location);
+      }
+    }catch(e){}
+    try{
+      const last = (ADAPT.turns||[]).filter(function(m){ return m.role==='you'; }).slice(-3).map(function(m){ return m.text; });
+      if(last.length) bits.push('Recent user points: '+last.join(' | '));
+    }catch(e){}
+    return bits.join('. ');
+  }
+
   function craftReply(userText){
-    const s = (userText||'').toLowerCase();
-    let answer = '';
-    let follow = '';
+    const raw = (userText||'').trim();
+    const s = raw.toLowerCase();
+    const name = userFirstName();
+    const you = name || 'you';
+    const turn = (ADAPT.turns||[]).filter(function(m){ return m.role==='coach'; }).length;
+    const prevYou = (ADAPT.turns||[]).filter(function(m){ return m.role==='you'; }).map(function(m){ return m.text.toLowerCase(); }).join(' ');
 
-    if(/linkedin|job portal|apply|applied|application|networking/.test(s)){
-      answer = 'When LinkedIn and portals feel maxed out, the bottleneck is rarely “more applications” — it is signal. Switch to 3–5 targeted roles a week: mirror the job description keywords in your top 6 bullets, message 2 people who already work there with a specific note (not a generic connect), and track reply rates. Cold volume without customization usually stalls.';
-      follow = 'Which part do you want to tighten first — your headline and About, your bullets, or outreach messages?';
-    } else if(/resume|cv|ats|bullet/.test(s)){
-      answer = 'A strong resume leads with outcomes: role, scope, and numbers (%, ₹, time saved, revenue, team size). Put the target job’s keywords in the first third of the page. Drop soft adjectives; keep verbs and results. If ATS is a concern, keep a clean single-column layout and standard section headings.';
-      follow = 'What role title are you aiming at, and which one achievement best proves you can do it?';
-    } else if(/interview|nervous|mock|panel|question/.test(s)){
-      answer = 'For interviews, prepare 4 STAR stories (conflict, failure, leadership, impact) you can reshape to most questions. Practice out loud once a day for 5 minutes — not memorizing scripts, but owning the structure: situation, your action, measurable result, and what you learned.';
-      follow = 'Is there one upcoming interview or one question that worries you most?';
-    } else if(/salary|negotiat|offer|package|ctc|pay/.test(s)){
-      answer = 'Negotiate from value, not need. Anchor with market range for the role and city, then cite 2–3 proof points of impact. Script: appreciate the offer, state the range you are targeting with brief evidence, and stay open on total package (bonus, joining, flexibility).';
-      follow = 'Do you already have an offer number, or are you still estimating market range?';
-    } else if(/stuck|career|direction|switch|pivot|promotion|confused/.test(s)){
-      answer = 'Clarity beats speed. Write one sentence: “In 6 months I want ___ because ___.” Then pick one skill and one relationship that move that sentence forward this month. Career pivots fail when people optimize for activity instead of a single coherent direction.';
-      follow = 'What would “better” look like for you in six months — title, skills, income, or lifestyle?';
-    } else if(/skill|learn|course|certif/.test(s)){
-      answer = 'Choose one skill tied to a real job posting you want. Learn in public: a small project, case write-up, or before/after metric in 30 days beats collecting certificates. Employers hire evidence of use, not course completion alone.';
-      follow = 'Which skill is most linked to the next role you want?';
-    } else if(/what will you give|what can you|help me|how can you/.test(s)){
-      answer = 'I can help you clarify direction, tighten your resume and LinkedIn, prep interview stories, plan outreach, and think through offers — with practical next steps, not generic advice. Share the real constraint you are facing and I will give you a concrete plan.';
-      follow = 'What is the single most important career problem on your plate this week?';
-    } else if(/diagnostic|w3m|report|assessment|coach/.test(s)){
-      answer = 'The career diagnostic on Home builds a structured readout of strengths and gaps; Coach is for rehearsal and decisions. Use Diagnostic when you want a scorecard, and this chat when you want advice or practice on a specific problem.';
-      follow = 'Would you rather start a diagnostic, or keep working through one career issue here?';
-    } else {
-      answer = 'I hear you. Let me respond to what you shared: focus on one outcome you control this week, one piece of evidence you can improve (resume line, outreach, or interview story), and one person or channel that compounds progress. Random activity without a target usually feels exhausting.';
-      follow = 'If we pick only one priority for the next seven days, what should it be?';
+    // ——— Greetings & rapport ———
+    if(/^(hi|hello|hey)\b/.test(s) && s.length < 36
+       || /good\s*(morning|afternoon|evening)/.test(s) && s.length < 70
+       || /how\s*are\s*you/.test(s) && s.length < 55){
+      return timeGreeting() + (name ? ', '+name : '') + '. I\'m well, thank you. I\'m here as your career thinking partner — to help you see gaps clearly, choose a sensible next move, and avoid noise. What is the real decision or pressure on your mind right now?';
+    }
+    if(/^(ok|okay|sure|fine|great|nice|cool|alright|yes|yeah)\.?$/i.test(raw)){
+      return 'Understood. Let\'s use the time well. Share the situation in plain words — role, search, interview, offer, or direction — and I\'ll give you a clear read and a next step.';
+    }
+    if(/thank/.test(s) && s.length < 80){
+      return 'You\'re welcome. If anything is still unclear — priority, message, or next action — say it now and we\'ll lock it before you go.';
     }
 
-    // After several turns, stop piling questions — close the loop
-    const coachTurns = ADAPT.turns.filter(function(m){ return m.role==='coach'; }).length;
-    if(coachTurns >= 5){
-      return answer + ' When you are ready we can stop here, or you can say what else you need.';
+    // ——— Emotional pulse ———
+    if(/not\s*good|sad|stressed|anxious|worried|burn\s*out|exhausted|frustrated|lost|demotivated|hopeless/.test(s)){
+      return 'I hear the weight in what you\'re saying. Career stress is real, and rushing usually makes it worse. Let\'s separate emotion from decision: what is the one work or career fact that is putting the most pressure on you this week? Once we name it, we can choose a controlled next move.';
     }
-    return answer + (follow ? ' ' + follow : '');
+
+    // ——— Job search / portals / LinkedIn ———
+    if(/linkedin|job portal|naukri|indeed|apply|applied|application|networking|recruiter|no\s*response|not\s*hearing/.test(s)){
+      return 'A quiet pipeline usually means a signal problem, not a effort problem. Three levers matter: (1) target fit — fewer roles that truly match your proof, (2) evidence — bullets that show outcome, not activity, (3) warm paths — people inside the company, not only Apply buttons. This week, cut spray-and-pray. Pick five roles, rewrite the top of your profile to those keywords, and send two specific notes to people in those teams. Where are you getting the least response — applications, messages, or both?';
+    }
+
+    // ——— Resume ———
+    if(/resume|cv|ats|bullet|curriculum|profile\b/.test(s)){
+      return 'A strong resume is a decision tool for the reader in six seconds: role match, scope, and proof. Lead with outcomes (%, revenue, time, team, quality), mirror the language of the job you want, and drop vague adjectives. Gap to watch: activity without result. If you share the target role title, I\'ll tell you what the top third of that resume must prove.';
+    }
+
+    // ——— Interviews ———
+    if(/interview|nervous|mock|panel|hr\b|technical round/.test(s)){
+      return 'Interviews reward clarity under pressure. Build four reusable stories — conflict, setback, leadership, impact — in STAR form, each ending with a measurable result and a learning. Practice out loud until the structure is automatic, not memorized. The gap for most candidates is not knowledge; it is unstructured answers. What is the interview stage and role, and which question feels weakest?';
+    }
+
+    // ——— Offers / salary ———
+    if(/salary|negotiat|offer|package|ctc|pay\b|compensation|hike/.test(s)){
+      return 'Compensation decisions need a frame: market range for the role and city, your scarce skills, and the cost of saying no. Negotiate from contribution, not need. Prepare two or three impact proofs, a target range, and a fallback (joining bonus, review cycle, scope). Do you have a written offer, or are you still forming a number?';
+    }
+
+    // ——— Career direction / pivot ———
+    if(/stuck|direction|switch|pivot|promotion|confused|what should i do|career path|next\s*move|growth/.test(s)
+       || (/career/.test(s) && /help|advice|suggest|guide/.test(s))){
+      return 'When direction is unclear, activity becomes anxiety. Use a simple filter: in six months, what must be true — title, skill, income, or lifestyle — for you to call this a good year? Then choose one skill and one relationship that move only that outcome. Everything else is optional. Tell me which of those four matters most right now, and whether you are employed, searching, or between roles — the right move depends on that context.';
+    }
+
+    // ——— Skills / learning ———
+    if(/skill|learn|course|certif|upskill|training/.test(s)){
+      return 'Learning pays when it is tied to a job signal. Pick one skill that appears in roles you want, then produce evidence in 30 days — a project, metric, or case — not only a certificate. Employers buy proof of use. Which role are you aiming at, and which skill on those postings do you least have evidence for?';
+    }
+
+    // ——— Manager / workplace / personal-professional boundary ———
+    if(/boss|manager|toxic|office politics|work.?life|laid\s*off|fired|notice|resign|quit/.test(s)){
+      return 'Workplace decisions need both head and timing. Protect your reputation, document facts, and separate what you control (effort, skills, network, exit plan) from what you don\'t (other people\'s behaviour). If you are considering leaving or escalating, we should map risk, runway, and narrative. Are you trying to improve the current role, or prepare a clean exit?';
+    }
+
+    // ——— Platform / diagnostic ———
+    if(/diagnostic|w3m|report|assessment|this\s*app|platform/.test(s)){
+      return 'Use the diagnostic on Home when you want a structured scorecard of strengths and gaps. Use this conversation when you need judgment on a live decision. Together they work best: scorecard for clarity, dialogue for the move. Which do you need first — a readout, or help deciding something specific today?';
+    }
+
+    if(/what can you|how can you help|what will you give|who are you/.test(s)){
+      return 'I\'m Neeraj — your career coach on W3ME. I help you diagnose gaps, choose a sensible channel (search, skill, network, or negotiate), and turn confusion into a next action you can take this week. I won\'t drown you in generic tips. Share your situation honestly and I\'ll respond with a clear read and options.';
+    }
+
+    // ——— Proactive synthesis when user shared context already ———
+    if(prevYou.length > 40 && turn >= 2){
+      if(/don\'?t know|not sure|maybe|confused|whatever/.test(s)){
+        return 'When things feel fuzzy, pick a default path for 14 days so you can learn from reality, not from overthinking. Based on what you\'ve shared so far, I recommend one primary channel and one backup. Tell me: are you more constrained by skills, visibility (network/profile), or opportunities (openings/offers)? I\'ll prioritise from that.';
+      }
+    }
+
+    // ——— Personal identity lines ———
+    if(/\b(i am|i'm|im)\b.*\b(looking|searching|jobless|unemployed|fresher|experienced|working)\b/.test(s)){
+      return 'Thanks for locating yourself in the journey — that changes the advice. Searching, switching, and growing inside a job each need a different playbook. What is the target role or industry, and what has blocked progress most so far: profile, interviews, or clarity of goal?';
+    }
+
+    // ——— Fallback: mirror + professional frame + one precise ask ———
+    const snippet = raw.length > 100 ? raw.slice(0, 96) + '…' : raw;
+    return 'I\'m taking what you said seriously: “' + snippet + '”. To give you advice that fits — not a generic lecture — I need one anchor: what decision are you trying to make in the next 2–4 weeks? With that, I can name the gap, the better channel (skill, search, network, or negotiate), and a practical first step.';
   }
 
   function handleUserAdapt(text){
@@ -5920,8 +5982,8 @@ const CoachModule = (() => {
     ADAPT.thinking = true;
     renderAdaptiveUI('Thinking through your message…');
 
-    // Deliberate pause: read, think, then respond (1.6–2.8s)
-    const thinkMs = Math.min(2800, 1600 + Math.min(text.length, 180)*6);
+    // Short pause only — respond to what they said (faster for short messages)
+    const thinkMs = text.length < 40 ? 700 : Math.min(1800, 900 + Math.min(text.length, 120)*5);
 
     setTimeout(function(){
       if(!ADAPT.active) return;
