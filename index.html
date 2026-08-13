@@ -450,6 +450,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
   padding:10px 18px; border-radius:12px; font-size:12.5px; opacity:0; transition:all .3s; z-index:200; pointer-events:none;}
 .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 /* ---- Neeraj voice coach bubble ---- */
+.coach-bubble.force-hide,.coach-bubble[data-quiet="1"]{display:none !important;}
 .coach-bubble{position:fixed; bottom:96px; right:max(16px, calc(50% - 215px + 16px)); z-index:250; display:none; align-items:flex-end; gap:8px; max-width:260px;}
 .coach-speech{background:var(--card); border:1px solid var(--line); border-radius:15px 15px 4px 15px; box-shadow:var(--shadow);
   padding:10px 13px; font-size:12px; line-height:1.4; color:var(--ink);}
@@ -1272,7 +1273,7 @@ img,video{max-width:100%;height:auto;}
     <button class="demo-skip" onclick="demoSkipStep()">Skip →</button>
   </div>
 </div>
-<div class="coach-bubble" id="coachBubble" onclick="coachBubbleTap()" style="cursor: pointer; display: none;" title="Tap to say hi to Neeraj">
+<div class="coach-bubble" id="coachBubble" onclick="coachBubbleTap()" style="cursor:pointer;display:none !important;" data-quiet="1" title="Tap to say hi to Neeraj">
   <div class="coach-speech"><div class="coach-name">Neeraj · Voice &amp; Video Coach</div><div id="coachText">Hi, I'm Neeraj. Tap me anytime 👋</div></div>
   <div class="coach-avatar" id="coachAvatar">NK</div>
 </div>
@@ -2954,10 +2955,15 @@ const VoiceAgent = (() => {
   async function speak(text, onEnd){
     if(!text){ if(onEnd) onEnd(); return; }
     try{
-      const bubble=document.getElementById('coachBubble');
-      const ct=document.getElementById('coachText');
-      if(bubble) bubble.style.display='flex';
-      if(ct) ct.textContent=text;
+      if(!window.__w3mQuietCoachUI){
+        const bubble=document.getElementById('coachBubble');
+        const ct=document.getElementById('coachText');
+        if(bubble) bubble.style.display='flex';
+        if(ct) ct.textContent=text;
+      } else {
+        const bubble=document.getElementById('coachBubble');
+        if(bubble) bubble.style.display='none';
+      }
     }catch(e){}
     stopSpeak();
     speaking = true; avatarTalk(true); setStatus('Speaking…'); setSub('Neeraj is talking');
@@ -3144,9 +3150,9 @@ const VoiceAgent = (() => {
 
 function coachSay(text, onEnd){
   const bubble = document.getElementById('coachBubble');
-  if(bubble) bubble.style.display = 'flex';
+  if(bubble) bubble.style.display = window.__w3mQuietCoachUI ? 'none' : 'flex';
   const ct = document.getElementById('coachText');
-  if(ct) ct.textContent = text;
+  if(ct && !window.__w3mQuietCoachUI) ct.textContent = text;
   if(typeof demoActive !== 'undefined' && demoActive){ if(onEnd) onEnd(); return; }
   if(typeof VoiceAgent !== 'undefined'){
     VoiceAgent.speak(text, onEnd);
@@ -5150,7 +5156,7 @@ const CoachModule = (() => {
   function scoreTag(s){ return s>=75?{t:'Strong',c:'rgba(76,143,107,.15)',tc:'var(--good)'}:s>=50?{t:'Developing',c:'rgba(198,147,42,.15)',tc:'var(--accent)'}:{t:'Focus area',c:'rgba(193,84,61,.15)',tc:'var(--danger)'}; }
 
   function init(){
-    if(STATE.inited) return;
+    if(!STATE.inited){
     STATE.inited = true;
     if(!ANALYSIS.canvas){ ANALYSIS.canvas = document.createElement('canvas'); ANALYSIS.canvas.width = ANALYSIS.w; ANALYSIS.canvas.height = ANALYSIS.h; ANALYSIS.ctx = ANALYSIS.canvas.getContext('2d', { willReadFrequently:true }); }
     const tabs = document.getElementById('coachMainTabs');
@@ -5168,9 +5174,13 @@ const CoachModule = (() => {
       if(elAb) elAb.classList.toggle('active', t==='about');
       if(t==='history') renderHistory();
       if(t==='about') renderAbout();
-      if(t==='livecall') renderLiveCall();
+      if(t==='livecall'){ try{ const b=document.getElementById('coachBubble'); if(b) b.style.display='none'; }catch(e){} renderLiveCall(); }
+      if(t==='practice'){ try{ startAdaptiveCoach(); }catch(e){} }
     });
-    renderConsent(); renderAbout();
+    renderAbout();
+    } // end first-time init
+    // Every visit to Coach: adaptive conversational flow
+    startAdaptiveCoach();
   }
 
   function renderConsent(){
@@ -5429,41 +5439,43 @@ const CoachModule = (() => {
   function renderLiveCall(){
     const root = document.getElementById('coachLiveCall');
     if(!root) return;
-    const items = LIVE_CALL_QS.map((item, idx) => {
-      const done = !!LIVE.answered[item.id];
-      const active = LIVE.qIndex === idx && LIVE.active;
-      return '<button type="button" class="lc-qbtn'+(done?' done':'')+(active?' active':'')+'" onclick="CoachModule.pickLiveQ('+idx+')">'
-        + '<span class="lc-num">Q'+(idx+1)+' · '+escapeHtml(item.topic)+(done?' · done':'')+'</span>'
-        + escapeHtml(item.q) + '</button>';
-    }).join('');
-    const chatHtml = (LIVE.chat || []).slice(-12).map(m =>
-      m.role==='coach'
-        ? '<div class="lc-neeraj"><b>Neeraj:</b> '+escapeHtml(m.text)+'</div>'
-        : '<div class="lc-you"><b>You:</b> '+escapeHtml(m.text)+'</div>'
-    ).join('') || '<div class="lc-you">Start the call, then pick a question — or ask your own.</div>';
-    root.innerHTML = '<div class="lc-wrap">'
-      + '<div class="lc-hero"><h3>Live coach call · questionnaire</h3>'
-      + '<p>Video on. Neeraj asks structured career questions; you answer out loud. You can also ask him anything during the call.</p></div>'
-      + '<div class="lc-video-box"><video id="lcVideo" playsinline autoplay muted></video>'
-      + '<div class="lc-overlay" id="lcOverlay">'+(LIVE.active ? 'Session live — pick a question or tap Ask Neeraj' : 'Camera preview appears when you start the call')+'</div></div>'
-      + '<div class="lc-qlist">'+items+'</div>'
-      + '<div class="lc-controls">'
-      + (LIVE.active
-          ? '<button type="button" class="lc-ask" onclick="CoachModule.askNeerajFree()">Ask Neeraj anything</button>'
-            + '<button type="button" class="lc-ask" onclick="CoachModule.nextLiveQ()">Next question</button>'
-            + '<button type="button" class="lc-end" onclick="CoachModule.endLiveCall()">End call</button>'
-          : '<button type="button" class="lc-start" onclick="CoachModule.startLiveCall()">Start video call</button>')
+    // Stop any free in-app call — Live Call is paid + scheduled only
+    try{ if(typeof endLiveCall==='function') endLiveCall(); }catch(e){}
+    try{
+      const bubble=document.getElementById('coachBubble');
+      if(bubble) bubble.style.display='none';
+    }catch(e){}
+    root.innerHTML = '<div style="padding:16px 16px 28px;">'
+      + '<div class="coach-eyebrow">Premium · 1:1 with Neeraj</div>'
+      + '<h2 style="font-size:18px;margin:0 0 8px;">Live coach call</h2>'
+      + '<p style="font-size:13px;color:var(--ink-soft);line-height:1.55;margin:0 0 16px;">Live video calls with Neeraj are available on the <b>paid coaching plan</b>. Book a slot; you will receive confirmation on your email and meet on the scheduled time.</p>'
+      + '<div class="coach-panel" style="margin-bottom:12px;">'
+      + '<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">'
+      + '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(145deg,var(--navy),var(--navy-deep));color:var(--gold-light);display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;font-weight:800;">NK</div>'
+      + '<div><div style="font-weight:700;font-size:14px;">Neeraj Kapil</div>'
+      + '<div style="font-size:11.5px;color:var(--ink-soft);">Career coach · live session</div></div></div>'
+      + '<div style="font-size:12.5px;line-height:1.55;color:var(--ink);margin-bottom:10px;">Schedule via Calendly or email the coach directly:</div>'
+      + '<a href="mailto:recreationeeraj@gmail.com?subject=W3ME%20Live%20Coach%20Call%20Booking" style="display:block;font-size:13px;font-weight:600;color:var(--accent);margin-bottom:8px;">recreationeeraj@gmail.com</a>'
+      + '<a href="https://calendly.com/" target="_blank" rel="noopener" id="lcCalendlyBtn" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;padding:13px 16px;border-radius:14px;background:linear-gradient(145deg,var(--gold-light),var(--gold));color:var(--navy-deep);font-weight:700;font-size:13.5px;text-decoration:none;">Book on Calendly</a>'
       + '</div>'
-      + '<div class="lc-chat" id="lcChat">'+chatHtml+'</div>'
-      + '<div class="lc-status" id="lcStatus">'+(LIVE.active ? 'Live' : 'Ready')+'</div>'
+      + '<div class="coach-panel" style="margin-bottom:12px;">'
+      + '<div class="coach-eyebrow">Included in paid live call</div>'
+      + '<ul style="margin:8px 0 0;padding-left:18px;font-size:12.5px;line-height:1.6;color:var(--ink);">'
+      + '<li>1:1 video session with Neeraj</li>'
+      + '<li>Career, interview, and role strategy</li>'
+      + '<li>Follow-up notes after the call</li>'
+      + '</ul></div>'
+      + '<button type="button" class="coach-btn coach-btn-primary" onclick="go(\'schedule\')">Open schedule &amp; payment</button>'
+      + '<button type="button" class="coach-btn coach-btn-ghost" style="margin-top:10px;" onclick="go(\'payment\')">View paid plans</button>'
+      + '<p style="font-size:11px;color:var(--ink-soft);margin-top:14px;line-height:1.45;">Free Practice tab stays available for adaptive chat coaching. Live Call is scheduled only — not an on-demand free call.</p>'
       + '</div>';
-    if(LIVE.stream){
-      const v = document.getElementById('lcVideo');
-      if(v){ v.srcObject = LIVE.stream; v.muted = true; v.play().catch(()=>{}); }
-    }
   }
 
   async function startLiveCall(){
+    // Paid / scheduled only — do not start free in-app video call
+    renderLiveCall();
+    if(typeof toast==='function') toast('Live Call is paid — book via Calendly or schedule');
+    return;
     try{
       LIVE.stream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
       LIVE.active = true; LIVE.chat = []; LIVE.answered = {}; LIVE.qIndex = 0;
@@ -5492,6 +5504,13 @@ const CoachModule = (() => {
   function setLcOverlay(t){ const el=document.getElementById('lcOverlay'); if(el) el.textContent=t; }
 
   function speakLive(text){
+    try{ const b=document.getElementById('coachBubble'); if(b) b.style.display='none'; }catch(e){}
+    if(window.__w3mQuietCoachUI){
+      try{
+        const u=new SpeechSynthesisUtterance(text); u.rate=0.92; speechSynthesis.speak(u);
+      }catch(e){}
+      return;
+    }
     if(typeof VoiceAgent!=='undefined' && VoiceAgent.speak){
       VoiceAgent.speak(text);
       return;
@@ -5607,7 +5626,371 @@ const CoachModule = (() => {
   }
 
 
-  return { init, stopMedia, startLiveCall, endLiveCall, pickLiveQ, nextLiveQ, askNeerajFree, renderLiveCall };
+  
+  /* ========== Adaptive conversational coach ========== */
+  const ADAPT = {
+    active:false, turns:[], phase:'greet', listening:false, rec:null,
+    stream:null, mediaReady:false, thinking:false, silenceTimer:null, interim:''
+  };
+
+  function timeGreeting(){
+    const h = new Date().getHours();
+    if(h < 12) return 'Good morning';
+    if(h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  function userFirstName(){
+    try{
+      if(typeof currentUser !== 'undefined' && currentUser && currentUser.name)
+        return String(currentUser.name).split(' ')[0];
+      const s = localStorage.getItem('w3m_session');
+      if(s){ const o=JSON.parse(s); if(o&&o.name) return String(o.name).split(' ')[0]; }
+    }catch(e){}
+    return '';
+  }
+
+  async function ensureMediaOnce(){
+    if(ADAPT.mediaReady && ADAPT.stream){
+      const live = ADAPT.stream.getTracks().some(t=>t.readyState==='live');
+      if(live) return true;
+    }
+    try{
+      ADAPT.stream = await navigator.mediaDevices.getUserMedia({ audio:true, video:{ facingMode:'user' } });
+      ADAPT.mediaReady = true;
+      return true;
+    }catch(e){
+      try{
+        ADAPT.stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+        ADAPT.mediaReady = true;
+        return true;
+      }catch(e2){
+        ADAPT.mediaReady = false;
+        return false;
+      }
+    }
+  }
+
+  async function startAdaptiveCoach(){
+    ADAPT.active = true; ADAPT.turns = []; ADAPT.phase = 'greet';
+    ADAPT.listening = false; ADAPT.thinking = false; ADAPT.interim = '';
+    window.__w3mQuietCoachUI = true; // video+voice call: no floating transcript popups
+    try{
+      const bubble=document.getElementById('coachBubble'); if(bubble) bubble.style.display='none';
+      const va=document.getElementById('vaPanel'); if(va) va.style.display='none';
+      const fab=document.getElementById('vaFab'); if(fab) fab.classList.remove('show');
+    }catch(e){}
+    try{ if(ADAPT.rec){ ADAPT.rec.onresult=null; ADAPT.rec.stop(); } }catch(e){}
+    ADAPT.rec = null;
+
+    document.querySelectorAll('#coachMainTabs button').forEach(b=>{
+      b.classList.toggle('active', b.dataset.ctab==='practice');
+    });
+    ['coachPractice','coachLiveCall','coachHistory','coachAbout'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.classList.toggle('active', id==='coachPractice');
+    });
+
+    renderAdaptiveUI('Connecting camera & mic…');
+    const ok = await ensureMediaOnce();
+    const name = userFirstName();
+    let greet = timeGreeting() + (name ? ', '+name : '') + '. I\'m Neeraj, your career coach.';
+    if(ok){
+      greet += ' Take your time — tell me what you need help with today. I\'ll listen fully before I reply.';
+    } else {
+      greet += ' Mic access was blocked — you can still type. How can I help you today?';
+    }
+    ADAPT.turns.push({ role:'coach', text: greet });
+    renderAdaptiveUI(ok ? 'Permissions ready — speak or type when ready' : 'Type your message (mic blocked)');
+    attachPreview();
+    speakAdaptive(greet, function(){
+      if(ok) setTimeout(function(){ listenAdaptive(true); }, 600);
+    });
+  }
+
+  function attachPreview(){
+    const v = document.getElementById('adaptVideo');
+    if(v && ADAPT.stream){
+      try{
+        v.srcObject = ADAPT.stream;
+        v.muted = true;
+        v.playsInline = true;
+        v.play().catch(function(){});
+      }catch(e){}
+    }
+  }
+
+  function renderAdaptiveUI(statusMsg){
+    const el = document.getElementById('coachPractice');
+    if(!el) return;
+    const chat = ADAPT.turns.map(function(m){
+      if(m.role==='coach')
+        return '<div style="display:flex;gap:8px;margin-bottom:12px;align-items:flex-start;"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(145deg,var(--navy),var(--navy-deep));color:var(--gold-light);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;font-weight:700;">NK</div><div style="background:var(--card);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:13px;line-height:1.55;max-width:85%;box-shadow:var(--shadow);"><div style="font-size:9px;font-family:IBM Plex Mono,monospace;color:var(--accent);font-weight:700;margin-bottom:3px;letter-spacing:.04em;">NEERAJ</div>'+escapeHtml(m.text)+'</div></div>';
+      return '<div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><div style="background:var(--navy);color:#fff;border-radius:14px 14px 4px 14px;padding:10px 12px;font-size:13px;line-height:1.55;max-width:85%;">'+escapeHtml(m.text)+'</div></div>';
+    }).join('');
+    const thinking = ADAPT.thinking ? '<div style="font-size:12px;color:var(--ink-soft);font-style:italic;margin:8px 0 12px;padding-left:40px;">Neeraj is thinking…</div>' : '';
+    el.innerHTML = '<div style="padding:12px 16px 24px;">'
+      + '<div class="coach-eyebrow">Live career coach</div>'
+      + '<h2 style="font-size:17px;margin:0 0 12px;">Talk with Neeraj</h2>'
+      + '<div style="position:relative;width:100%;max-width:280px;margin:0 auto 14px;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:#0D1E3D;border:1px solid var(--line);">'
+      + '<video id="adaptVideo" playsinline autoplay muted style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);"></video>'
+      + '<div style="position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.45);color:#fff;font-size:10px;padding:3px 8px;border-radius:8px;">You</div></div>'
+      + '<div id="adaptChat" style="min-height:140px;max-height:38vh;overflow-y:auto;margin-bottom:8px;">'+chat+thinking+'</div>'
+      + '<div style="display:flex;gap:8px;align-items:center;">'
+      + '<input type="text" id="adaptInput" placeholder="Type your full question…" style="flex:1;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-family:inherit;font-size:13px;outline:none;">'
+      + '<button type="button" onclick="CoachModule.adaptMic()" title="Speak" style="width:46px;height:46px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--gold-light),var(--gold));font-size:18px;cursor:pointer;flex-shrink:0;">🎙️</button>'
+      + '<button type="button" onclick="CoachModule.adaptSend()" style="padding:12px 16px;border-radius:12px;border:none;background:var(--navy);color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">Send</button>'
+      + '</div>'
+      + '<div id="adaptStatus" style="font-size:11px;color:var(--ink-soft);margin-top:8px;min-height:16px;">'+(statusMsg|| (ADAPT.listening?'Listening — take your time, finish your full thought…':'Ready'))+'</div>'
+      + '<div style="margin-top:14px;"><button type="button" class="coach-btn coach-btn-ghost" onclick="CoachModule.adaptEnd()">End conversation</button></div>'
+      + '</div>';
+    attachPreview();
+    const input = document.getElementById('adaptInput');
+    if(input){
+      input.onkeydown = function(e){ if(e.key==='Enter'){ e.preventDefault(); adaptSend(); } };
+    }
+    const box = document.getElementById('adaptChat');
+    if(box) box.scrollTop = box.scrollHeight;
+  }
+
+  function speakAdaptive(text, onDone){
+    try{ if(typeof speechSynthesis!=='undefined') speechSynthesis.cancel(); }catch(e){}
+    try{
+      const bubble=document.getElementById('coachBubble');
+      if(bubble) bubble.style.display='none';
+    }catch(e){}
+    try{
+      // Voice only — no floating transcript popups during adaptive call
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.92;
+      u.onend = function(){ if(onDone) onDone(); };
+      u.onerror = function(){ if(onDone) onDone(); };
+      speechSynthesis.speak(u);
+    }catch(e){ if(onDone) onDone(); }
+  }
+
+  function setAdaptStatus(t){
+    const el=document.getElementById('adaptStatus');
+    if(el) el.textContent=t;
+  }
+
+  function adaptMic(){
+    if(ADAPT.thinking) return;
+    listenAdaptive(true);
+  }
+
+  function listenAdaptive(fromUser){
+    if(ADAPT.thinking || !ADAPT.active) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){ setAdaptStatus('Speech not supported here — type your full question'); return; }
+    try{
+      if(ADAPT.rec){
+        try{ ADAPT.rec.onresult=null; ADAPT.rec.onend=null; ADAPT.rec.stop(); }catch(e){}
+      }
+      const rec = new SR();
+      ADAPT.rec = rec;
+      ADAPT.listening = true;
+      ADAPT.interim = '';
+      setAdaptStatus('Listening — finish your full thought, I will wait…');
+      rec.lang = 'en-IN';
+      rec.interimResults = true;
+      rec.continuous = true;
+      rec.maxAlternatives = 1;
+
+      let finalText = '';
+      let quietMs = 0;
+
+      if(ADAPT.silenceTimer) clearInterval(ADAPT.silenceTimer);
+      ADAPT.silenceTimer = setInterval(function(){
+        quietMs += 400;
+        // Wait ~2.4s of silence after speech before treating as complete
+        if(finalText.trim() && quietMs >= 2400){
+          clearInterval(ADAPT.silenceTimer);
+          ADAPT.silenceTimer = null;
+          try{ rec.stop(); }catch(e){}
+        }
+      }, 400);
+
+      rec.onresult = function(e){
+        quietMs = 0;
+        let interim = '';
+        for(let i=e.resultIndex;i<e.results.length;i++){
+          const r = e.results[i];
+          if(r.isFinal) finalText += r[0].transcript + ' ';
+          else interim += r[0].transcript;
+        }
+        ADAPT.interim = interim;
+        const live = (finalText + ' ' + interim).trim();
+        if(live) setAdaptStatus('Hearing you: “' + live.slice(0,80) + (live.length>80?'…':'') + '”');
+      };
+      rec.onerror = function(ev){
+        ADAPT.listening = false;
+        if(ADAPT.silenceTimer){ clearInterval(ADAPT.silenceTimer); ADAPT.silenceTimer=null; }
+        if(ev && ev.error==='not-allowed')
+          setAdaptStatus('Mic blocked — allow microphone once, or type your question');
+        else
+          setAdaptStatus('Mic paused — tap 🎙️ or type');
+      };
+      rec.onend = function(){
+        ADAPT.listening = false;
+        if(ADAPT.silenceTimer){ clearInterval(ADAPT.silenceTimer); ADAPT.silenceTimer=null; }
+        const said = finalText.trim() || ADAPT.interim.trim();
+        if(said) handleUserAdapt(said);
+        else if(fromUser) setAdaptStatus('Didn\'t catch speech — try again or type');
+      };
+      rec.start();
+    }catch(e){
+      setAdaptStatus('Mic error — type your full question instead');
+    }
+  }
+
+  function adaptSend(){
+    if(ADAPT.thinking) return;
+    const input = document.getElementById('adaptInput');
+    const t = input ? input.value.trim() : '';
+    if(!t) return;
+    if(input) input.value = '';
+    handleUserAdapt(t);
+  }
+
+  function isThanks(t){
+    return /\b(thank\s*you|thanks|thx|that'?s\s*all|nothing\s*else|i'?m\s*done|goodbye|bye)\b/i.test(t||'');
+  }
+  function isNoMore(t){
+    return /^(no|nope|nah|nothing|no thanks|i'?m good|that'?s all|all good)\.?$/i.test((t||'').trim())
+      || /\b(no\s+thank|nothing\s+else|i'?m\s+good|that'?s\s+all)\b/i.test(t||'');
+  }
+  function isYesMore(t){
+    return /^(yes|yeah|yep|sure|please|ok|okay)\b/i.test((t||'').trim())
+      || /\b(yes\s+please|one more|something else)\b/i.test(t||'');
+  }
+
+  /** Thoughtful answer + optional one soft follow-up — not a rapid quiz */
+  function craftReply(userText){
+    const s = (userText||'').toLowerCase();
+    let answer = '';
+    let follow = '';
+
+    if(/linkedin|job portal|apply|applied|application|networking/.test(s)){
+      answer = 'When LinkedIn and portals feel maxed out, the bottleneck is rarely “more applications” — it is signal. Switch to 3–5 targeted roles a week: mirror the job description keywords in your top 6 bullets, message 2 people who already work there with a specific note (not a generic connect), and track reply rates. Cold volume without customization usually stalls.';
+      follow = 'Which part do you want to tighten first — your headline and About, your bullets, or outreach messages?';
+    } else if(/resume|cv|ats|bullet/.test(s)){
+      answer = 'A strong resume leads with outcomes: role, scope, and numbers (%, ₹, time saved, revenue, team size). Put the target job’s keywords in the first third of the page. Drop soft adjectives; keep verbs and results. If ATS is a concern, keep a clean single-column layout and standard section headings.';
+      follow = 'What role title are you aiming at, and which one achievement best proves you can do it?';
+    } else if(/interview|nervous|mock|panel|question/.test(s)){
+      answer = 'For interviews, prepare 4 STAR stories (conflict, failure, leadership, impact) you can reshape to most questions. Practice out loud once a day for 5 minutes — not memorizing scripts, but owning the structure: situation, your action, measurable result, and what you learned.';
+      follow = 'Is there one upcoming interview or one question that worries you most?';
+    } else if(/salary|negotiat|offer|package|ctc|pay/.test(s)){
+      answer = 'Negotiate from value, not need. Anchor with market range for the role and city, then cite 2–3 proof points of impact. Script: appreciate the offer, state the range you are targeting with brief evidence, and stay open on total package (bonus, joining, flexibility).';
+      follow = 'Do you already have an offer number, or are you still estimating market range?';
+    } else if(/stuck|career|direction|switch|pivot|promotion|confused/.test(s)){
+      answer = 'Clarity beats speed. Write one sentence: “In 6 months I want ___ because ___.” Then pick one skill and one relationship that move that sentence forward this month. Career pivots fail when people optimize for activity instead of a single coherent direction.';
+      follow = 'What would “better” look like for you in six months — title, skills, income, or lifestyle?';
+    } else if(/skill|learn|course|certif/.test(s)){
+      answer = 'Choose one skill tied to a real job posting you want. Learn in public: a small project, case write-up, or before/after metric in 30 days beats collecting certificates. Employers hire evidence of use, not course completion alone.';
+      follow = 'Which skill is most linked to the next role you want?';
+    } else if(/what will you give|what can you|help me|how can you/.test(s)){
+      answer = 'I can help you clarify direction, tighten your resume and LinkedIn, prep interview stories, plan outreach, and think through offers — with practical next steps, not generic advice. Share the real constraint you are facing and I will give you a concrete plan.';
+      follow = 'What is the single most important career problem on your plate this week?';
+    } else if(/diagnostic|w3m|report|assessment|coach/.test(s)){
+      answer = 'The career diagnostic on Home builds a structured readout of strengths and gaps; Coach is for rehearsal and decisions. Use Diagnostic when you want a scorecard, and this chat when you want advice or practice on a specific problem.';
+      follow = 'Would you rather start a diagnostic, or keep working through one career issue here?';
+    } else {
+      answer = 'I hear you. Let me respond to what you shared: focus on one outcome you control this week, one piece of evidence you can improve (resume line, outreach, or interview story), and one person or channel that compounds progress. Random activity without a target usually feels exhausting.';
+      follow = 'If we pick only one priority for the next seven days, what should it be?';
+    }
+
+    // After several turns, stop piling questions — close the loop
+    const coachTurns = ADAPT.turns.filter(function(m){ return m.role==='coach'; }).length;
+    if(coachTurns >= 5){
+      return answer + ' When you are ready we can stop here, or you can say what else you need.';
+    }
+    return answer + (follow ? ' ' + follow : '');
+  }
+
+  function handleUserAdapt(text){
+    if(!ADAPT.active || ADAPT.thinking) return;
+    text = (text||'').trim();
+    if(!text) return;
+
+    try{ if(ADAPT.rec){ ADAPT.rec.onresult=null; ADAPT.rec.stop(); } }catch(e){}
+    ADAPT.listening = false;
+
+    ADAPT.turns.push({ role:'you', text: text });
+    ADAPT.thinking = true;
+    renderAdaptiveUI('Thinking through your message…');
+
+    // Deliberate pause: read, think, then respond (1.6–2.8s)
+    const thinkMs = Math.min(2800, 1600 + Math.min(text.length, 180)*6);
+
+    setTimeout(function(){
+      if(!ADAPT.active) return;
+
+      if(ADAPT.phase === 'closing'){
+        ADAPT.thinking = false;
+        if(isNoMore(text) || isThanks(text)){
+          const bye = 'Glad I could help. Open Coach anytime you need. Taking you back to Home.';
+          ADAPT.turns.push({ role:'coach', text: bye });
+          renderAdaptiveUI('Conversation complete');
+          speakAdaptive(bye, function(){
+            ADAPT.active = false;
+            setTimeout(function(){ try{ go('home'); }catch(e){} }, 900);
+          });
+          return;
+        }
+        if(isYesMore(text)){
+          ADAPT.phase = 'help';
+          const q = 'Of course. What else is on your mind? Take your time.';
+          ADAPT.turns.push({ role:'coach', text: q });
+          renderAdaptiveUI('Your turn — speak or type fully');
+          speakAdaptive(q, function(){ setTimeout(function(){ listenAdaptive(true); }, 500); });
+          return;
+        }
+        ADAPT.phase = 'help';
+      }
+
+      if(isThanks(text) && ADAPT.phase !== 'closing'){
+        ADAPT.phase = 'closing';
+        ADAPT.thinking = false;
+        const q = 'You\'re welcome. Is there anything else I can help you with today?';
+        ADAPT.turns.push({ role:'coach', text: q });
+        renderAdaptiveUI('Waiting for your reply');
+        speakAdaptive(q, function(){ setTimeout(function(){ listenAdaptive(true); }, 500); });
+        return;
+      }
+
+      ADAPT.phase = 'help';
+      const reply = craftReply(text);
+      ADAPT.thinking = false;
+      ADAPT.turns.push({ role:'coach', text: reply });
+      renderAdaptiveUI('Your turn when you are ready');
+      speakAdaptive(reply, function(){
+        // Only listen again after coach finishes speaking
+        setTimeout(function(){ if(ADAPT.active) listenAdaptive(true); }, 700);
+      });
+    }, thinkMs);
+  }
+
+  function adaptEnd(){
+    ADAPT.active = false;
+    ADAPT.thinking = false;
+    window.__w3mQuietCoachUI = false;
+    try{ if(ADAPT.silenceTimer) clearInterval(ADAPT.silenceTimer); }catch(e){}
+    try{ if(ADAPT.rec){ ADAPT.rec.onresult=null; ADAPT.rec.stop(); } }catch(e){}
+    try{ if(typeof speechSynthesis!=='undefined') speechSynthesis.cancel(); }catch(e){}
+    // Keep stream for next open if still live; stop tracks on full leave
+    try{
+      if(ADAPT.stream){
+        ADAPT.stream.getTracks().forEach(function(t){ t.stop(); });
+        ADAPT.stream = null;
+        ADAPT.mediaReady = false;
+      }
+    }catch(e){}
+    try{ go('home'); }catch(e){}
+  }
+
+  return { init, stopMedia, startLiveCall, endLiveCall, pickLiveQ, nextLiveQ, askNeerajFree, renderLiveCall, adaptSend, adaptMic, adaptEnd, startAdaptiveCoach };
+
 })();
 
 </script>
