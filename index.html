@@ -3093,7 +3093,13 @@ const VoiceAgent = (() => {
 
   async function generateCoachReply(userText){
     if(VOICE_CONFIG.llm.enabled && VOICE_CONFIG.llm.apiKey){
-      try{
+      try{llm: {
+  enabled: true,
+  endpoint: 'https://api.openai.com/v1/chat/completions',
+  workerEndpoint: '',  // or your Cloudflare worker URL
+  apiKey: 'sk-...',    // OpenAI key (only for private test) OR leave empty if worker holds the key
+  model: 'gpt-4o-mini',
+}
         const res = await fetch(VOICE_CONFIG.llm.endpoint, {
           method:'POST',
           headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+VOICE_CONFIG.llm.apiKey },
