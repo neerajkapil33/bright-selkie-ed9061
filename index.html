@@ -30,9 +30,9 @@ body{font-family:'Space Grotesk',sans-serif; background:
 h1,h2,h3,.display{font-family:'Fraunces',serif;}
 .mono{font-family:'IBM Plex Mono',monospace;}
 .app{width:100%; max-width:430px; min-height:100vh; position:relative; display:flex; flex-direction:column;}
-.screen{display:none; flex-direction:column; flex:1; min-height:100vh; padding-bottom:calc(130px + env(safe-area-inset-bottom, 0px)); animation:fadeUp .4s ease;}
+.screen{display:none; flex-direction:column; flex:1; min-height:100vh; padding-bottom:calc(150px + env(safe-area-inset-bottom, 0px)); animation:fadeUp .4s ease; overflow-x:hidden; overflow-y:auto;}
 .screen.active{display:flex;}
-@keyframes fadeUp{from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);}}
+@keyframes fadeUp{from{opacity:0;} to{opacity:1;}}
 .card{background:var(--card); border-radius:var(--r-md); box-shadow:var(--shadow); border:1px solid var(--line); padding:18px;}
 .btn{border:none; cursor:pointer; font-family:'Space Grotesk'; font-weight:600; font-size:14px; border-radius:14px;
   padding:13px 18px; display:flex; align-items:center; justify-content:center; gap:8px; width:100%; transition:transform .12s;}
@@ -146,9 +146,27 @@ h1,h2,h3,.display{font-family:'Fraunces',serif;}
 .h-sub{font-size:10px; color:var(--ink-soft); margin-top:-2px;}
 .icon-btn{width:36px;height:36px;border-radius:11px; border:1px solid var(--line); background:var(--card);
   display:flex; align-items:center; justify-content:center; cursor:pointer;}
-.tabbar{position:fixed; bottom:calc(14px + env(safe-area-inset-bottom, 0px)); left:50%; transform:translateX(-50%); width:calc(100% - 36px); max-width:394px;
-  display:flex; justify-content:space-around; background:var(--card); border-radius:20px; box-shadow:var(--shadow);
-  padding:10px 6px; z-index:30; border:1px solid var(--line);}
+.tabbar{
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  width:calc(100% - 36px) !important;
+  max-width:394px !important;
+  transform:none !important;
+  display:none;
+  justify-content:space-around;
+  align-items:center;
+  background:var(--card);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  padding:10px 6px;
+  z-index:999 !important;
+  border:1px solid var(--line);
+  box-sizing:border-box;
+}
 .tab{display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:var(--ink-soft); flex:1; font-size:10px; font-weight:600;}
 .tab.active{color:var(--navy);}
 .tab .tdot{width:4px;height:4px;border-radius:50%; background:var(--gold); margin-top:1px; opacity:0;}
@@ -589,7 +607,7 @@ video{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
 .coach-step:not(.active){display:none;}
 img,video{max-width:100%;height:auto;}
 .globe-canvas{will-change:transform;}
-.tabbar{transform:translateZ(0);}
+/* tabbar GPU hint removed — breaks fixed centering */
 
 
 /* ---- Hidden admin gear + biometric enroll ---- */
@@ -782,6 +800,7 @@ img,video{max-width:100%;height:auto;}
         <div class="ats-circle" id="atsCircle"><span id="atsVal">0</span><span>ATS</span></div>
         <div class="ats-insights" id="atsInsights"></div>
       </div>
+      <div id="homeBottomSpacer" style="height:24px;"></div>
     </div>
   </div>
 </div>
@@ -1259,13 +1278,6 @@ img,video{max-width:100%;height:auto;}
   </div>
 </div>
 
-<div class="tabbar" id="tabbar" style="display: none;">
-  <div class="tab" data-tab="home" onclick="go(&#39;home&#39;)"><span>🏠</span><span>Home</span><div class="tdot"></div></div>
-  <div class="tab" data-tab="setup" onclick="go(&#39;setup&#39;)"><span>🧭</span><span>Assess</span><div class="tdot"></div></div>
-  <div class="tab" data-tab="coach" onclick="go(&#39;coach&#39;)"><span>🎙️</span><span>Coach</span><div class="tdot"></div></div>
-  <div class="tab" data-tab="report" onclick="go(&#39;report&#39;)"><span>📊</span><span>Report</span><div class="tdot"></div></div>
-  <div class="tab" data-tab="profile" onclick="go(&#39;profile&#39;)"><span>👤</span><span>Profile</span><div class="tdot"></div></div>
-</div>
 <div class="toast" id="toast">Signed in as Demo</div>
 <div class="demo-overlay" id="demoOverlay">
   <div class="demo-topbar">
@@ -1484,6 +1496,15 @@ function go(screen){
   if(tabbar){
     const show = TAB_SCREENS.includes(screen);
     tabbar.style.display = show ? 'flex' : 'none';
+    tabbar.style.position = 'fixed';
+    tabbar.style.left = '0';
+    tabbar.style.right = '0';
+    tabbar.style.marginLeft = 'auto';
+    tabbar.style.marginRight = 'auto';
+    tabbar.style.bottom = 'calc(14px + env(safe-area-inset-bottom, 0px))';
+    tabbar.style.width = 'calc(100% - 36px)';
+    tabbar.style.maxWidth = '394px';
+    tabbar.style.zIndex = '999';
     tabbar.classList.toggle('is-on', show);
   }
   try{ if(typeof VoiceAgent!=='undefined') VoiceAgent.showFab(TAB_SCREENS.includes(screen)); }catch(e){}
@@ -5618,4 +5639,11 @@ const CoachModule = (() => {
 })();
 
 </script>
+<div class="tabbar" id="tabbar" style="display:none;">
+  <div class="tab" data-tab="home" onclick="go(&#39;home&#39;)"><span>🏠</span><span>Home</span><div class="tdot"></div></div>
+  <div class="tab" data-tab="setup" onclick="go(&#39;setup&#39;)"><span>🧭</span><span>Assess</span><div class="tdot"></div></div>
+  <div class="tab" data-tab="coach" onclick="go(&#39;coach&#39;)"><span>🎙️</span><span>Coach</span><div class="tdot"></div></div>
+  <div class="tab" data-tab="report" onclick="go(&#39;report&#39;)"><span>📊</span><span>Report</span><div class="tdot"></div></div>
+  <div class="tab" data-tab="profile" onclick="go(&#39;profile&#39;)"><span>👤</span><span>Profile</span><div class="tdot"></div></div>
+</div>
 </body></html>
