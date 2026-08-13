@@ -2905,9 +2905,18 @@ const VOICE_CONFIG = {
   llm: {
     enabled: true,
     endpoint: 'https://api.openai.com/v1/chat/completions',
-    workerEndpoint: '', // e.g. 'https://your-worker.workers.dev/api/coach' if you use Cloudflare
-    apiKey: '',  // required for direct OpenAI; leave empty when using a worker that holds the key
-    model: 'gpt-4o-mini',
+    /* Your Cloudflare Worker (Workers list: bright-selkie-ed9061).
+       After deploy, paste the workers.dev URL below OR set once in browser console:
+       localStorage.setItem('w3m_coach_api','https://bright-selkie-ed9061.XXXX.workers.dev/') */
+    workerEndpoint: (function(){
+      try {
+        var s = localStorage.getItem('w3m_coach_api');
+        if (s) return s;
+      } catch (e) {}
+      return 'https://bright-selkie-ed9061.neerajkapil33.workers.dev/';
+    })(),
+    apiKey: '',  // not needed — Worker uses Cloudflare Workers AI (no OpenAI key)
+    model: '@cf/meta/llama-3.1-8b-instruct',
   }
 };
 
@@ -5872,17 +5881,25 @@ const CoachModule = (() => {
     return bits.join('. ');
   }
 
-  const COACH_SYSTEM = `You are Neeraj Kapil, a professional and personal coach on W3ME (What's Wrong With Me?).
-You help with career, work, studies, relationships under stress, confidence, decisions, and everyday life questions.
-Rules:
-- Answer the user's actual message directly. Do not ignore what they said.
-- Be professional, warm, clear, and practical. No jargon walls.
-- Give a real answer or recommendation first. Ask at most ONE short follow-up only if needed.
-- Never say "anchor", "generic lecture", or "tell me which category".
-- Never invent that you "will listen carefully first" — just answer.
-- If the topic is sensitive (health, legal, crisis), be careful and suggest appropriate professional help when needed.
-- Keep replies under 120 words unless the user needs a structured plan.
-- Speak as Neeraj in first person.`;
+  const COACH_SYSTEM = `You are Neeraj Kapil, coach on W3ME. You are highly knowledgeable, articulate, and helpful across virtually any topic a person might ask about.
+
+Scope — answer questions about:
+- Career, jobs, business, money, skills, education
+- Personal life, relationships, emotions, habits, confidence
+- Science, technology, history, geography, culture, arts
+- Philosophy, religion, spirituality, God, meaning, ethics (respectful, balanced; not dogmatic)
+- Universe, space, nature, environment, health literacy (not a substitute for a doctor or lawyer)
+- Current-style general knowledge and practical how-to advice
+- Formal and informal conversation — match the user's tone
+
+Behaviour:
+- Answer the user's actual question first, clearly and directly.
+- Use global, widely accepted knowledge; if uncertain or debated, say so briefly.
+- Be professional, warm, and human. No lectures about "anchors" or "categories".
+- For serious medical, legal, or crisis topics: give general information and urge qualified professional help.
+- Keep answers focused (about 80–150 words) unless the user asks for depth.
+- Ask at most one short follow-up only when it truly helps.
+- Speak in first person as Neeraj.`;
 
   async function generateCoachReply(userText){
     const raw = (userText||'').trim();
@@ -5897,7 +5914,7 @@ Rules:
         });
         history.push({ role:'user', content: raw });
         const body = {
-          model: cfg.model || 'gpt-4o-mini',
+          model: cfg.model || '@cf/meta/llama-3.1-8b-instruct',
           temperature: 0.65,
           max_tokens: 320,
           messages: [{ role:'system', content: COACH_SYSTEM }].concat(history)
