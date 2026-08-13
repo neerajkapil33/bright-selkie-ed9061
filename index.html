@@ -5873,90 +5873,85 @@ const CoachModule = (() => {
 
   function craftReply(userText){
     const raw = (userText||'').trim();
-    const s = raw.toLowerCase();
+    const s = raw.toLowerCase().replace(/\s+/g, ' ');
     const name = userFirstName();
-    const you = name || 'you';
-    const turn = (ADAPT.turns||[]).filter(function(m){ return m.role==='coach'; }).length;
-    const prevYou = (ADAPT.turns||[]).filter(function(m){ return m.role==='you'; }).map(function(m){ return m.text.toLowerCase(); }).join(' ');
+    const nm = name ? name : '';
 
-    // ——— Greetings & rapport ———
-    if(/^(hi|hello|hey)\b/.test(s) && s.length < 36
-       || /good\s*(morning|afternoon|evening)/.test(s) && s.length < 70
-       || /how\s*are\s*you/.test(s) && s.length < 55){
-      return timeGreeting() + (name ? ', '+name : '') + '. I\'m well, thank you. I\'m here as your career thinking partner — to help you see gaps clearly, choose a sensible next move, and avoid noise. What is the real decision or pressure on your mind right now?';
-    }
-    if(/^(ok|okay|sure|fine|great|nice|cool|alright|yes|yeah)\.?$/i.test(raw)){
-      return 'Understood. Let\'s use the time well. Share the situation in plain words — role, search, interview, offer, or direction — and I\'ll give you a clear read and a next step.';
-    }
-    if(/thank/.test(s) && s.length < 80){
-      return 'You\'re welcome. If anything is still unclear — priority, message, or next action — say it now and we\'ll lock it before you go.';
+    // Always keep a short echo of their words so reply stays grounded
+    function echo(){
+      const t = raw.length > 70 ? raw.slice(0, 67) + '…' : raw;
+      return t;
     }
 
-    // ——— Emotional pulse ———
-    if(/not\s*good|sad|stressed|anxious|worried|burn\s*out|exhausted|frustrated|lost|demotivated|hopeless/.test(s)){
-      return 'I hear the weight in what you\'re saying. Career stress is real, and rushing usually makes it worse. Let\'s separate emotion from decision: what is the one work or career fact that is putting the most pressure on you this week? Once we name it, we can choose a controlled next move.';
+    // ——— Pure greetings / small talk ———
+    if(/^(hi|hello|hey|hii|helo)[\s\!\.]*$/i.test(raw)
+       || /^(good\s*(morning|afternoon|evening))([\s\,]+.*)?$/i.test(raw) && s.length < 55
+       || /^how\s*are\s*you([\s\?\!\.]*)$/i.test(raw)
+       || /good\s*(morning|afternoon|evening).{0,20}how\s*are\s*you/.test(s)){
+      return timeGreeting() + (nm ? ', ' + nm : '') + '. I\'m good, thank you. How can I help you today?';
+    }
+    if(/^(ok|okay|sure|fine|great|yes|yeah|yep|alright)\.?$/i.test(raw)){
+      return 'Okay. What would you like help with?';
+    }
+    if(/\bthank/.test(s) && s.length < 60){
+      return 'You\'re welcome. Anything else you want help with?';
+    }
+    if(/^(no|nope|nothing|that\'?s all|nothing else)[\s\.\!]*$/i.test(raw)){
+      return 'Alright. I\'m here whenever you need. Take care.';
     }
 
-    // ——— Job search / portals / LinkedIn ———
-    if(/linkedin|job portal|naukri|indeed|apply|applied|application|networking|recruiter|no\s*response|not\s*hearing/.test(s)){
-      return 'A quiet pipeline usually means a signal problem, not a effort problem. Three levers matter: (1) target fit — fewer roles that truly match your proof, (2) evidence — bullets that show outcome, not activity, (3) warm paths — people inside the company, not only Apply buttons. This week, cut spray-and-pray. Pick five roles, rewrite the top of your profile to those keywords, and send two specific notes to people in those teams. Where are you getting the least response — applications, messages, or both?';
+    // ——— Detect topics from THIS message (order = priority if multiple) ———
+    const topics = [];
+    if(/linkedin|naukri|indeed|job portal|recruiter|application|apply|applied|networking|no\s*callback|no\s*response|ghost/.test(s)) topics.push('search');
+    if(/resume|cv\b|ats|biodata|curriculum/.test(s)) topics.push('resume');
+    if(/interview|hr round|technical round|panel|nervous about interview/.test(s)) topics.push('interview');
+    if(/salary|ctc|package|negotiat|offer letter|hike|compensation|pay\b/.test(s)) topics.push('salary');
+    if(/resign|quit|notice|toxic|boss|manager|laid off|fired|work.?life|politics/.test(s)) topics.push('workplace');
+    if(/skill|course|certif|upskill|learn|training/.test(s)) topics.push('skills');
+    if(/stuck|career path|direction|pivot|switch|promotion|growth|what should i do|confused/.test(s)) topics.push('direction');
+    if(/fresher|experienced|years? of experience|i am a|i\'m a|working as|jobless|unemployed|looking for/.test(s)) topics.push('situation');
+
+    const topic = topics[0] || '';
+
+    if(topic === 'search'){
+      return 'On what you said — “' + echo() + '” — the usual gap is weak signal, not lack of effort. Tighten to fewer roles that match your proof, put outcome-based bullets at the top, and use warm intros inside the company instead of only Apply. What is failing more for you right now: applications, or messages with no reply?';
+    }
+    if(topic === 'resume'){
+      return 'Regarding your resume point (“' + echo() + '”): prioritise results a hiring manager can scan in seconds — impact numbers, scope, and keywords from the target job. Avoid duty lists. What role title are you targeting so we can shape the top third of the page?';
+    }
+    if(topic === 'interview'){
+      return 'On interviews (“' + echo() + '”): use short STAR stories — situation, your action, result — and practice speaking them, not memorising essays. Most people lose marks on structure, not knowledge. Which round is next, and which question feels hardest?';
+    }
+    if(topic === 'salary'){
+      return 'On compensation (“' + echo() + '”): decide from market range plus your scarce value, not from pressure. Prepare a number range and two proof points of impact before you negotiate. Do you already have an offer, or are you setting an expectation?';
+    }
+    if(topic === 'workplace'){
+      return 'About your work situation (“' + echo() + '”): separate what you control (skills, network, timeline, how you leave) from what you don\'t (others\' behaviour). If the environment is draining you, we plan either repair or a clean exit with runway. Are you trying to improve this role, or prepare to move?';
+    }
+    if(topic === 'skills'){
+      return 'On skills (“' + echo() + '”): learn only what a real job posting asks for, then show evidence in 30 days — project or metric — not certificates alone. Which role are you aiming at, and which required skill is your weakest proof?';
+    }
+    if(topic === 'direction'){
+      return 'On direction (“' + echo() + '”): pick one six-month outcome — title, skill, income, or lifestyle — then one weekly action that only serves that outcome. Activity without a target feels like being stuck. Which of those four outcomes matters most to you now?';
+    }
+    if(topic === 'situation'){
+      return 'Thanks for sharing your situation (“' + echo() + '”). That context matters. What is the main goal for the next few weeks — land interviews, switch domain, grow where you are, or decide a path?';
     }
 
-    // ——— Resume ———
-    if(/resume|cv|ats|bullet|curriculum|profile\b/.test(s)){
-      return 'A strong resume is a decision tool for the reader in six seconds: role match, scope, and proof. Lead with outcomes (%, revenue, time, team, quality), mirror the language of the job you want, and drop vague adjectives. Gap to watch: activity without result. If you share the target role title, I\'ll tell you what the top third of that resume must prove.';
-    }
-
-    // ——— Interviews ———
-    if(/interview|nervous|mock|panel|hr\b|technical round/.test(s)){
-      return 'Interviews reward clarity under pressure. Build four reusable stories — conflict, setback, leadership, impact — in STAR form, each ending with a measurable result and a learning. Practice out loud until the structure is automatic, not memorized. The gap for most candidates is not knowledge; it is unstructured answers. What is the interview stage and role, and which question feels weakest?';
-    }
-
-    // ——— Offers / salary ———
-    if(/salary|negotiat|offer|package|ctc|pay\b|compensation|hike/.test(s)){
-      return 'Compensation decisions need a frame: market range for the role and city, your scarce skills, and the cost of saying no. Negotiate from contribution, not need. Prepare two or three impact proofs, a target range, and a fallback (joining bonus, review cycle, scope). Do you have a written offer, or are you still forming a number?';
-    }
-
-    // ——— Career direction / pivot ———
-    if(/stuck|direction|switch|pivot|promotion|confused|what should i do|career path|next\s*move|growth/.test(s)
-       || (/career/.test(s) && /help|advice|suggest|guide/.test(s))){
-      return 'When direction is unclear, activity becomes anxiety. Use a simple filter: in six months, what must be true — title, skill, income, or lifestyle — for you to call this a good year? Then choose one skill and one relationship that move only that outcome. Everything else is optional. Tell me which of those four matters most right now, and whether you are employed, searching, or between roles — the right move depends on that context.';
-    }
-
-    // ——— Skills / learning ———
-    if(/skill|learn|course|certif|upskill|training/.test(s)){
-      return 'Learning pays when it is tied to a job signal. Pick one skill that appears in roles you want, then produce evidence in 30 days — a project, metric, or case — not only a certificate. Employers buy proof of use. Which role are you aiming at, and which skill on those postings do you least have evidence for?';
-    }
-
-    // ——— Manager / workplace / personal-professional boundary ———
-    if(/boss|manager|toxic|office politics|work.?life|laid\s*off|fired|notice|resign|quit/.test(s)){
-      return 'Workplace decisions need both head and timing. Protect your reputation, document facts, and separate what you control (effort, skills, network, exit plan) from what you don\'t (other people\'s behaviour). If you are considering leaving or escalating, we should map risk, runway, and narrative. Are you trying to improve the current role, or prepare a clean exit?';
-    }
-
-    // ——— Platform / diagnostic ———
-    if(/diagnostic|w3m|report|assessment|this\s*app|platform/.test(s)){
-      return 'Use the diagnostic on Home when you want a structured scorecard of strengths and gaps. Use this conversation when you need judgment on a live decision. Together they work best: scorecard for clarity, dialogue for the move. Which do you need first — a readout, or help deciding something specific today?';
-    }
-
-    if(/what can you|how can you help|what will you give|who are you/.test(s)){
-      return 'I\'m Neeraj — your career coach on W3ME. I help you diagnose gaps, choose a sensible channel (search, skill, network, or negotiate), and turn confusion into a next action you can take this week. I won\'t drown you in generic tips. Share your situation honestly and I\'ll respond with a clear read and options.';
-    }
-
-    // ——— Proactive synthesis when user shared context already ———
-    if(prevYou.length > 40 && turn >= 2){
-      if(/don\'?t know|not sure|maybe|confused|whatever/.test(s)){
-        return 'When things feel fuzzy, pick a default path for 14 days so you can learn from reality, not from overthinking. Based on what you\'ve shared so far, I recommend one primary channel and one backup. Tell me: are you more constrained by skills, visibility (network/profile), or opportunities (openings/offers)? I\'ll prioritise from that.';
+    // ——— No topic keyword: answer the content itself, don't invent a career lecture ———
+    // Questions from user
+    if(/\?$/.test(raw) || /^(what|how|why|when|where|should i|can i|do you)\b/.test(s)){
+      if(/help|do for me|can you/.test(s)){
+        return 'I can help with job search, resume, interviews, offers, career direction, and workplace decisions — with a clear next step based on your situation. What is the specific problem you want to solve?';
       }
+      if(/should i/.test(s)){
+        return 'On “' + echo() + '”: I won\'t give a blind yes/no without your constraints. In one line — what are you optimising for (money, growth, stability, exit), and what is the risk if you wait 3 months?';
+      }
+      return 'You asked: “' + echo() + '”. Here is a direct take: clarify the outcome you want, the constraint (time, money, skills, or market), then choose one channel — improve profile, apply selectively, network, or negotiate. Tell me which constraint is tightest and I\'ll narrow the advice.';
     }
 
-    // ——— Personal identity lines ———
-    if(/\b(i am|i'm|im)\b.*\b(looking|searching|jobless|unemployed|fresher|experienced|working)\b/.test(s)){
-      return 'Thanks for locating yourself in the journey — that changes the advice. Searching, switching, and growing inside a job each need a different playbook. What is the target role or industry, and what has blocked progress most so far: profile, interviews, or clarity of goal?';
-    }
-
-    // ——— Fallback: mirror + professional frame + one precise ask ———
-    const snippet = raw.length > 100 ? raw.slice(0, 96) + '…' : raw;
-    return 'I\'m taking what you said seriously: “' + snippet + '”. To give you advice that fits — not a generic lecture — I need one anchor: what decision are you trying to make in the next 2–4 weeks? With that, I can name the gap, the better channel (skill, search, network, or negotiate), and a practical first step.';
+    // Statement with no keywords — reflect + one precise clarifying question tied to their words
+    return 'You said: “' + echo() + '”. I want to respond to that, not a generic script. What should we solve from this — a decision, a message/profile fix, interview prep, or a job-search plan?';
   }
 
   function handleUserAdapt(text){
@@ -5991,7 +5986,7 @@ const CoachModule = (() => {
         }
         if(isYesMore(text)){
           ADAPT.phase = 'help';
-          const q = 'Of course. What else is on your mind? Take your time.';
+          const q = 'Of course. What else is on your mind?';
           ADAPT.turns.push({ role:'coach', text: q });
           renderAdaptiveUI('Your turn — speak or type fully');
           speakAdaptive(q, function(){ setTimeout(function(){ listenAdaptive(true); }, 500); });
