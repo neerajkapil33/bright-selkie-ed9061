@@ -2903,9 +2903,10 @@ const VOICE_CONFIG = {
     similarityBoost: 0.88,
   },
   llm: {
-    enabled: false,
+    enabled: true,
     endpoint: 'https://api.openai.com/v1/chat/completions',
-    apiKey: '',
+    workerEndpoint: '', // e.g. 'https://your-worker.workers.dev/api/coach' if you use Cloudflare
+    apiKey: '',  // required for direct OpenAI; leave empty when using a worker that holds the key
     model: 'gpt-4o-mini',
   }
 };
@@ -3093,13 +3094,7 @@ const VoiceAgent = (() => {
 
   async function generateCoachReply(userText){
     if(VOICE_CONFIG.llm.enabled && VOICE_CONFIG.llm.apiKey){
-      try{llm: {
-  enabled: true,
-  endpoint: 'https://api.openai.com/v1/chat/completions',
-  workerEndpoint: '',  // or your Cloudflare worker URL
-  apiKey: 'sk-...',    // OpenAI key (only for private test) OR leave empty if worker holds the key
-  model: 'gpt-4o-mini',
-}
+      try{
         const res = await fetch(VOICE_CONFIG.llm.endpoint, {
           method:'POST',
           headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+VOICE_CONFIG.llm.apiKey },
@@ -5877,97 +5872,124 @@ const CoachModule = (() => {
     return bits.join('. ');
   }
 
-  function craftReply(userText){
+  const COACH_SYSTEM = `You are Neeraj Kapil, a professional and personal coach on W3ME (What's Wrong With Me?).
+You help with career, work, studies, relationships under stress, confidence, decisions, and everyday life questions.
+Rules:
+- Answer the user's actual message directly. Do not ignore what they said.
+- Be professional, warm, clear, and practical. No jargon walls.
+- Give a real answer or recommendation first. Ask at most ONE short follow-up only if needed.
+- Never say "anchor", "generic lecture", or "tell me which category".
+- Never invent that you "will listen carefully first" — just answer.
+- If the topic is sensitive (health, legal, crisis), be careful and suggest appropriate professional help when needed.
+- Keep replies under 120 words unless the user needs a structured plan.
+- Speak as Neeraj in first person.`;
+
+  async function generateCoachReply(userText){
     const raw = (userText||'').trim();
-    if(!raw) return 'I did not catch that. Please say it again.';
+    if(!raw) return 'Please say that again.';
+
+    // Try LLM (OpenAI-compatible or your /api/coach worker)
+    try{
+      const cfg = (typeof VOICE_CONFIG !== 'undefined' && VOICE_CONFIG.llm) ? VOICE_CONFIG.llm : null;
+      if(cfg && cfg.enabled){
+        const history = (ADAPT.turns||[]).slice(-8).map(function(m){
+          return { role: m.role==='you' ? 'user' : 'assistant', content: m.text };
+        });
+        history.push({ role:'user', content: raw });
+        const body = {
+          model: cfg.model || 'gpt-4o-mini',
+          temperature: 0.65,
+          max_tokens: 320,
+          messages: [{ role:'system', content: COACH_SYSTEM }].concat(history)
+        };
+        const endpoints = [];
+        if(cfg.workerEndpoint) endpoints.push({ url: cfg.workerEndpoint, key: '' });
+        if(cfg.endpoint) endpoints.push({ url: cfg.endpoint, key: cfg.apiKey || '' });
+        for(let e=0;e<endpoints.length;e++){
+          try{
+            const headers = { 'Content-Type':'application/json' };
+            if(endpoints[e].key) headers['Authorization'] = 'Bearer ' + endpoints[e].key;
+            const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+            const timer = ctrl ? setTimeout(function(){ try{ ctrl.abort(); }catch(ex){} }, 14000) : null;
+            const res = await fetch(endpoints[e].url, {
+              method:'POST', headers: headers, body: JSON.stringify(body),
+              signal: ctrl ? ctrl.signal : undefined
+            });
+            if(timer) clearTimeout(timer);
+            if(!res.ok) continue;
+            const data = await res.json();
+            let text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+            if(!text && data.reply) text = data.reply;
+            if(!text && data.content) text = data.content;
+            if(text && String(text).trim()) return String(text).trim();
+          }catch(ex){ console.warn('coach endpoint fail', endpoints[e].url, ex); }
+        }
+      }
+    }catch(e){ console.warn('coach llm', e); }
+
+    return craftReplyLocal(raw);
+  }
+
+  function craftReplyLocal(userText){
+    const raw = (userText||'').trim();
     const s = raw.toLowerCase().replace(/\s+/g, ' ');
     const name = userFirstName();
     const nm = name ? ', ' + name : '';
 
-    // --- Greetings only ---
     if(/^(hi|hello|hey|hii)[\s\!\.]*$/i.test(raw)
-       || /^(good\s*(morning|afternoon|evening))([\s\,]+(neeraj|coach)?)?[\s\!\.]*$/i.test(raw)
-       || /good\s*(morning|afternoon|evening).{0,25}how\s*are\s*(you|u)\b/.test(s)
-       || /^how\s*are\s*(you|u)\b/.test(s) && s.length < 40){
+       || /good\s*(morning|afternoon|evening)/.test(s) && s.length < 55
+       || /how\s*are\s*(you|u)\b/.test(s) && s.length < 45){
       return timeGreeting() + nm + '. How can I help you today?';
     }
-    if(/^(ok|okay|sure|fine|great|yes|yeah|yep|alright|hmm|achha|accha)\.?$/i.test(raw)){
-      return 'What would you like help with?';
-    }
-    if(/\b(thank\s*you|thanks)\b/.test(s) && s.length < 50){
-      return 'You are welcome. Do you need anything else?';
-    }
-    if(/^(no|nope|nothing|that\'?s all|nothing else|bye|goodbye)[\s\.\!]*$/i.test(raw)){
-      return 'Okay. All the best.';
-    }
+    if(/^(ok|okay|sure|yes|yeah|fine)\.?$/i.test(raw)) return 'What would you like to talk about?';
+    if(/\bthank/.test(s) && s.length < 50) return 'You are welcome. Anything else?';
+    if(/^(no|nope|nothing|bye|that\'?s all)[\s\.\!]*$/i.test(raw)) return 'Okay. All the best.';
 
-    // Build reply FROM their words: pick intent with simple keyword hits on their sentence
     const has = function(){
-      for(let i=0;i<arguments.length;i++){
-        if(s.indexOf(arguments[i]) >= 0) return true;
-      }
+      for(let i=0;i<arguments.length;i++) if(s.indexOf(arguments[i]) >= 0) return true;
       return false;
     };
 
-    // Job search / LinkedIn / applications
-    if(has('linkedin','naukri','indeed','portal','recruiter','application','apply','applied','networking','callback','shortlist','rejection','reject')){
-      if(has('no reply','no response','not hearing','ghost','ignore','ignored','silence')){
-        return 'If you are not getting replies, change the approach: apply to fewer roles that match you closely, put strong results at the top of your profile, and message people inside the company with a short specific note. What have you been doing so far — only applying, or also messaging?';
-      }
-      return 'For job search, focus on roles that match your experience, a clear profile, and direct outreach — not only mass applications. What is the main problem: few interviews, or interviews but no offers?';
+    // Answer-first templates (not interrogation)
+    if(has('linkedin','naukri','indeed','job portal','apply','applied','recruiter','application')){
+      return 'If applications are not converting, reduce volume and increase fit: match your top bullets to the job, and message two people inside the company with a specific reason you are reaching out. That usually beats sending more CVs.';
+    }
+    if(has('resume','cv','ats')){
+      return 'Strengthen the resume by leading with outcomes (numbers, scope, results) and keywords from the target role. Cut soft adjectives and long duty lists so a recruiter sees your value in a few seconds.';
+    }
+    if(has('interview','nervous')){
+      return 'Use short STAR answers: situation, your action, result. Practise three stories out loud (challenge, teamwork, impact). Clear structure reduces nerves more than memorising long scripts.';
+    }
+    if(has('salary','ctc','package','offer','negotiat','hike')){
+      return 'Base your number on market range for the role and city, then support it with two impact examples. Ask for the range confidently and stay open on bonus or review cycle if base is tight.';
+    }
+    if(has('stuck','confused','career','direction','pivot','what should i do')){
+      return 'Choose one six-month outcome (role, skill, or income) and one weekly action that only serves that outcome. Drop side activities until that path is moving.';
+    }
+    if(has('stress','anxious','worried','sad','depressed','tired','burnout')){
+      return 'What you feel matters. For career pressure, shrink the problem to one next step you control today. If this feels like a mental health crisis, please talk to someone you trust or a professional helpline as well.';
+    }
+    if(has('relationship','marriage','family','parents','wife','husband','girlfriend','boyfriend','friend')){
+      return 'On personal matters, lead with clarity and respect: say what you need, listen to the other side, and decide boundaries you can keep. If you share the specific conflict, I can help you phrase a calm next conversation.';
+    }
+    if(has('money','debt','loan','saving','invest')){
+      return 'For money stress, list income, fixed costs, and debt minimums first, then cut non-essentials and automate a small saving. For investments or complex debt, a qualified advisor is safer than quick tips.';
+    }
+    if(has('health','doctor','sick','pain')){
+      return 'I am not a medical professional. Please see a qualified doctor for symptoms or treatment. I can still help with work or life planning around a health constraint if you want.';
     }
 
-    // Resume
-    if(has('resume','cv','ats','biodata')){
-      return 'For your resume, show results and impact in the first half of the page, and use words from the job description you want. What role are you applying for?';
+    // General: respond to their content with a practical take (no category menu)
+    const snippet = raw.length > 100 ? raw.slice(0, 97) + '…' : raw;
+    if(raw.indexOf('?') >= 0 || /^(what|how|why|should|can|do)\b/.test(s)){
+      return 'On that — ' + snippet + ' — decide what success looks like, what you control this week, and one action that moves only that. If you add one constraint (time, money, or skills), I can sharpen the plan.';
     }
+    return 'I hear you: ' + snippet + '. A solid approach is to name the outcome you want, the main obstacle, and one action for the next seven days. Share the obstacle and I will help you choose that action.';
+  }
 
-    // Interview
-    if(has('interview','panel','hr round','technical round','nervous')){
-      return 'For interviews, prepare short examples: situation, what you did, and the result. Practice saying them out loud. Which interview or question is worrying you?';
-    }
-
-    // Salary / offer
-    if(has('salary','ctc','package','negotiat','offer','hike','compensation','pay')){
-      return 'On salary, use market range for the role and your impact as the base, then ask with a clear number. Do you already have an offer amount?';
-    }
-
-    // Direction / stuck
-    if(has('stuck','confused','direction','career path','pivot','switch','promotion','growth','what should i do','no idea')){
-      return 'When you feel stuck, choose one goal for the next six months — a role, a skill, or income — and take one weekly action toward only that. What do you want most in the next six months?';
-    }
-
-    // Skills
-    if(has('skill','course','certif','upskill','learn','training')){
-      return 'Pick one skill that job ads ask for, practice it on a small project, and show that proof. Which skill do you want to build?';
-    }
-
-    // Workplace
-    if(has('boss','manager','toxic','resign','quit','notice','fired','laid off','office')){
-      return 'On your work situation, decide whether you want to fix it where you are or prepare to leave with a plan and timeline. Which of those two are you closer to?';
-    }
-
-    // Looking for job / situation
-    if(has('jobless','unemployed','looking for job','looking for a job','need a job','fresher','experienced','i work','i am working','i\'m working')){
-      return 'Understood. To help you properly: what kind of role or field are you targeting?';
-    }
-
-    // User asked a direct question
-    if(raw.indexOf('?') >= 0 || /^(what|how|why|when|where|should|can|do you|is it)\b/.test(s)){
-      if(has('help','you do','can you')){
-        return 'I can help with job search, resume, interviews, salary, and career direction. Tell me your main problem in one sentence.';
-      }
-      if(has('should i')){
-        return 'I need one detail to answer that: what matters more to you right now — money, growth, stability, or leaving a bad situation?';
-      }
-      // Answer question by reframing their question + practical step
-      return 'On your question — ' + raw.replace(/\?+$/,'') + ' — start with the outcome you want, then the next action you control this week. What outcome do you want?';
-    }
-
-    // Fallback: use THEIR sentence as the subject — never meta "anchor/lecture" talk
-    // Give a short practical response tied to hearing them, then one simple question using their theme
-    const short = raw.length > 90 ? raw.slice(0, 87) + '…' : raw;
-    return 'I understood: ' + short + '. Tell me the main problem in this — is it finding jobs, clearing interviews, resume, salary, or choosing a career path?';
+  function craftReply(userText){
+    // sync fallback for any legacy callers
+    return craftReplyLocal(userText);
   }
 
   function handleUserAdapt(text){
@@ -6022,13 +6044,22 @@ const CoachModule = (() => {
       }
 
       ADAPT.phase = 'help';
-      const reply = craftReply(text);
-      ADAPT.thinking = false;
-      ADAPT.turns.push({ role:'coach', text: reply });
-      renderAdaptiveUI('Your turn when you are ready');
-      speakAdaptive(reply, function(){
-        // Only listen again after coach finishes speaking
-        setTimeout(function(){ if(ADAPT.active) listenAdaptive(true); }, 700);
+      generateCoachReply(text).then(function(reply){
+        if(!ADAPT.active) return;
+        ADAPT.thinking = false;
+        ADAPT.turns.push({ role:'coach', text: reply });
+        renderAdaptiveUI('Your turn when you are ready');
+        speakAdaptive(reply, function(){
+          setTimeout(function(){ if(ADAPT.active) listenAdaptive(true); }, 700);
+        });
+      }).catch(function(){
+        const reply = craftReplyLocal(text);
+        ADAPT.thinking = false;
+        ADAPT.turns.push({ role:'coach', text: reply });
+        renderAdaptiveUI('Your turn when you are ready');
+        speakAdaptive(reply, function(){
+          setTimeout(function(){ if(ADAPT.active) listenAdaptive(true); }, 700);
+        });
       });
     }, thinkMs);
   }
