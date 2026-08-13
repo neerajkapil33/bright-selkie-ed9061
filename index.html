@@ -5873,85 +5873,95 @@ const CoachModule = (() => {
 
   function craftReply(userText){
     const raw = (userText||'').trim();
+    if(!raw) return 'I did not catch that. Please say it again.';
     const s = raw.toLowerCase().replace(/\s+/g, ' ');
     const name = userFirstName();
-    const nm = name ? name : '';
+    const nm = name ? ', ' + name : '';
 
-    // Always keep a short echo of their words so reply stays grounded
-    function echo(){
-      const t = raw.length > 70 ? raw.slice(0, 67) + '…' : raw;
-      return t;
+    // --- Greetings only ---
+    if(/^(hi|hello|hey|hii)[\s\!\.]*$/i.test(raw)
+       || /^(good\s*(morning|afternoon|evening))([\s\,]+(neeraj|coach)?)?[\s\!\.]*$/i.test(raw)
+       || /good\s*(morning|afternoon|evening).{0,25}how\s*are\s*(you|u)\b/.test(s)
+       || /^how\s*are\s*(you|u)\b/.test(s) && s.length < 40){
+      return timeGreeting() + nm + '. How can I help you today?';
     }
-
-    // ——— Pure greetings / small talk ———
-    if(/^(hi|hello|hey|hii|helo)[\s\!\.]*$/i.test(raw)
-       || /^(good\s*(morning|afternoon|evening))([\s\,]+.*)?$/i.test(raw) && s.length < 55
-       || /^how\s*are\s*you([\s\?\!\.]*)$/i.test(raw)
-       || /good\s*(morning|afternoon|evening).{0,20}how\s*are\s*you/.test(s)){
-      return timeGreeting() + (nm ? ', ' + nm : '') + '. I\'m good, thank you. How can I help you today?';
+    if(/^(ok|okay|sure|fine|great|yes|yeah|yep|alright|hmm|achha|accha)\.?$/i.test(raw)){
+      return 'What would you like help with?';
     }
-    if(/^(ok|okay|sure|fine|great|yes|yeah|yep|alright)\.?$/i.test(raw)){
-      return 'Okay. What would you like help with?';
+    if(/\b(thank\s*you|thanks)\b/.test(s) && s.length < 50){
+      return 'You are welcome. Do you need anything else?';
     }
-    if(/\bthank/.test(s) && s.length < 60){
-      return 'You\'re welcome. Anything else you want help with?';
-    }
-    if(/^(no|nope|nothing|that\'?s all|nothing else)[\s\.\!]*$/i.test(raw)){
-      return 'Alright. I\'m here whenever you need. Take care.';
+    if(/^(no|nope|nothing|that\'?s all|nothing else|bye|goodbye)[\s\.\!]*$/i.test(raw)){
+      return 'Okay. All the best.';
     }
 
-    // ——— Detect topics from THIS message (order = priority if multiple) ———
-    const topics = [];
-    if(/linkedin|naukri|indeed|job portal|recruiter|application|apply|applied|networking|no\s*callback|no\s*response|ghost/.test(s)) topics.push('search');
-    if(/resume|cv\b|ats|biodata|curriculum/.test(s)) topics.push('resume');
-    if(/interview|hr round|technical round|panel|nervous about interview/.test(s)) topics.push('interview');
-    if(/salary|ctc|package|negotiat|offer letter|hike|compensation|pay\b/.test(s)) topics.push('salary');
-    if(/resign|quit|notice|toxic|boss|manager|laid off|fired|work.?life|politics/.test(s)) topics.push('workplace');
-    if(/skill|course|certif|upskill|learn|training/.test(s)) topics.push('skills');
-    if(/stuck|career path|direction|pivot|switch|promotion|growth|what should i do|confused/.test(s)) topics.push('direction');
-    if(/fresher|experienced|years? of experience|i am a|i\'m a|working as|jobless|unemployed|looking for/.test(s)) topics.push('situation');
-
-    const topic = topics[0] || '';
-
-    if(topic === 'search'){
-      return 'On what you said — “' + echo() + '” — the usual gap is weak signal, not lack of effort. Tighten to fewer roles that match your proof, put outcome-based bullets at the top, and use warm intros inside the company instead of only Apply. What is failing more for you right now: applications, or messages with no reply?';
-    }
-    if(topic === 'resume'){
-      return 'Regarding your resume point (“' + echo() + '”): prioritise results a hiring manager can scan in seconds — impact numbers, scope, and keywords from the target job. Avoid duty lists. What role title are you targeting so we can shape the top third of the page?';
-    }
-    if(topic === 'interview'){
-      return 'On interviews (“' + echo() + '”): use short STAR stories — situation, your action, result — and practice speaking them, not memorising essays. Most people lose marks on structure, not knowledge. Which round is next, and which question feels hardest?';
-    }
-    if(topic === 'salary'){
-      return 'On compensation (“' + echo() + '”): decide from market range plus your scarce value, not from pressure. Prepare a number range and two proof points of impact before you negotiate. Do you already have an offer, or are you setting an expectation?';
-    }
-    if(topic === 'workplace'){
-      return 'About your work situation (“' + echo() + '”): separate what you control (skills, network, timeline, how you leave) from what you don\'t (others\' behaviour). If the environment is draining you, we plan either repair or a clean exit with runway. Are you trying to improve this role, or prepare to move?';
-    }
-    if(topic === 'skills'){
-      return 'On skills (“' + echo() + '”): learn only what a real job posting asks for, then show evidence in 30 days — project or metric — not certificates alone. Which role are you aiming at, and which required skill is your weakest proof?';
-    }
-    if(topic === 'direction'){
-      return 'On direction (“' + echo() + '”): pick one six-month outcome — title, skill, income, or lifestyle — then one weekly action that only serves that outcome. Activity without a target feels like being stuck. Which of those four outcomes matters most to you now?';
-    }
-    if(topic === 'situation'){
-      return 'Thanks for sharing your situation (“' + echo() + '”). That context matters. What is the main goal for the next few weeks — land interviews, switch domain, grow where you are, or decide a path?';
-    }
-
-    // ——— No topic keyword: answer the content itself, don't invent a career lecture ———
-    // Questions from user
-    if(/\?$/.test(raw) || /^(what|how|why|when|where|should i|can i|do you)\b/.test(s)){
-      if(/help|do for me|can you/.test(s)){
-        return 'I can help with job search, resume, interviews, offers, career direction, and workplace decisions — with a clear next step based on your situation. What is the specific problem you want to solve?';
+    // Build reply FROM their words: pick intent with simple keyword hits on their sentence
+    const has = function(){
+      for(let i=0;i<arguments.length;i++){
+        if(s.indexOf(arguments[i]) >= 0) return true;
       }
-      if(/should i/.test(s)){
-        return 'On “' + echo() + '”: I won\'t give a blind yes/no without your constraints. In one line — what are you optimising for (money, growth, stability, exit), and what is the risk if you wait 3 months?';
+      return false;
+    };
+
+    // Job search / LinkedIn / applications
+    if(has('linkedin','naukri','indeed','portal','recruiter','application','apply','applied','networking','callback','shortlist','rejection','reject')){
+      if(has('no reply','no response','not hearing','ghost','ignore','ignored','silence')){
+        return 'If you are not getting replies, change the approach: apply to fewer roles that match you closely, put strong results at the top of your profile, and message people inside the company with a short specific note. What have you been doing so far — only applying, or also messaging?';
       }
-      return 'You asked: “' + echo() + '”. Here is a direct take: clarify the outcome you want, the constraint (time, money, skills, or market), then choose one channel — improve profile, apply selectively, network, or negotiate. Tell me which constraint is tightest and I\'ll narrow the advice.';
+      return 'For job search, focus on roles that match your experience, a clear profile, and direct outreach — not only mass applications. What is the main problem: few interviews, or interviews but no offers?';
     }
 
-    // Statement with no keywords — reflect + one precise clarifying question tied to their words
-    return 'You said: “' + echo() + '”. I want to respond to that, not a generic script. What should we solve from this — a decision, a message/profile fix, interview prep, or a job-search plan?';
+    // Resume
+    if(has('resume','cv','ats','biodata')){
+      return 'For your resume, show results and impact in the first half of the page, and use words from the job description you want. What role are you applying for?';
+    }
+
+    // Interview
+    if(has('interview','panel','hr round','technical round','nervous')){
+      return 'For interviews, prepare short examples: situation, what you did, and the result. Practice saying them out loud. Which interview or question is worrying you?';
+    }
+
+    // Salary / offer
+    if(has('salary','ctc','package','negotiat','offer','hike','compensation','pay')){
+      return 'On salary, use market range for the role and your impact as the base, then ask with a clear number. Do you already have an offer amount?';
+    }
+
+    // Direction / stuck
+    if(has('stuck','confused','direction','career path','pivot','switch','promotion','growth','what should i do','no idea')){
+      return 'When you feel stuck, choose one goal for the next six months — a role, a skill, or income — and take one weekly action toward only that. What do you want most in the next six months?';
+    }
+
+    // Skills
+    if(has('skill','course','certif','upskill','learn','training')){
+      return 'Pick one skill that job ads ask for, practice it on a small project, and show that proof. Which skill do you want to build?';
+    }
+
+    // Workplace
+    if(has('boss','manager','toxic','resign','quit','notice','fired','laid off','office')){
+      return 'On your work situation, decide whether you want to fix it where you are or prepare to leave with a plan and timeline. Which of those two are you closer to?';
+    }
+
+    // Looking for job / situation
+    if(has('jobless','unemployed','looking for job','looking for a job','need a job','fresher','experienced','i work','i am working','i\'m working')){
+      return 'Understood. To help you properly: what kind of role or field are you targeting?';
+    }
+
+    // User asked a direct question
+    if(raw.indexOf('?') >= 0 || /^(what|how|why|when|where|should|can|do you|is it)\b/.test(s)){
+      if(has('help','you do','can you')){
+        return 'I can help with job search, resume, interviews, salary, and career direction. Tell me your main problem in one sentence.';
+      }
+      if(has('should i')){
+        return 'I need one detail to answer that: what matters more to you right now — money, growth, stability, or leaving a bad situation?';
+      }
+      // Answer question by reframing their question + practical step
+      return 'On your question — ' + raw.replace(/\?+$/,'') + ' — start with the outcome you want, then the next action you control this week. What outcome do you want?';
+    }
+
+    // Fallback: use THEIR sentence as the subject — never meta "anchor/lecture" talk
+    // Give a short practical response tied to hearing them, then one simple question using their theme
+    const short = raw.length > 90 ? raw.slice(0, 87) + '…' : raw;
+    return 'I understood: ' + short + '. Tell me the main problem in this — is it finding jobs, clearing interviews, resume, salary, or choosing a career path?';
   }
 
   function handleUserAdapt(text){
