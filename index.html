@@ -1257,6 +1257,10 @@ img,video{max-width:100%;height:auto;}
       <button type="button" class="ag-go" onclick="AdminGate.submit()">Sign in</button>
       <button type="button" class="ag-cancel" onclick="AdminGate.close()">Cancel</button>
     </div>
+    <p style="margin:12px 0 0;text-align:center;font-size:12px;">
+      <a href="mailto:recreationeeraj@gmail.com?subject=W3ME%20Admin%20Forgot%20Password&body=Hi%20Neeraj%2C%0A%0AI%20need%20to%20reset%20my%20W3ME%20admin%20password.%0A%0AUsername%3A%20kapilneeraj%0A" style="color:var(--accent);font-weight:600;text-decoration:none;">Forgot password?</a>
+      <span style="color:var(--ink-soft);"> — email recreationeeraj@gmail.com</span>
+    </p>
     <div class="ag-status" id="agStatus"></div>
   </div>
 </div>
@@ -1475,6 +1479,7 @@ function go(screen){
   const target = document.getElementById('screen-'+screen);
   if(!target){ console.warn('Missing screen', screen); return; }
   target.classList.add('active');
+  try{ if(typeof Analytics!=='undefined') Analytics.track('screen_view', { screen: screen, summary: 'Viewed '+screen }); }catch(e){}
   const tabbar = document.getElementById('tabbar');
   if(tabbar){
     const show = TAB_SCREENS.includes(screen);
@@ -1485,7 +1490,7 @@ function go(screen){
   if(screen==='setup'){ coachSay("Hey, I'm Neeraj! Let's get to know you a little better. Pop in your resume if you have one handy — it helps me ask sharper, more relevant questions."); }
   else if(!['hardware','assess'].includes(screen)){ hideCoach(); }
   if(screen==='schedule'){ try{ resetScheduleScreen(); }catch(e){} }
-  if(screen==='coach'){ try{ CoachModule.init(); }catch(e){} try{ loadChartJs(); }catch(e){} }
+  if(screen==='coach'){ try{ CoachModule.init(); }catch(e){} try{ if(typeof Analytics!=='undefined') Analytics.init(); }catch(e){} try{ loadChartJs(); }catch(e){} }
   if(screen==='report'){ try{ loadChartJs(); }catch(e){} try{ setTimeout(updateScoreArrows, 60); }catch(e){} }
   if(screen==='admin'){ try{ renderAdminConsole(); }catch(e){} }
   window.scrollTo(0,0);
@@ -1587,6 +1592,7 @@ function loginAs(user){
 
   currentUser = user;
   try{ localStorage.setItem('w3m_session', user.username); localStorage.setItem('w3m_biometric_user', user.username); }catch(e){}
+  try{ if(typeof Analytics!=='undefined') Analytics.track('login', { summary: 'Login '+(user.email||user.username||''), email: user.email||'', username: user.username||'' }); }catch(e){}
   const hr = new Date().getHours();
   const greet = hr<12?'Good morning':hr<18?'Good afternoon':'Good evening';
   document.getElementById('home-greeting').textContent = `${greet}, ${user.name.split(' ')[0]}`;
@@ -1675,6 +1681,7 @@ function completeSsoLogin({ name, email, provider, picture }){
   if(!user && lookupKey && DB.users[lookupKey]) user = DB.users[lookupKey];
 
   if(!user){
+    try{ if(typeof Analytics!=='undefined') Analytics.track('signup', { summary:'New account '+(email||''), email: email||'' }); }catch(e){}
     const base = lookupKey.includes('@') ? lookupKey.split('@')[0].replace(/[^a-z0-9_.]/g,'') : (provider + '_user');
     let username = base || (provider + '_user');
     if(DB.users[username]) username = username + '.' + Math.random().toString(36).slice(2,5);
@@ -2913,7 +2920,7 @@ const VOICE_CONFIG = {
         var s = localStorage.getItem('w3m_coach_api');
         if (s) return s;
       } catch (e) {}
-      return 'https://bright-selkie-ed9061.neerajkapil33.workers.dev/';
+      return 'https://bright-selkie-ed9061.neerajkapil33.workers.dev';
     })(),
     apiKey: '',  // not needed — Worker uses Cloudflare Workers AI (no OpenAI key)
     model: '@cf/meta/llama-3.1-8b-instruct',
@@ -3528,24 +3535,16 @@ let diagnosticVdResults = [];
     name: 'Neeraj Kapil',
     email: 'recreationeeraj@gmail.com',
     username: 'kapilneeraj',
-    passwordHash: '638233e8d51c833e09fec599c302a794e5ae553d19f71723d293c16ca4c6f8be',
+    passwordHash: 'e18c86b7eac8ce7c1944d86505d770237e0283393ecab98e0a22a5574c916876',
     role: 'Founder · Career Coach',
     location: 'India',
     isAdmin: true
   };
-  if(!DB.users['kapilneeraj']){
-    DB.users['kapilneeraj'] = Object.assign({}, ADMIN);
-    DB.byEmail[ADMIN.email] = 'kapilneeraj';
-    saveDB();
-  } else {
-    const u = DB.users['kapilneeraj'];
-    u.isAdmin = true;
-    u.passwordHash = ADMIN.passwordHashHash;
-    delete u.password; // never keep plaintext
-    u.name = ADMIN.name;
-    u.role = ADMIN.role;
-    saveDB();
-  }
+  // Always overwrite admin credentials (clears old password from localStorage)
+  DB.users['kapilneeraj'] = Object.assign({}, ADMIN);
+  DB.byEmail[ADMIN.email] = 'kapilneeraj';
+  try { delete DB.users['kapilneeraj'].password; } catch(e) {}
+  saveDB();
 })();
 
 async function sha256Hex(text){
@@ -3605,8 +3604,310 @@ function logAssessmentEvent(payload){
   };
   logs.push(entry);
   saveAdminLogs(logs);
+  try{ if(typeof Analytics !== 'undefined') Analytics.track(payload.type || 'assessment', payload); }catch(e){}
   return entry;
 }
+
+/* ========== Site analytics & admin activity log ========== */
+const Analytics = (() => {
+  const EVT_KEY = 'w3m_analytics_events';
+  const VISIT_KEY = 'w3m_analytics_visits';
+  const MAX_EVENTS = 800;
+
+  function loadEvents(){
+    try{ return JSON.parse(localStorage.getItem(EVT_KEY)||'[]')||[]; }catch(e){ return []; }
+  }
+  function saveEvents(list){
+    try{ localStorage.setItem(EVT_KEY, JSON.stringify((list||[]).slice(-MAX_EVENTS))); }catch(e){}
+  }
+  function uid(){
+    try{
+      let id = localStorage.getItem('w3m_visitor_id');
+      if(!id){ id = 'v_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9); localStorage.setItem('w3m_visitor_id', id); }
+      return id;
+    }catch(e){ return 'v_anon'; }
+  }
+  function actor(){
+    if(typeof currentUser !== 'undefined' && currentUser){
+      return {
+        visitorId: uid(),
+        username: currentUser.username || '',
+        name: currentUser.name || '',
+        email: currentUser.email || '',
+      };
+    }
+    return { visitorId: uid(), username: '', name: 'Anonymous', email: '' };
+  }
+  function track(type, detail){
+    const events = loadEvents();
+    const entry = {
+      id: 'ev_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+      ts: Date.now(),
+      iso: new Date().toISOString(),
+      type: type || 'event',
+      detail: detail || {},
+      path: (typeof location !== 'undefined' ? location.pathname + location.search : ''),
+      screen: (detail && detail.screen) || '',
+      user: actor(),
+      ua: (typeof navigator !== 'undefined' ? (navigator.userAgent||'').slice(0,120) : '')
+    };
+    events.push(entry);
+    saveEvents(events);
+    // mirror important events into admin assessment log for training archive
+    try{
+      if(['login','signup','demo_start','coach_start','coach_end','assessment_start','assessment_complete','video_interview','mcq_complete'].indexOf(type) >= 0){
+        const logs = loadAdminLogs();
+        logs.push({
+          id: entry.id, ts: entry.ts, iso: entry.iso, type: type,
+          user: entry.user, summary: (detail && (detail.summary || detail.question)) || type,
+          detail: detail || {}
+        });
+        saveAdminLogs(logs);
+      }
+    }catch(e){}
+    // Cloud sync (Cloudflare Worker KV) — non-blocking
+    try{ cloudLog(entry); }catch(e){}
+    return entry;
+  }
+
+  function coachApiBase(){
+    try{
+      const s = localStorage.getItem('w3m_coach_api');
+      if(s) return String(s).replace(/\/?$/, '');
+    }catch(e){}
+    try{
+      if(typeof VOICE_CONFIG!=='undefined' && VOICE_CONFIG.llm && VOICE_CONFIG.llm.workerEndpoint)
+        return String(VOICE_CONFIG.llm.workerEndpoint).replace(/\/?$/, '');
+    }catch(e){}
+    return 'https://bright-selkie-ed9061.neerajkapil33.workers.dev';
+  }
+
+  function cloudLog(entry){
+    const base = coachApiBase();
+    if(!base || typeof fetch==='undefined') return;
+    fetch(base + '/api/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    }).catch(function(){});
+  }
+
+  async function fetchCloudLogs(){
+    const base = coachApiBase();
+    if(!base) return { ok:false, error:'No worker URL. Set localStorage w3m_coach_api', events:[] };
+    const token = (function(){ try{ return localStorage.getItem('w3m_admin_log_token')||'w3me-admin-logs'; }catch(e){ return 'w3me-admin-logs'; }})();
+    const res = await fetch(base + '/api/log?limit=300', {
+      headers: { 'X-Admin-Token': token }
+    });
+    if(!res.ok){
+      const t = await res.text();
+      return { ok:false, error: t || res.status, events:[] };
+    }
+    const data = await res.json();
+    return { ok:true, events: data.events||[], visitsByDay: data.visitsByDay||{}, count: data.count||0 };
+  }
+
+  function cloudRecordingMeta(meta){
+    const base = coachApiBase();
+    if(!base) return;
+    fetch(base + '/api/recording-meta', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(meta)
+    }).catch(function(){});
+  }
+  function trackVisit(){
+    try{
+      const day = new Date().toISOString().slice(0,10);
+      const raw = localStorage.getItem(VISIT_KEY);
+      const map = raw ? JSON.parse(raw) : {};
+      if(!map[day]) map[day] = { views:0, visitors:{} };
+      map[day].views = (map[day].views||0) + 1;
+      map[day].visitors[uid()] = true;
+      localStorage.setItem(VISIT_KEY, JSON.stringify(map));
+    }catch(e){}
+    track('visit', { summary: 'App opened / page view' });
+  }
+  function visitStats(){
+    try{
+      const map = JSON.parse(localStorage.getItem(VISIT_KEY)||'{}')||{};
+      let views = 0, days = 0;
+      const visitorSet = {};
+      Object.keys(map).forEach(d=>{
+        days++;
+        views += map[d].views||0;
+        Object.keys(map[d].visitors||{}).forEach(v=>{ visitorSet[v]=true; });
+      });
+      return { views, uniqueVisitors: Object.keys(visitorSet).length, days, byDay: map };
+    }catch(e){ return { views:0, uniqueVisitors:0, days:0, byDay:{} }; }
+  }
+  function countByType(type){
+    return loadEvents().filter(e=>e.type===type).length;
+  }
+  function emailsSeen(){
+    const set = {};
+    loadEvents().forEach(e=>{
+      const em = e.user && e.user.email;
+      if(em) set[em] = (set[em]||0)+1;
+    });
+    try{
+      if(typeof DB !== 'undefined' && DB.users){
+        Object.keys(DB.users).forEach(u=>{
+          const em = DB.users[u].email;
+          if(em) set[em] = set[em] || 1;
+        });
+      }
+    }catch(e){}
+    return set;
+  }
+  function registeredUsers(){
+    try{
+      if(typeof DB === 'undefined' || !DB.users) return [];
+      return Object.keys(DB.users).map(u=>{
+        const x = DB.users[u];
+        return { username:u, name:x.name||u, email:x.email||'', isAdmin:!!x.isAdmin };
+      });
+    }catch(e){ return []; }
+  }
+  function exportJSON(){
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      visits: visitStats(),
+      events: loadEvents(),
+      assessmentLogs: (typeof loadAdminLogs==='function'?loadAdminLogs():[]),
+      recordingsMeta: (typeof loadAdminRecMeta==='function'?loadAdminRecMeta():[]),
+      users: registeredUsers(),
+      emails: emailsSeen()
+    };
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'w3me-admin-log-'+Date.now()+'.json';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  }
+  function init(){
+    trackVisit();
+  }
+  return { track, trackVisit, visitStats, countByType, emailsSeen, registeredUsers, exportJSON, loadEvents, init, fetchCloudLogs, cloudLog, coachApiBase, cloudRecordingMeta };
+})();
+
+/* IndexedDB store for video/audio session recordings (admin training archive) */
+const RecStore = (() => {
+  const DB_NAME = 'w3m_rec_db';
+  const STORE = 'recordings';
+  function open(){
+    return new Promise((resolve, reject)=>{
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = function(){
+        const db = req.result;
+        if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath:'id' });
+      };
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
+  }
+  async function put(rec){
+    const db = await open();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(rec);
+      tx.oncomplete = ()=> resolve(rec.id);
+      tx.onerror = ()=> reject(tx.error);
+    });
+  }
+  async function all(){
+    const db = await open();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = ()=> resolve(req.result||[]);
+      req.onerror = ()=> reject(req.error);
+    });
+  }
+  async function get(id){
+    const db = await open();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).get(id);
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
+  }
+  return { put, all, get };
+})();
+
+/* Session recorder for coach / video interview — stores video+audio blob for admin */
+const SessionRecorder = (() => {
+  let mediaRec = null, chunks = [], startedAt = 0, meta = {};
+  function start(stream, info){
+    stop();
+    if(!stream || typeof MediaRecorder === 'undefined') return false;
+    try{
+      chunks = [];
+      meta = info || {};
+      startedAt = Date.now();
+      const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ? 'video/webm;codecs=vp8,opus'
+        : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '');
+      mediaRec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      mediaRec.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+      mediaRec.start(1000);
+      try{ Analytics.track('recording_start', { summary: meta.label || 'session' }); }catch(e){}
+      return true;
+    }catch(e){ mediaRec = null; return false; }
+  }
+  function stop(){
+    return new Promise(function(resolve){
+      if(!mediaRec){ resolve(null); return; }
+      const rec = mediaRec;
+      mediaRec = null;
+      rec.onstop = async function(){
+        try{
+          const blob = new Blob(chunks, { type: rec.mimeType || 'video/webm' });
+          chunks = [];
+          const id = 'rec_'+startedAt+'_'+Math.random().toString(36).slice(2,7);
+          const user = (typeof currentUser !== 'undefined' && currentUser) ? {
+            username: currentUser.username, name: currentUser.name, email: currentUser.email||''
+          } : { username:'guest', name:'Guest', email:'' };
+          const record = {
+            id, ts: startedAt, endedAt: Date.now(),
+            iso: new Date(startedAt).toISOString(),
+            durationSec: Math.round((Date.now()-startedAt)/1000),
+            user, meta, mime: blob.type, size: blob.size, blob
+          };
+          await RecStore.put(record);
+          try{
+            const list = (typeof loadAdminRecMeta==='function'?loadAdminRecMeta():[]);
+            list.push({ id, ts: startedAt, iso: record.iso, durationSec: record.durationSec, user, meta, mime: blob.type, size: blob.size });
+            if(typeof saveAdminRecMeta==='function') saveAdminRecMeta(list.slice(-100));
+          }catch(e){}
+          try{ Analytics.track('recording_saved', { id, summary: (meta.label||'session')+' '+record.durationSec+'s', size: blob.size }); }catch(e){}
+          try{
+            if(typeof Analytics!=='undefined' && Analytics.cloudRecordingMeta){
+              Analytics.cloudRecordingMeta({
+                id, ts: startedAt, iso: record.iso, durationSec: record.durationSec,
+                user, meta, mime: blob.type, size: blob.size,
+                note: 'Video blob stays on user device; metadata synced to cloud'
+              });
+            }
+          }catch(e){}
+          resolve(record);
+        }catch(e){ resolve(null); }
+      };
+      try{ rec.stop(); }catch(e){ resolve(null); }
+    });
+  }
+  async function download(id){
+    const rec = await RecStore.get(id);
+    if(!rec || !rec.blob) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(rec.blob);
+    a.download = (rec.id||'session')+'.webm';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  }
+  return { start, stop, download };
+})();
 
 /* ---- MediaRecorder for video interview documentation ---- */
 let assessRecorder = null;
@@ -3707,6 +4008,42 @@ SharedVideoAssess.stopAnswer = function(sess){
   _origStopAnswer(sess);
 };
 
+async function loadCloudAdminLogs(){
+  const st = document.getElementById('adminCloudStatus');
+  const feed = document.getElementById('adminCloudFeed');
+  if(st) st.textContent = 'Loading cloud logs…';
+  try{
+    if(typeof Analytics==='undefined' || !Analytics.fetchCloudLogs){
+      if(st) st.textContent = 'Analytics module missing';
+      return;
+    }
+    const base = Analytics.coachApiBase && Analytics.coachApiBase();
+    if(!base){
+      if(st) st.textContent = 'Set Worker URL first: localStorage.setItem("w3m_coach_api","https://YOUR-WORKER.workers.dev")';
+      return;
+    }
+    const res = await Analytics.fetchCloudLogs();
+    if(!res.ok){
+      if(st) st.textContent = 'Cloud error: ' + (res.error||'failed') + ' — check KV binding W3M_LOGS and ADMIN_TOKEN';
+      return;
+    }
+    if(st) st.textContent = 'Cloud: ' + (res.count||0) + ' events synced from Worker';
+    if(feed){
+      const dayBits = res.visitsByDay ? Object.keys(res.visitsByDay).sort().reverse().slice(0,14).map(d=>
+        '<span style="margin-right:8px;">'+d+': <b>'+res.visitsByDay[d]+'</b></span>'
+      ).join('') : '';
+      feed.innerHTML = (dayBits ? '<div style="font-size:12px;margin-bottom:8px;"><b>Visits by day (cloud)</b><br>'+dayBits+'</div>' : '')
+        + (res.events||[]).slice(0,80).map(e=>
+          '<div class="admin-log-item"><div class="ts">'+(e.iso||'')+'</div><div><span class="admin-badge">'+(e.type||'')+'</span> '
+          + escapeAdmin((e.user&&e.user.email)||(e.user&&e.user.name)||'anon') + ' — '
+          + escapeAdmin((e.detail&&e.detail.summary)||e.screen||'') + '</div></div>'
+        ).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No cloud events yet.</p>';
+    }
+  }catch(e){
+    if(st) st.textContent = 'Cloud load failed: ' + (e.message||e);
+  }
+}
+
 function renderAdminConsole(){
   if(!isAdminUser(currentUser)){ toast('Admin access only'); go('home'); return; }
   try{
@@ -3718,47 +4055,135 @@ function renderAdminConsole(){
     if(typeof renderBioAdminSection === 'function') renderBioAdminSection();
   }catch(e){}
 
-  const logs = loadAdminLogs();
-  const recs = loadAdminRecMeta();
+  const logs = (typeof loadAdminLogs==='function') ? loadAdminLogs() : [];
+  const recs = (typeof loadAdminRecMeta==='function') ? loadAdminRecMeta() : [];
+  const events = (typeof Analytics!=='undefined') ? Analytics.loadEvents() : [];
+  const visits = (typeof Analytics!=='undefined') ? Analytics.visitStats() : { views:0, uniqueVisitors:0, days:0 };
+  const emails = (typeof Analytics!=='undefined') ? Analytics.emailsSeen() : {};
+  const usersReg = (typeof Analytics!=='undefined') ? Analytics.registeredUsers() : [];
+  const c = (t)=> (typeof Analytics!=='undefined' ? Analytics.countByType(t) : 0);
+
+  const nLogin = c('login');
+  const nDemo = c('demo_start');
+  const nCoach = c('coach_start');
+  const nVisit = c('visit');
+  const nScreen = c('screen_view');
+  const nQA = c('coach_qa');
+  const nAssess = logs.filter(l=>l.type==='diagnostic'||l.type==='assessment_complete'||l.type==='mcq_complete').length
+    + c('assessment_complete') + c('mcq_complete') + c('video_interview');
+  const nSignup = c('signup') + usersReg.filter(u=>!u.isAdmin).length;
+
   const usersMap = {};
   logs.forEach(l=>{
-    const u = (l.user && l.user.username) || 'guest';
-    if(!usersMap[u]) usersMap[u] = { username:u, name:(l.user&&l.user.name)||u, logs:[], diag:0, coach:0, last:0 };
+    const u = (l.user && (l.user.username||l.user.email)) || 'guest';
+    if(!usersMap[u]) usersMap[u] = { username:u, name:(l.user&&l.user.name)||u, email:(l.user&&l.user.email)||'', logs:[], diag:0, coach:0, last:0 };
     usersMap[u].logs.push(l);
-    if(l.type === 'diagnostic') usersMap[u].diag++;
-    if(l.type === 'coach') usersMap[u].coach++;
+    if(l.type === 'diagnostic' || l.type==='assessment_complete') usersMap[u].diag++;
+    if(l.type === 'coach' || l.type==='coach_start') usersMap[u].coach++;
     if(l.ts > usersMap[u].last) usersMap[u].last = l.ts;
   });
+  events.forEach(e=>{
+    const u = (e.user && (e.user.username||e.user.email||e.user.visitorId)) || 'guest';
+    if(!usersMap[u]) usersMap[u] = { username:u, name:(e.user&&e.user.name)||u, email:(e.user&&e.user.email)||'', logs:[], diag:0, coach:0, last:0 };
+    if(e.ts > usersMap[u].last) usersMap[u].last = e.ts;
+    if(e.user && e.user.email) usersMap[u].email = e.user.email;
+  });
   const userList = Object.values(usersMap).sort((a,b)=>b.last-a.last);
-  document.getElementById('adminStats').innerHTML = `
-    <div class="admin-stat"><div class="av">${logs.length}</div><div class="al">Assessment logs</div></div>
-    <div class="admin-stat"><div class="av">${userList.length}</div><div class="al">Users with reviews</div></div>
-    <div class="admin-stat"><div class="av">${recs.length}</div><div class="al">Recording sessions</div></div>
-    <div class="admin-stat"><div class="av">${logs.filter(l=>l.type==='diagnostic').length}</div><div class="al">Diagnostics</div></div>`;
-  document.getElementById('adminUserList').innerHTML = userList.length ? userList.map(u=>`
-    <div class="admin-user-card" onclick="openAdminUser('${u.username.replace(/'/g,"\\'")}')">
-      <h4>${escapeAdmin(u.name)} <span class="admin-badge">${u.username}</span></h4>
-      <div class="meta">${u.diag} diagnostic · ${u.coach} coach · last ${u.last ? new Date(u.last).toLocaleString() : '—'}</div>
-    </div>`).join('') : '<p style="font-size:12.5px;color:var(--ink-soft);">No assessment logs yet. When users finish a diagnostic or coach session, they appear here.</p>';
 
-  document.getElementById('adminLogList').innerHTML = logs.slice().reverse().slice(0,40).map(l=>`
-    <div class="admin-log-item">
-      <div class="ts">${l.iso || new Date(l.ts).toISOString()}</div>
-      <div><span class="admin-badge ${l.type==='coach'?'coach':'diag'}">${l.type||'event'}</span> <b>${escapeAdmin((l.user&&l.user.name)||'Guest')}</b> · ${escapeAdmin(l.summary||'')}</div>
-      ${l.overallDelivery!=null?`<div style="margin-top:3px;color:var(--ink-soft);">Delivery readiness: ${l.overallDelivery}/100 · track: ${escapeAdmin(l.track||'—')}</div>`:''}
-    </div>`).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No logs yet.</p>';
+  const emailRows = Object.keys(emails).sort().map(em=>
+    '<div class="admin-log-item"><b>'+escapeAdmin(em)+'</b> · '+emails[em]+' event(s)</div>'
+  ).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No emails captured yet.</p>';
 
-  document.getElementById('adminRecList').innerHTML = recs.slice().reverse().map(r=>`
+  const recentEvents = events.slice().reverse().slice(0,50).map(e=>`
     <div class="admin-log-item">
-      <div class="ts">${r.iso || new Date(r.ts).toISOString()}</div>
-      <div><b>${escapeAdmin(r.name||r.user)}</b> · ${(r.bytes/1024).toFixed(0)} KB · ${escapeAdmin(r.kind||'video')}</div>
-      <button class="btn btn-outline coach-btn-sm" style="margin-top:6px;width:auto;padding:6px 12px;font-size:11px;" type="button" onclick="downloadRecording('${r.id}')">Download recording</button>
-    </div>`).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No recordings in this browser yet. Video-mode diagnostics are recorded automatically when the browser supports MediaRecorder.</p>';
+      <div class="ts">${e.iso || new Date(e.ts).toISOString()}</div>
+      <div><span class="admin-badge">${escapeAdmin(e.type)}</span>
+      ${escapeAdmin((e.user&&e.user.email)||(e.user&&e.user.name)||'anon')} —
+      ${escapeAdmin((e.detail&&e.detail.summary)||e.screen||'')}</div>
+    </div>`).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No activity yet. Open the app, try demo, coach, or login to generate logs.</p>';
+
+  if(document.getElementById('adminStats')){
+    document.getElementById('adminStats').innerHTML = `
+      <div class="admin-stat"><div class="av">${visits.views||nVisit}</div><div class="al">Page views</div></div>
+      <div class="admin-stat"><div class="av">${visits.uniqueVisitors||0}</div><div class="al">Unique visitors</div></div>
+      <div class="admin-stat"><div class="av">${nLogin}</div><div class="al">Logins</div></div>
+      <div class="admin-stat"><div class="av">${nSignup||usersReg.length}</div><div class="al">Accounts</div></div>
+      <div class="admin-stat"><div class="av">${nDemo}</div><div class="al">Demo trials</div></div>
+      <div class="admin-stat"><div class="av">${nCoach}</div><div class="al">Coach sessions</div></div>
+      <div class="admin-stat"><div class="av">${nAssess}</div><div class="al">Assessments</div></div>
+      <div class="admin-stat"><div class="av">${recs.length}</div><div class="al">AV recordings</div></div>`;
+  }
+
+  if(document.getElementById('adminUserList')){
+    document.getElementById('adminUserList').innerHTML = `
+      <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-navy" style="width:auto;padding:8px 12px;font-size:12px;" onclick="Analytics.exportJSON()">Download full log (JSON)</button>
+        <button type="button" class="btn btn-outline" style="width:auto;padding:8px 12px;font-size:12px;" onclick="renderAdminConsole()">Refresh</button>
+        <button type="button" class="btn btn-outline" style="width:auto;padding:8px 12px;font-size:12px;" onclick="loadCloudAdminLogs()">Load cloud logs</button>
+      </div>
+      <div id="adminCloudStatus" style="font-size:11.5px;color:var(--ink-soft);margin-bottom:10px;">Cloud logs: click “Load cloud logs” (needs Worker URL + KV).</div>
+      <div id="adminCloudFeed"></div>
+      <div class="section-title"><h2>Registered accounts</h2></div>
+      ${usersReg.map(u=>`<div class="admin-user-card"><h4>${escapeAdmin(u.name)} <span class="admin-badge">${escapeAdmin(u.username)}</span></h4>
+        <div class="meta">${escapeAdmin(u.email||'no email')}${u.isAdmin?' · admin':''}</div></div>`).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No accounts in local DB.</p>'}
+      <div class="section-title"><h2>Activity by user / visitor</h2></div>
+      ${userList.length ? userList.map(u=>`
+        <div class="admin-user-card" onclick="openAdminUser('${String(u.username).replace(/'/g,"\\'")}')">
+          <h4>${escapeAdmin(u.name)} <span class="admin-badge">${escapeAdmin(u.username)}</span></h4>
+          <div class="meta">${escapeAdmin(u.email||'')} · ${u.diag} assess · ${u.coach} coach · last ${u.last ? new Date(u.last).toLocaleString() : '—'}</div>
+        </div>`).join('') : '<p style="font-size:12.5px;color:var(--ink-soft);">No user activity yet.</p>'}`;
+  }
+
+  if(document.getElementById('adminLogList')){
+    document.getElementById('adminLogList').innerHTML = `
+      <div class="section-title"><h2>Emails seen</h2></div>
+      ${emailRows}
+      <div class="section-title"><h2>Recordings (video/audio)</h2></div>
+      <p style="font-size:11.5px;color:var(--ink-soft);">Coach/video sessions are stored on this device (IndexedDB) as WebM. Download for training archive.</p>
+      <div id="adminRecListLive">Loading recordings…</div>
+      <div class="section-title"><h2>Recent activity feed</h2></div>
+      ${recentEvents}
+      <div class="section-title"><h2>Assessment / coach logs</h2></div>
+      ${logs.slice().reverse().slice(0,40).map(l=>`
+        <div class="admin-log-item">
+          <div class="ts">${l.iso || new Date(l.ts).toISOString()}</div>
+          <div><span class="admin-badge ${l.type==='coach'||l.type==='coach_start'?'coach':'diag'}">${escapeAdmin(l.type||'event')}</span>
+          <b>${escapeAdmin((l.user&&l.user.name)||'Guest')}</b>
+          ${escapeAdmin((l.user&&l.user.email)||'')} — ${escapeAdmin(l.summary||'')}</div>
+        </div>`).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No assessment logs yet.</p>'}`;
+  }
+
+  // async fill recordings list with download buttons
+  (async function(){
+    const host = document.getElementById('adminRecListLive');
+    if(!host || typeof RecStore==='undefined'){ if(host) host.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Recorder not available.</p>'; return; }
+    try{
+      const all = await RecStore.all();
+      if(!all.length){
+        const metaOnly = recs.slice().reverse();
+        host.innerHTML = metaOnly.length ? metaOnly.map(r=>`
+          <div class="admin-log-item"><div class="ts">${r.iso||''}</div>
+          <div>${escapeAdmin((r.user&&r.user.email)||(r.user&&r.user.name)||'guest')} · ${r.durationSec||0}s · ${escapeAdmin((r.meta&&r.meta.label)||'session')}
+          <span style="color:var(--ink-soft);font-size:11px;"> (metadata only)</span></div></div>`).join('')
+          : '<p style="font-size:12px;color:var(--ink-soft);">No recordings yet. Start a Coach session with camera to capture video+audio.</p>';
+        return;
+      }
+      host.innerHTML = all.slice().reverse().map(r=>`
+        <div class="admin-log-item">
+          <div class="ts">${r.iso||new Date(r.ts).toISOString()}</div>
+          <div><b>${escapeAdmin((r.user&&r.user.name)||'Guest')}</b> ${escapeAdmin((r.user&&r.user.email)||'')}
+          · ${r.durationSec||0}s · ${Math.round((r.size||0)/1024)} KB
+          <button type="button" class="btn btn-outline" style="width:auto;display:inline-flex;padding:4px 10px;font-size:11px;margin-left:8px;"
+            onclick="SessionRecorder.download('${r.id}')">Download video</button>
+          </div>
+          <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Q&amp;A is in activity feed (coach_qa / coach_answer). Video file includes audio track.</div>
+        </div>`).join('');
+    }catch(e){
+      host.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Could not read recordings.</p>';
+    }
+  })();
 }
 
-function escapeAdmin(s){
-  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
 
 function openAdminUser(username){
   const logs = loadAdminLogs().filter(l => (l.user && l.user.username) === username);
@@ -4055,7 +4480,7 @@ function finalizeAnswer(followUp){
   stepIndex++;
   if(stepIndex >= workingCategories.length){ finishAssessment(); } else { renderQuestion(); }
 }
-function finishAssessment(){
+function finishAssessment(){ try{ if(typeof Analytics!=='undefined') Analytics.track('assessment_complete', { summary:'Assessment completed' }); }catch(e){}
   clearInterval(timerInterval);
   if(recognizer){ try{ recognizer.stop(); }catch(e){} }
   hideCoach();
@@ -5097,7 +5522,7 @@ async function runAutoDemoSequence(){
   }
   if(demoActive) finishAutoDemo();
 }
-function startAutoDemo(){
+function startAutoDemo(){ try{ if(typeof Analytics!=='undefined') Analytics.track('demo_start', { summary:'Auto demo started' }); }catch(e){} 
   if(demoActive) return;
   demoActive = true;
   demoCurrentStep = 0;
@@ -5661,30 +6086,68 @@ const CoachModule = (() => {
   }
 
   async function ensureMediaOnce(){
-    if(ADAPT.mediaReady && ADAPT.stream){
-      const live = ADAPT.stream.getTracks().some(t=>t.readyState==='live');
-      if(live) return true;
+    try{
+      if(ADAPT.mediaReady && ADAPT.stream){
+        const live = ADAPT.stream.getTracks().some(function(t){ return t.readyState==='live'; });
+        if(live) return true;
+        try{ ADAPT.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+        ADAPT.stream = null;
+        ADAPT.mediaReady = false;
+      }
+    }catch(e){}
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      console.warn('getUserMedia unavailable');
+      return false;
     }
     try{
-      ADAPT.stream = await navigator.mediaDevices.getUserMedia({ audio:true, video:{ facingMode:'user' } });
+      ADAPT.stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: { facingMode: 'user' }
+      });
       ADAPT.mediaReady = true;
       return true;
     }catch(e){
+      console.warn('getUserMedia av failed', e);
       try{
-        ADAPT.stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+        ADAPT.stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
         ADAPT.mediaReady = true;
         return true;
       }catch(e2){
-        ADAPT.mediaReady = false;
-        return false;
+        try{
+          ADAPT.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          ADAPT.mediaReady = true;
+          return true;
+        }catch(e3){
+          console.warn('getUserMedia audio failed', e3);
+          ADAPT.mediaReady = false;
+          ADAPT.stream = null;
+          return false;
+        }
       }
     }
+  }
+
+  function attachPreview(){
+    try{
+      const v = document.getElementById('adaptVideo');
+      if(!v) return;
+      if(ADAPT.stream){
+        v.srcObject = ADAPT.stream;
+        v.muted = true;
+        v.setAttribute('playsinline', 'true');
+        v.setAttribute('webkit-playsinline', 'true');
+        const p = v.play();
+        if(p && typeof p.catch === 'function') p.catch(function(){});
+      }
+    }catch(e){ console.warn('attachPreview', e); }
   }
 
   async function startAdaptiveCoach(){
     ADAPT.active = true; ADAPT.turns = []; ADAPT.phase = 'greet';
     ADAPT.listening = false; ADAPT.thinking = false; ADAPT.interim = '';
-    window.__w3mQuietCoachUI = true; // video+voice call: no floating transcript popups
+    ADAPT.mobileArmed = true;
+    window.__w3mQuietCoachUI = true;
+    try{ if(typeof Analytics!=='undefined') Analytics.track('coach_start', { summary:'Coach session started' }); }catch(e){}
     try{
       const bubble=document.getElementById('coachBubble'); if(bubble) bubble.style.display='none';
       const va=document.getElementById('vaPanel'); if(va) va.style.display='none';
@@ -5693,55 +6156,56 @@ const CoachModule = (() => {
     try{ if(ADAPT.rec){ ADAPT.rec.onresult=null; ADAPT.rec.stop(); } }catch(e){}
     ADAPT.rec = null;
 
-    document.querySelectorAll('#coachMainTabs button').forEach(b=>{
+    document.querySelectorAll('#coachMainTabs button').forEach(function(b){
       b.classList.toggle('active', b.dataset.ctab==='practice');
     });
-    ['coachPractice','coachLiveCall','coachHistory','coachAbout'].forEach(id=>{
+    ['coachPractice','coachLiveCall','coachHistory','coachAbout'].forEach(function(id){
       const el=document.getElementById(id);
       if(el) el.classList.toggle('active', id==='coachPractice');
     });
 
     renderAdaptiveUI('Connecting camera & mic…');
     const ok = await ensureMediaOnce();
+    try{
+      if(ok && ADAPT.stream && typeof SessionRecorder!=='undefined')
+        SessionRecorder.start(ADAPT.stream, { label:'coach_adaptive', type:'coach' });
+    }catch(e){}
     const name = userFirstName();
-    let greet = timeGreeting() + (name ? ', ' + name : '') + '. How can I help you today?';
+    const greet = timeGreeting() + (name ? ', ' + name : '') + '. How can I help you today?';
     ADAPT.turns.push({ role:'coach', text: greet });
-    renderAdaptiveUI(ok ? 'Permissions ready — speak or type when ready' : 'Type your message (mic blocked)');
-    attachPreview();
-    speakAdaptive(greet, function(){
-      if(ok) setTimeout(function(){ listenAdaptive(true); }, 600);
-    });
+    renderAdaptiveUI(ok ? 'Speak or type when ready' : 'Type your message (allow camera/mic if prompted)');
+    // Re-bind stream after UI rebuild (video element is new each render)
+    setTimeout(function(){ try{ attachPreview(); }catch(e){} }, 50);
+    setTimeout(function(){ try{ attachPreview(); }catch(e){} }, 300);
+    try{
+      speakAdaptive(greet, function(){
+        setTimeout(function(){ if(ADAPT.active) listenAdaptive(true); }, 500);
+      });
+    }catch(e){
+      setAdaptStatus(ok ? 'Camera ready — type or tap mic' : 'Allow camera/mic or type below');
+    }
   }
 
-  function attachPreview(){
-    const v = document.getElementById('adaptVideo');
-    if(v && ADAPT.stream){
-      try{
-        v.srcObject = ADAPT.stream;
-        v.muted = true;
-        v.playsInline = true;
-        v.play().catch(function(){});
-      }catch(e){}
-    }
+  async function armCoachSession(){
+    // Same as start — for buttons that still call armCoachSession
+    return startAdaptiveCoach();
   }
 
   function renderAdaptiveUI(statusMsg){
     const el = document.getElementById('coachPractice');
     if(!el) return;
-    // Video + voice call UI only — no transcript text bubbles
     el.innerHTML = '<div style="padding:12px 16px 24px;">'
       + '<div class="coach-eyebrow">Live career coach</div>'
       + '<h2 style="font-size:17px;margin:0 0 12px;">Neeraj · video &amp; voice</h2>'
       + '<div style="position:relative;width:100%;max-width:320px;margin:0 auto 16px;aspect-ratio:3/4;border-radius:16px;overflow:hidden;background:#0D1E3D;border:1px solid var(--line);box-shadow:var(--shadow);">'
-      + '<video id="adaptVideo" playsinline autoplay muted style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);"></video>'
+      + '<video id="adaptVideo" playsinline webkit-playsinline autoplay muted style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);background:#0D1E3D;"></video>'
       + '<div style="position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:4px 10px;border-radius:8px;">You</div>'
-      + '<div id="adaptPulse" style="position:absolute;right:10px;top:10px;width:10px;height:10px;border-radius:50%;background:'+(ADAPT.listening?'#4C8F6B':(ADAPT.thinking?'#E3B23C':'#888'))+';box-shadow:0 0 0 4px rgba(255,255,255,.15);"></div>'
       + '</div>'
-      + '<div id="adaptStatus" style="text-align:center;font-size:12.5px;color:var(--ink-soft);min-height:20px;margin-bottom:12px;">'+(statusMsg || (ADAPT.listening ? 'Listening…' : (ADAPT.thinking ? '…' : 'Speak when ready')))+'</div>'
+      + '<div id="adaptStatus" style="text-align:center;font-size:13px;color:var(--ink-soft);min-height:22px;margin-bottom:12px;">'+(statusMsg|| (ADAPT.listening ? 'Listening…' : (ADAPT.thinking ? 'Thinking…' : 'Ready')))+'</div>'
       + '<div style="display:flex;gap:8px;align-items:center;max-width:320px;margin:0 auto;">'
-      + '<input type="text" id="adaptInput" placeholder="Or type here…" style="flex:1;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-family:inherit;font-size:13px;outline:none;">'
-      + '<button type="button" onclick="CoachModule.adaptMic()" title="Speak" style="width:46px;height:46px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--gold-light),var(--gold));font-size:18px;cursor:pointer;flex-shrink:0;">🎙️</button>'
-      + '<button type="button" onclick="CoachModule.adaptSend()" style="padding:12px 16px;border-radius:12px;border:none;background:var(--navy);color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">Send</button>'
+      + '<input type="text" id="adaptInput" enterkeyhint="send" autocomplete="off" placeholder="Type or speak…" style="flex:1;padding:14px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-family:inherit;font-size:16px;outline:none;">'
+      + '<button type="button" onclick="CoachModule.adaptMic()" title="Speak" style="width:48px;height:48px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--gold-light),var(--gold));font-size:18px;cursor:pointer;flex-shrink:0;">🎙️</button>'
+      + '<button type="button" onclick="CoachModule.adaptSend()" style="padding:14px 16px;border-radius:12px;border:none;background:var(--navy);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Send</button>'
       + '</div>'
       + '<div style="text-align:center;margin-top:14px;"><button type="button" class="coach-btn coach-btn-ghost" onclick="CoachModule.adaptEnd()" style="max-width:200px;margin:0 auto;">End call</button></div>'
       + '</div>';
@@ -5758,13 +6222,23 @@ const CoachModule = (() => {
       const bubble=document.getElementById('coachBubble');
       if(bubble) bubble.style.display='none';
     }catch(e){}
+    setAdaptStatus('Neeraj: ' + String(text||'').slice(0, 100) + (String(text||'').length>100?'…':''));
+    if(!text){ if(onDone) onDone(); return; }
     try{
-      // Voice only — no floating transcript popups during adaptive call
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.92;
-      u.onend = function(){ if(onDone) onDone(); };
-      u.onerror = function(){ if(onDone) onDone(); };
+      if(typeof speechSynthesis==='undefined'){ if(onDone) onDone(); return; }
+      // iOS: resume / speak in short delayed ticks
+      try{ speechSynthesis.resume(); }catch(e){}
+      const u = new SpeechSynthesisUtterance(String(text));
+      u.rate = 0.95;
+      u.pitch = 1;
+      u.lang = 'en-IN';
+      var done = false;
+      function finish(){ if(done) return; done = true; if(onDone) onDone(); }
+      u.onend = finish;
+      u.onerror = finish;
       speechSynthesis.speak(u);
+      // Safety timeout if onend never fires (some mobile browsers)
+      setTimeout(finish, Math.min(20000, 2500 + String(text).length * 60));
     }catch(e){ if(onDone) onDone(); }
   }
 
@@ -5781,7 +6255,7 @@ const CoachModule = (() => {
   function listenAdaptive(fromUser){
     if(ADAPT.thinking || !ADAPT.active) return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SR){ setAdaptStatus('Speech not supported here — type your full question'); return; }
+    if(!SR){ setAdaptStatus('Type your question — speech not supported in this browser'); return; }
     try{
       if(ADAPT.rec){
         try{ ADAPT.rec.onresult=null; ADAPT.rec.onend=null; ADAPT.rec.stop(); }catch(e){}
@@ -5790,26 +6264,22 @@ const CoachModule = (() => {
       ADAPT.rec = rec;
       ADAPT.listening = true;
       ADAPT.interim = '';
-      setAdaptStatus('Listening — finish your full thought, I will wait…');
+      setAdaptStatus('Listening…');
       rec.lang = 'en-IN';
       rec.interimResults = true;
       rec.continuous = true;
       rec.maxAlternatives = 1;
-
       let finalText = '';
       let quietMs = 0;
-
       if(ADAPT.silenceTimer) clearInterval(ADAPT.silenceTimer);
       ADAPT.silenceTimer = setInterval(function(){
         quietMs += 400;
-        // Wait ~2.4s of silence after speech before treating as complete
-        if(finalText.trim() && quietMs >= 2400){
+        if(finalText.trim() && quietMs >= 2200){
           clearInterval(ADAPT.silenceTimer);
           ADAPT.silenceTimer = null;
           try{ rec.stop(); }catch(e){}
         }
       }, 400);
-
       rec.onresult = function(e){
         quietMs = 0;
         let interim = '';
@@ -5820,26 +6290,26 @@ const CoachModule = (() => {
         }
         ADAPT.interim = interim;
         const live = (finalText + ' ' + interim).trim();
-        if(live) setAdaptStatus('Hearing you: “' + live.slice(0,80) + (live.length>80?'…':'') + '”');
+        if(live) setAdaptStatus('Hearing: “' + live.slice(0,80) + (live.length>80?'…':'') + '”');
       };
       rec.onerror = function(ev){
         ADAPT.listening = false;
         if(ADAPT.silenceTimer){ clearInterval(ADAPT.silenceTimer); ADAPT.silenceTimer=null; }
         if(ev && ev.error==='not-allowed')
-          setAdaptStatus('Mic blocked — allow microphone once, or type your question');
+          setAdaptStatus('Mic blocked — allow microphone, or type');
         else
           setAdaptStatus('Mic paused — tap 🎙️ or type');
       };
       rec.onend = function(){
         ADAPT.listening = false;
         if(ADAPT.silenceTimer){ clearInterval(ADAPT.silenceTimer); ADAPT.silenceTimer=null; }
-        const said = finalText.trim() || ADAPT.interim.trim();
+        const said = (finalText || ADAPT.interim || '').trim();
         if(said) handleUserAdapt(said);
-        else if(fromUser) setAdaptStatus('Didn\'t catch speech — try again or type');
+        else if(fromUser) setAdaptStatus('Tap 🎙️ or type your question');
       };
       rec.start();
     }catch(e){
-      setAdaptStatus('Mic error — type your full question instead');
+      setAdaptStatus('Type your question and press Send');
     }
   }
 
@@ -6018,6 +6488,7 @@ Behaviour:
     ADAPT.listening = false;
 
     ADAPT.turns.push({ role:'you', text: text });
+    try{ if(typeof Analytics!=='undefined') Analytics.track('coach_qa', { summary: text.slice(0,120), question: text.slice(0,500) }); }catch(e){}
     ADAPT.thinking = true;
     renderAdaptiveUI('Thinking through your message…');
 
@@ -6065,6 +6536,7 @@ Behaviour:
         if(!ADAPT.active) return;
         ADAPT.thinking = false;
         ADAPT.turns.push({ role:'coach', text: reply });
+        try{ if(typeof Analytics!=='undefined') Analytics.track('coach_answer', { summary: String(reply).slice(0,120), answer: String(reply).slice(0,800) }); }catch(e){}
         renderAdaptiveUI('Your turn when you are ready');
         speakAdaptive(reply, function(){
           setTimeout(function(){ if(ADAPT.active) listenAdaptive(true); }, 700);
@@ -6085,6 +6557,8 @@ Behaviour:
     ADAPT.active = false;
     ADAPT.thinking = false;
     window.__w3mQuietCoachUI = false;
+    try{ if(typeof SessionRecorder!=='undefined') SessionRecorder.stop(); }catch(e){}
+    try{ if(typeof Analytics!=='undefined') Analytics.track('coach_end', { summary:'Coach session ended' }); }catch(e){}
     try{ if(ADAPT.silenceTimer) clearInterval(ADAPT.silenceTimer); }catch(e){}
     try{ if(ADAPT.rec){ ADAPT.rec.onresult=null; ADAPT.rec.stop(); } }catch(e){}
     try{ if(typeof speechSynthesis!=='undefined') speechSynthesis.cancel(); }catch(e){}
@@ -6099,10 +6573,12 @@ Behaviour:
     try{ go('home'); }catch(e){}
   }
 
-  return { init, stopMedia, startLiveCall, endLiveCall, pickLiveQ, nextLiveQ, askNeerajFree, renderLiveCall, adaptSend, adaptMic, adaptEnd, startAdaptiveCoach };
+  return { init, stopMedia, startLiveCall, endLiveCall, pickLiveQ, nextLiveQ, askNeerajFree, renderLiveCall, adaptSend, adaptMic, adaptEnd, startAdaptiveCoach, armCoachSession };
 
 })();
 
+
+try{ if(typeof Analytics!=='undefined') Analytics.init(); }catch(e){}
 </script>
 <div class="tabbar" id="tabbar" style="display:none;">
   <div class="tab" data-tab="home" onclick="go(&#39;home&#39;)"><span>🏠</span><span>Home</span><div class="tdot"></div></div>
