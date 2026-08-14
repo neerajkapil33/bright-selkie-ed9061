@@ -1475,6 +1475,19 @@ function loadChartJs(){
 const TAB_SCREENS = ['home','setup','coach','report','profile'];
 function go(screen){
   if(!screen) return;
+  // Block MCQ / video paths until Diagnostic Setup is complete
+  if(screen==='track' || screen==='assess' || screen==='hardware'){
+    try{
+      if(typeof validateDiagnosticSetup==='function'){
+        const errs = validateDiagnosticSetup();
+        const hasSnap = !!(window.__w3mSetup && window.__w3mSetup.careerStage);
+        if(errs.length && !hasSnap){
+          toast('Complete Diagnostic Setup first');
+          screen = 'setup';
+        }
+      }
+    }catch(e){}
+  }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const target = document.getElementById('screen-'+screen);
   if(!target){ console.warn('Missing screen', screen); return; }
@@ -1491,6 +1504,7 @@ function go(screen){
   else if(!['hardware','assess'].includes(screen)){ hideCoach(); }
   if(screen==='schedule'){ try{ resetScheduleScreen(); }catch(e){} }
   if(screen==='coach'){ try{ CoachModule.init(); }catch(e){} try{ if(typeof Analytics!=='undefined') Analytics.init(); }catch(e){} try{ loadChartJs(); }catch(e){} }
+  if(screen==='setup'){ try{ bindSetupValidation(); updateSetupContinueState(); }catch(e){} }
   if(screen==='report'){ try{ loadChartJs(); }catch(e){} try{ setTimeout(updateScoreArrows, 60); }catch(e){} }
   if(screen==='admin'){ try{ renderAdminConsole(); }catch(e){} }
   window.scrollTo(0,0);
@@ -2808,8 +2822,8 @@ function onCareerStageChange(){
   const isStudent = stageEl.value === 'Student';
   studentGroup.style.display = isStudent ? 'block' : 'none';
   proGroup.style.display = isStudent ? 'none' : 'block';
-  // keep Skill Signals / roadmap context in sync immediately if a report already exists on screen
   try{ renderSkillSignals(); }catch(e){}
+  try{ updateSetupContinueState(); }catch(e){}
 }
 function onFieldOfStudyChange(){
   const fos = document.getElementById('fieldOfStudy').value;
@@ -2845,6 +2859,7 @@ function addSkill(){
   if(userSkills.includes(val)){ toast('That skill is already added'); return; }
   userSkills.push(val);
   renderSkillPool();
+  try{ updateSetupContinueState(); }catch(e){}
 }
 function renderSkillPool(){
   document.getElementById('skillPool').innerHTML = userSkills.map((s,i)=>
@@ -2854,6 +2869,14 @@ function removeSkill(i){ userSkills.splice(i,1); renderSkillPool(); }
 function continueFromSetup(){ go('track'); }
 function continueFromTrack(){
   if(!chosenTrack){ toast('Pick a response mode to continue'); return; }
+  try{
+    const errs = validateDiagnosticSetup();
+    if(errs.length){
+      toast('Complete Diagnostic Setup first: ' + errs.slice(0,3).join(', '));
+      go('setup');
+      return;
+    }
+  }catch(e){}
   if(chosenTrack==='voice') { go('hardware'); requestHardware(); }
   else beginAssessment();
 }
@@ -4348,6 +4371,14 @@ function inferScoreFromTranscript(transcript, options){
 }
 
 function beginAssessment(){
+  try{
+    const errs = validateDiagnosticSetup();
+    if(errs.length && !window.__w3mSetup){
+      toast('Complete Diagnostic Setup first');
+      go('setup');
+      return;
+    }
+  }catch(e){}
   workingCategories = buildAdaptiveCategories();
   stepIndex = 0; userAnswers.length = 0; pendingAnswer = null; timeLeft = 600;
   diagnosticVdResults = [];
