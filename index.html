@@ -855,11 +855,11 @@ img,video{max-width:100%;height:auto;}
 
     <div class="card" style="margin-top:14px;">
       <label style="display:flex; gap:8px; align-items:flex-start; font-size:11.5px; color:var(--ink-soft);">
-        <input type="checkbox" id="consentCheck" style="margin-top:2px;" onchange="document.getElementById(&#39;setupContinue&#39;).disabled = !this.checked">
+        <input type="checkbox" id="consentCheck" style="margin-top:2px;" onchange="updateSetupContinueState()">
         I consent to my responses (and camera/mic if voice mode is chosen) being used only to generate my report.
       </label>
     </div>
-    <div class="btn-row"><button class="btn btn-navy" id="setupContinue" disabled="" onclick="continueFromSetup()">Continue →</button></div>
+    <div class="btn-row"><button class="btn btn-navy" id="setupContinue" disabled onclick="continueFromSetup()">Continue →</button></div>
   </div>
 </div>
 
@@ -1480,13 +1480,12 @@ function go(screen){
     try{
       if(typeof validateDiagnosticSetup==='function'){
         const errs = validateDiagnosticSetup();
-        const hasSnap = !!(window.__w3mSetup && window.__w3mSetup.careerStage);
-        if(errs.length && !hasSnap){
-          toast('Complete Diagnostic Setup first');
+        if(errs.length){
+          toast('Complete Diagnostic Setup first: ' + errs.slice(0,3).join(', '));
           screen = 'setup';
         }
       }
-    }catch(e){}
+    }catch(e){ screen = 'setup'; }
   }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const target = document.getElementById('screen-'+screen);
@@ -1500,7 +1499,7 @@ function go(screen){
   }
   try{ if(typeof VoiceAgent!=='undefined') VoiceAgent.showFab(TAB_SCREENS.includes(screen)); }catch(e){}
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===screen));
-  if(screen==='setup'){ coachSay("Hey, I'm Neeraj! Let's get to know you a little better. Pop in your resume if you have one handy — it helps me ask sharper, more relevant questions."); }
+  if(screen==='setup'){ try{ window.__w3mSetup=null; bindSetupValidation(); updateSetupContinueState(); }catch(e){} }
   else if(!['hardware','assess'].includes(screen)){ hideCoach(); }
   if(screen==='schedule'){ try{ resetScheduleScreen(); }catch(e){} }
   if(screen==='coach'){ try{ CoachModule.init(); }catch(e){} try{ if(typeof Analytics!=='undefined') Analytics.init(); }catch(e){} try{ loadChartJs(); }catch(e){} }
@@ -2655,6 +2654,7 @@ function addLanguage(){
   if(!lang){ toast('Choose a language first'); return; }
   userLangs.push({lang,lvl});
   renderLangPool();
+  try{ updateSetupContinueState(); }catch(e){}
 }
 function renderLangPool(){
   document.getElementById('langPool').innerHTML = userLangs.map((l,i)=>
@@ -2865,14 +2865,85 @@ function renderSkillPool(){
   document.getElementById('skillPool').innerHTML = userSkills.map((s,i)=>
     `<div class="lang-chip">${s} <b onclick="removeSkill(${i})">✕</b></div>`).join('');
 }
-function removeSkill(i){ userSkills.splice(i,1); renderSkillPool(); }
-function continueFromSetup(){ go('track'); }
+function removeSkill(i){ userSkills.splice(i,1); renderSkillPool(); try{ updateSetupContinueState(); }catch(e){} }
+function getSetupField(id){
+  const el = document.getElementById(id);
+  return el ? String(el.value || '').trim() : '';
+}
+function validateDiagnosticSetup(){
+  const errors = [];
+  const stage = getSetupField('careerStage');
+  if(!stage) errors.push('Career Stage');
+  if(stage === 'Student'){
+    if(!getSetupField('educationLevel')) errors.push('Education Level');
+    if(!getSetupField('fieldOfStudy')) errors.push('Field of Study');
+    if(!getSetupField('courseProgram')) errors.push('Course / Program');
+    if(!getSetupField('yearOfStudy')) errors.push('Year of Study');
+    if(!getSetupField('internshipStatus')) errors.push('Internship Status');
+    const college = getSetupField('collegeSelect');
+    if(!college) errors.push('College / University');
+    if(college === 'Other' && !getSetupField('collegeOtherInput')) errors.push('College name');
+  } else if(stage){
+    if(!getSetupField('industry')) errors.push('Target Industry');
+    if(!getSetupField('jobFunction')) errors.push('Job Function');
+    if(!getSetupField('jobRole')) errors.push('Job Role');
+  }
+  if(!getSetupField('location')) errors.push('Location');
+  if(typeof userSkills === 'undefined' || !userSkills || !userSkills.length) errors.push('At least one Skill');
+  if(typeof userLangs === 'undefined' || !userLangs || !userLangs.length) errors.push('At least one Language');
+  const consent = document.getElementById('consentCheck');
+  if(!consent || !consent.checked) errors.push('Consent');
+  return errors;
+}
+function updateSetupContinueState(){
+  const btn = document.getElementById('setupContinue');
+  if(!btn) return false;
+  const errors = validateDiagnosticSetup();
+  btn.disabled = errors.length > 0;
+  btn.style.opacity = errors.length ? '0.5' : '1';
+  btn.style.pointerEvents = errors.length ? 'none' : 'auto';
+  btn.title = errors.length ? ('Missing: ' + errors.join(', ')) : 'Continue';
+  return errors.length === 0;
+}
+function bindSetupValidation(){
+  const ids = ['careerStage','educationLevel','fieldOfStudy','courseProgram','yearOfStudy','internshipStatus','collegeSelect','collegeOtherInput','industry','jobFunction','jobRole','location','skillSelect','langSelect','langLevel','consentCheck'];
+  ids.forEach(function(id){
+    const el = document.getElementById(id);
+    if(!el || el.__w3mBound) return;
+    el.__w3mBound = true;
+    el.addEventListener('change', function(){ updateSetupContinueState(); });
+    el.addEventListener('input', function(){ updateSetupContinueState(); });
+  });
+  updateSetupContinueState();
+}
+function continueFromSetup(){
+  try{ bindSetupValidation(); }catch(e){}
+  const errors = validateDiagnosticSetup();
+  if(errors.length){
+    updateSetupContinueState();
+    toast('Complete all required fields: ' + errors.slice(0,5).join(', ') + (errors.length>5?'…':''));
+    return;
+  }
+  try{
+    window.__w3mSetup = {
+      careerStage: getSetupField('careerStage'),
+      industry: getSetupField('industry'),
+      jobFunction: getSetupField('jobFunction'),
+      jobRole: getSetupField('jobRole'),
+      location: getSetupField('location'),
+      skills: (typeof userSkills!=='undefined' ? userSkills.slice() : []),
+      languages: (typeof userLangs!=='undefined' ? userLangs.slice() : [])
+    };
+  }catch(e){}
+  go('track');
+}
 function continueFromTrack(){
   if(!chosenTrack){ toast('Pick a response mode to continue'); return; }
   try{
     const errs = validateDiagnosticSetup();
     if(errs.length){
-      toast('Complete Diagnostic Setup first: ' + errs.slice(0,3).join(', '));
+      window.__w3mSetup = null;
+      toast('Complete Diagnostic Setup first');
       go('setup');
       return;
     }
@@ -2880,6 +2951,8 @@ function continueFromTrack(){
   if(chosenTrack==='voice') { go('hardware'); requestHardware(); }
   else beginAssessment();
 }
+
+
 
 /* ================= HARDWARE CHECK ================= */
 let hwStream = null;
