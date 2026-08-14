@@ -6142,6 +6142,116 @@ const CoachModule = (() => {
     }catch(e){ console.warn('attachPreview', e); }
   }
 
+
+  /* Face + voice behaviour analysis during coach (browser heuristics) */
+  const CoachBehavior = {
+    running: false, raf: 0, audioCtx: null, analyser: null, source: null,
+    video: null, canvas: null, ctx: null, prev: null,
+    samples: { motion:[], voice:[], presence:[], ts:[] },
+    start: function(stream){
+      this.stop();
+      if(!stream) return;
+      this.samples = { motion:[], voice:[], presence:[], ts:[] };
+      this.running = true;
+      try{
+        this.canvas = document.createElement('canvas');
+        this.canvas.width = 160; this.canvas.height = 120;
+        this.ctx = this.canvas.getContext('2d', { willReadFrequently:true });
+      }catch(e){}
+      try{
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(AC){
+          this.audioCtx = new AC();
+          this.analyser = this.audioCtx.createAnalyser();
+          this.analyser.fftSize = 512;
+          this.source = this.audioCtx.createMediaStreamSource(stream);
+          this.source.connect(this.analyser);
+          if(this.audioCtx.state==='suspended') this.audioCtx.resume();
+        }
+      }catch(e){}
+      const self = this;
+      function tick(){
+        if(!self.running) return;
+        self.sample(stream);
+        self.raf = requestAnimationFrame(tick);
+      }
+      this.raf = requestAnimationFrame(tick);
+    },
+    sample: function(stream){
+      const now = Date.now();
+      // Voice energy
+      let voice = 0;
+      try{
+        if(this.analyser){
+          const data = new Uint8Array(this.analyser.frequencyBinCount);
+          this.analyser.getByteFrequencyData(data);
+          let sum = 0;
+          for(let i=0;i<data.length;i++) sum += data[i];
+          voice = sum / (data.length * 255);
+        }
+      }catch(e){}
+      // Face/presence + motion from video frame center
+      let motion = 0, presence = 0;
+      try{
+        const v = document.getElementById('adaptVideo');
+        if(v && v.readyState >= 2 && this.ctx){
+          this.ctx.drawImage(v, 0, 0, 160, 120);
+          const img = this.ctx.getImageData(40, 20, 80, 80);
+          const d = img.data;
+          let bright = 0;
+          for(let i=0;i<d.length;i+=16){ bright += d[i]+d[i+1]+d[i+2]; }
+          const n = d.length / 16;
+          bright = bright / (n * 765);
+          presence = bright > 0.08 && bright < 0.95 ? Math.min(1, bright * 1.4) : 0.15;
+          if(this.prev && this.prev.length === d.length){
+            let diff = 0, c = 0;
+            for(let i=0;i<d.length;i+=32){
+              diff += Math.abs(d[i]-this.prev[i]) + Math.abs(d[i+1]-this.prev[i+1]) + Math.abs(d[i+2]-this.prev[i+2]);
+              c++;
+            }
+            motion = Math.min(1, (diff / (c * 200)));
+          }
+          this.prev = new Uint8Array(d);
+        }
+      }catch(e){}
+      this.samples.voice.push(voice);
+      this.samples.motion.push(motion);
+      this.samples.presence.push(presence);
+      this.samples.ts.push(now);
+      if(this.samples.voice.length > 400){
+        this.samples.voice.shift(); this.samples.motion.shift();
+        this.samples.presence.shift(); this.samples.ts.shift();
+      }
+    },
+    stop: function(){
+      this.running = false;
+      try{ if(this.raf) cancelAnimationFrame(this.raf); }catch(e){}
+      try{ if(this.source) this.source.disconnect(); }catch(e){}
+      try{ if(this.audioCtx) this.audioCtx.close(); }catch(e){}
+      this.audioCtx = null; this.analyser = null; this.source = null;
+    },
+    summary: function(){
+      function avg(a){ if(!a.length) return 0; return a.reduce(function(x,y){ return x+y; },0)/a.length; }
+      const voice = avg(this.samples.voice);
+      const motion = avg(this.samples.motion);
+      const presence = avg(this.samples.presence);
+      // Heuristic behaviour labels (not medical/psychological diagnosis)
+      let eye = presence > 0.35 ? 'steady camera presence' : 'low face visibility in frame';
+      let body = motion > 0.35 ? 'high movement' : (motion > 0.12 ? 'natural movement' : 'very still');
+      let vocal = voice > 0.28 ? 'strong vocal energy' : (voice > 0.12 ? 'moderate vocal energy' : 'soft or limited voice');
+      const score = Math.round(100 * (0.4*Math.min(1,presence+0.2) + 0.3*Math.min(1,voice*2) + 0.3*(1-Math.abs(motion-0.18))));
+      return {
+        eye: eye, body: body, vocal: vocal,
+        scores: {
+          presence: Math.round(presence*100),
+          voice: Math.round(voice*100),
+          motion: Math.round(motion*100),
+          overall: Math.max(0, Math.min(100, score))
+        }
+      };
+    }
+  };
+
   async function startAdaptiveCoach(){
     ADAPT.active = true; ADAPT.turns = []; ADAPT.phase = 'greet';
     ADAPT.listening = false; ADAPT.thinking = false; ADAPT.interim = '';
@@ -6170,6 +6280,7 @@ const CoachModule = (() => {
       if(ok && ADAPT.stream && typeof SessionRecorder!=='undefined')
         SessionRecorder.start(ADAPT.stream, { label:'coach_adaptive', type:'coach' });
     }catch(e){}
+    try{ if(ok && ADAPT.stream) CoachBehavior.start(ADAPT.stream); }catch(e){}
     const name = userFirstName();
     const greet = timeGreeting() + (name ? ', ' + name : '') + '. How can I help you today?';
     ADAPT.turns.push({ role:'coach', text: greet });
@@ -6216,6 +6327,45 @@ const CoachModule = (() => {
     }
   }
 
+  // One common male coach voice (desktop + mobile)
+  let _maleCoachVoice = null;
+  let _maleVoiceReady = false;
+  function loadMaleCoachVoice(){
+    try{
+      if(typeof speechSynthesis==='undefined') return null;
+      const voices = speechSynthesis.getVoices() || [];
+      if(!voices.length) return _maleCoachVoice;
+      const prefer = [
+        'Google UK English Male','Microsoft David','Microsoft Mark','Alex','Daniel',
+        'Google US English','Arthur','Rishi','Aaron','Fred','Male'
+      ];
+      let found = null;
+      for(let i=0;i<prefer.length;i++){
+        found = voices.find(function(v){ return (v.name||'').indexOf(prefer[i])>=0; });
+        if(found) break;
+      }
+      if(!found){
+        found = voices.find(function(v){
+          const n=(v.name||'').toLowerCase();
+          const l=(v.lang||'').toLowerCase();
+          return (l.indexOf('en')===0) && (n.indexOf('male')>=0 || n.indexOf('david')>=0 || n.indexOf('mark')>=0 || n.indexOf('daniel')>=0);
+        });
+      }
+      if(!found){
+        found = voices.find(function(v){ return (v.lang||'').toLowerCase().indexOf('en')===0; }) || voices[0];
+      }
+      _maleCoachVoice = found || null;
+      _maleVoiceReady = true;
+      return _maleCoachVoice;
+    }catch(e){ return null; }
+  }
+  try{
+    if(typeof speechSynthesis!=='undefined'){
+      speechSynthesis.onvoiceschanged = function(){ loadMaleCoachVoice(); };
+      loadMaleCoachVoice();
+    }
+  }catch(e){}
+
   function speakAdaptive(text, onDone){
     try{ if(typeof speechSynthesis!=='undefined') speechSynthesis.cancel(); }catch(e){}
     try{
@@ -6226,19 +6376,19 @@ const CoachModule = (() => {
     if(!text){ if(onDone) onDone(); return; }
     try{
       if(typeof speechSynthesis==='undefined'){ if(onDone) onDone(); return; }
-      // iOS: resume / speak in short delayed ticks
       try{ speechSynthesis.resume(); }catch(e){}
       const u = new SpeechSynthesisUtterance(String(text));
-      u.rate = 0.95;
-      u.pitch = 1;
-      u.lang = 'en-IN';
+      const voice = loadMaleCoachVoice();
+      if(voice) u.voice = voice;
+      u.rate = 0.94;
+      u.pitch = 0.92; // slightly lower = more male, consistent
+      u.lang = (voice && voice.lang) ? voice.lang : 'en-US';
       var done = false;
       function finish(){ if(done) return; done = true; if(onDone) onDone(); }
       u.onend = finish;
       u.onerror = finish;
       speechSynthesis.speak(u);
-      // Safety timeout if onend never fires (some mobile browsers)
-      setTimeout(finish, Math.min(20000, 2500 + String(text).length * 60));
+      setTimeout(finish, Math.min(22000, 2800 + String(text).length * 55));
     }catch(e){ if(onDone) onDone(); }
   }
 
@@ -6351,25 +6501,20 @@ const CoachModule = (() => {
     return bits.join('. ');
   }
 
-  const COACH_SYSTEM = `You are Neeraj Kapil, coach on W3ME. You are highly knowledgeable, articulate, and helpful across virtually any topic a person might ask about.
+  const COACH_SYSTEM = `You are Neeraj Kapil, male career and life coach on W3ME.
+You speak in a calm, professional male voice tone in writing as well.
 
-Scope — answer questions about:
-- Career, jobs, business, money, skills, education
-- Personal life, relationships, emotions, habits, confidence
-- Science, technology, history, geography, culture, arts
-- Philosophy, religion, spirituality, God, meaning, ethics (respectful, balanced; not dogmatic)
-- Universe, space, nature, environment, health literacy (not a substitute for a doctor or lawyer)
-- Current-style general knowledge and practical how-to advice
-- Formal and informal conversation — match the user's tone
+Always base your reply on:
+1) The user's latest words and their recent answers in this chat (their real experience)
+2) Optional live behaviour signals if provided (camera presence, voice energy, movement) — use gently, never as medical diagnosis
+3) Adaptive follow-up: one clear next question only when it helps
 
-Behaviour:
-- Answer the user's actual question first, clearly and directly.
-- Use global, widely accepted knowledge; if uncertain or debated, say so briefly.
-- Be professional, warm, and human. No lectures about "anchors" or "categories".
-- For serious medical, legal, or crisis topics: give general information and urge qualified professional help.
-- Keep answers focused (about 80–150 words) unless the user asks for depth.
-- Ask at most one short follow-up only when it truly helps.
-- Speak in first person as Neeraj.`;
+Rules:
+- Answer what they actually said; do not ignore their message
+- Professional, warm, practical; under 120 words unless they ask for depth
+- No "anchor", "generic lecture", or category menus
+- Face/voice signals only for coaching presence (e.g. encourage facing camera, steady voice) when relevant
+- Topics: career, personal, decisions, skills, interviews, life questions`
 
   async function generateCoachReply(userText){
     const raw = (userText||'').trim();
@@ -6382,7 +6527,14 @@ Behaviour:
         const history = (ADAPT.turns||[]).slice(-8).map(function(m){
           return { role: m.role==='you' ? 'user' : 'assistant', content: m.text };
         });
-        history.push({ role:'user', content: raw });
+        let behave = '';
+        try{
+          if(typeof CoachBehavior!=='undefined'){
+            const s = CoachBehavior.summary();
+            behave = ' [Live signals: '+s.eye+'; '+s.vocal+'; '+s.body+'; overall '+s.scores.overall+'/100]';
+          }
+        }catch(e){}
+        history.push({ role:'user', content: raw + behave });
         const body = {
           model: cfg.model || '@cf/meta/llama-3.1-8b-instruct',
           temperature: 0.65,
@@ -6419,6 +6571,17 @@ Behaviour:
 
   function craftReplyLocal(userText){
     const raw = (userText||'').trim();
+    // Prior user experience from this session
+    const prior = (ADAPT.turns||[]).filter(function(m){ return m.role==='you'; }).map(function(m){ return m.text; }).slice(-3);
+    let behaveNote = '';
+    try{
+      if(typeof CoachBehavior!=='undefined'){
+        const s = CoachBehavior.summary();
+        if(s.scores.presence < 30) behaveNote = ' I notice you may be off-camera or in low light — facing the camera helps our session.';
+        else if(s.scores.voice < 15) behaveNote = ' Speak a little clearer if you can; I will also read what you type.';
+      }
+    }catch(e){}
+
     const s = raw.toLowerCase().replace(/\s+/g, ' ');
     const name = userFirstName();
     const nm = name ? ', ' + name : '';
@@ -6426,7 +6589,7 @@ Behaviour:
     if(/^(hi|hello|hey|hii)[\s\!\.]*$/i.test(raw)
        || /good\s*(morning|afternoon|evening)/.test(s) && s.length < 55
        || /how\s*are\s*(you|u)\b/.test(s) && s.length < 45){
-      return timeGreeting() + nm + '. How can I help you today?';
+      return timeGreeting() + nm + '. How can I help you today?' + behaveNote;
     }
     if(/^(ok|okay|sure|yes|yeah|fine)\.?$/i.test(raw)) return 'What would you like to talk about?';
     if(/\bthank/.test(s) && s.length < 50) return 'You are welcome. Anything else?';
@@ -6536,7 +6699,14 @@ Behaviour:
         if(!ADAPT.active) return;
         ADAPT.thinking = false;
         ADAPT.turns.push({ role:'coach', text: reply });
-        try{ if(typeof Analytics!=='undefined') Analytics.track('coach_answer', { summary: String(reply).slice(0,120), answer: String(reply).slice(0,800) }); }catch(e){}
+        try{
+          var bsum = null;
+          try{ bsum = CoachBehavior.summary(); }catch(e){}
+          if(typeof Analytics!=='undefined') Analytics.track('coach_answer', {
+            summary: String(reply).slice(0,120), answer: String(reply).slice(0,800),
+            behaviour: bsum
+          });
+        }catch(e){}
         renderAdaptiveUI('Your turn when you are ready');
         speakAdaptive(reply, function(){
           setTimeout(function(){ if(ADAPT.active) listenAdaptive(true); }, 700);
@@ -6558,6 +6728,7 @@ Behaviour:
     ADAPT.thinking = false;
     window.__w3mQuietCoachUI = false;
     try{ if(typeof SessionRecorder!=='undefined') SessionRecorder.stop(); }catch(e){}
+    try{ CoachBehavior.stop(); }catch(e){}
     try{ if(typeof Analytics!=='undefined') Analytics.track('coach_end', { summary:'Coach session ended' }); }catch(e){}
     try{ if(ADAPT.silenceTimer) clearInterval(ADAPT.silenceTimer); }catch(e){}
     try{ if(ADAPT.rec){ ADAPT.rec.onresult=null; ADAPT.rec.stop(); } }catch(e){}
