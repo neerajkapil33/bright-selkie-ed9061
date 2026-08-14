@@ -1479,6 +1479,7 @@ function go(screen){
   const target = document.getElementById('screen-'+screen);
   if(!target){ console.warn('Missing screen', screen); return; }
   target.classList.add('active');
+  try{ if(typeof Analytics!=='undefined') Analytics.track('screen_view', { screen: screen, summary: 'Viewed '+screen }); }catch(e){}
   const tabbar = document.getElementById('tabbar');
   if(tabbar){
     const show = TAB_SCREENS.includes(screen);
@@ -1489,7 +1490,7 @@ function go(screen){
   if(screen==='setup'){ coachSay("Hey, I'm Neeraj! Let's get to know you a little better. Pop in your resume if you have one handy — it helps me ask sharper, more relevant questions."); }
   else if(!['hardware','assess'].includes(screen)){ hideCoach(); }
   if(screen==='schedule'){ try{ resetScheduleScreen(); }catch(e){} }
-  if(screen==='coach'){ try{ CoachModule.init(); }catch(e){} try{ loadChartJs(); }catch(e){} }
+  if(screen==='coach'){ try{ CoachModule.init(); }catch(e){} try{ if(typeof Analytics!=='undefined') Analytics.init(); }catch(e){} try{ loadChartJs(); }catch(e){} }
   if(screen==='report'){ try{ loadChartJs(); }catch(e){} try{ setTimeout(updateScoreArrows, 60); }catch(e){} }
   if(screen==='admin'){ try{ renderAdminConsole(); }catch(e){} }
   window.scrollTo(0,0);
@@ -1591,6 +1592,7 @@ function loginAs(user){
 
   currentUser = user;
   try{ localStorage.setItem('w3m_session', user.username); localStorage.setItem('w3m_biometric_user', user.username); }catch(e){}
+  try{ if(typeof Analytics!=='undefined') Analytics.track('login', { summary: 'Login '+(user.email||user.username||''), email: user.email||'', username: user.username||'' }); }catch(e){}
   const hr = new Date().getHours();
   const greet = hr<12?'Good morning':hr<18?'Good afternoon':'Good evening';
   document.getElementById('home-greeting').textContent = `${greet}, ${user.name.split(' ')[0]}`;
@@ -1679,6 +1681,7 @@ function completeSsoLogin({ name, email, provider, picture }){
   if(!user && lookupKey && DB.users[lookupKey]) user = DB.users[lookupKey];
 
   if(!user){
+    try{ if(typeof Analytics!=='undefined') Analytics.track('signup', { summary:'New account '+(email||''), email: email||'' }); }catch(e){}
     const base = lookupKey.includes('@') ? lookupKey.split('@')[0].replace(/[^a-z0-9_.]/g,'') : (provider + '_user');
     let username = base || (provider + '_user');
     if(DB.users[username]) username = username + '.' + Math.random().toString(36).slice(2,5);
@@ -3601,8 +3604,252 @@ function logAssessmentEvent(payload){
   };
   logs.push(entry);
   saveAdminLogs(logs);
+  try{ if(typeof Analytics !== 'undefined') Analytics.track(payload.type || 'assessment', payload); }catch(e){}
   return entry;
 }
+
+/* ========== Site analytics & admin activity log ========== */
+const Analytics = (() => {
+  const EVT_KEY = 'w3m_analytics_events';
+  const VISIT_KEY = 'w3m_analytics_visits';
+  const MAX_EVENTS = 800;
+
+  function loadEvents(){
+    try{ return JSON.parse(localStorage.getItem(EVT_KEY)||'[]')||[]; }catch(e){ return []; }
+  }
+  function saveEvents(list){
+    try{ localStorage.setItem(EVT_KEY, JSON.stringify((list||[]).slice(-MAX_EVENTS))); }catch(e){}
+  }
+  function uid(){
+    try{
+      let id = localStorage.getItem('w3m_visitor_id');
+      if(!id){ id = 'v_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9); localStorage.setItem('w3m_visitor_id', id); }
+      return id;
+    }catch(e){ return 'v_anon'; }
+  }
+  function actor(){
+    if(typeof currentUser !== 'undefined' && currentUser){
+      return {
+        visitorId: uid(),
+        username: currentUser.username || '',
+        name: currentUser.name || '',
+        email: currentUser.email || '',
+      };
+    }
+    return { visitorId: uid(), username: '', name: 'Anonymous', email: '' };
+  }
+  function track(type, detail){
+    const events = loadEvents();
+    const entry = {
+      id: 'ev_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+      ts: Date.now(),
+      iso: new Date().toISOString(),
+      type: type || 'event',
+      detail: detail || {},
+      path: (typeof location !== 'undefined' ? location.pathname + location.search : ''),
+      screen: (detail && detail.screen) || '',
+      user: actor(),
+      ua: (typeof navigator !== 'undefined' ? (navigator.userAgent||'').slice(0,120) : '')
+    };
+    events.push(entry);
+    saveEvents(events);
+    // mirror important events into admin assessment log for training archive
+    try{
+      if(['login','signup','demo_start','coach_start','coach_end','assessment_start','assessment_complete','video_interview','mcq_complete'].indexOf(type) >= 0){
+        const logs = loadAdminLogs();
+        logs.push({
+          id: entry.id, ts: entry.ts, iso: entry.iso, type: type,
+          user: entry.user, summary: (detail && (detail.summary || detail.question)) || type,
+          detail: detail || {}
+        });
+        saveAdminLogs(logs);
+      }
+    }catch(e){}
+    return entry;
+  }
+  function trackVisit(){
+    try{
+      const day = new Date().toISOString().slice(0,10);
+      const raw = localStorage.getItem(VISIT_KEY);
+      const map = raw ? JSON.parse(raw) : {};
+      if(!map[day]) map[day] = { views:0, visitors:{} };
+      map[day].views = (map[day].views||0) + 1;
+      map[day].visitors[uid()] = true;
+      localStorage.setItem(VISIT_KEY, JSON.stringify(map));
+    }catch(e){}
+    track('visit', { summary: 'App opened / page view' });
+  }
+  function visitStats(){
+    try{
+      const map = JSON.parse(localStorage.getItem(VISIT_KEY)||'{}')||{};
+      let views = 0, days = 0;
+      const visitorSet = {};
+      Object.keys(map).forEach(d=>{
+        days++;
+        views += map[d].views||0;
+        Object.keys(map[d].visitors||{}).forEach(v=>{ visitorSet[v]=true; });
+      });
+      return { views, uniqueVisitors: Object.keys(visitorSet).length, days, byDay: map };
+    }catch(e){ return { views:0, uniqueVisitors:0, days:0, byDay:{} }; }
+  }
+  function countByType(type){
+    return loadEvents().filter(e=>e.type===type).length;
+  }
+  function emailsSeen(){
+    const set = {};
+    loadEvents().forEach(e=>{
+      const em = e.user && e.user.email;
+      if(em) set[em] = (set[em]||0)+1;
+    });
+    try{
+      if(typeof DB !== 'undefined' && DB.users){
+        Object.keys(DB.users).forEach(u=>{
+          const em = DB.users[u].email;
+          if(em) set[em] = set[em] || 1;
+        });
+      }
+    }catch(e){}
+    return set;
+  }
+  function registeredUsers(){
+    try{
+      if(typeof DB === 'undefined' || !DB.users) return [];
+      return Object.keys(DB.users).map(u=>{
+        const x = DB.users[u];
+        return { username:u, name:x.name||u, email:x.email||'', isAdmin:!!x.isAdmin };
+      });
+    }catch(e){ return []; }
+  }
+  function exportJSON(){
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      visits: visitStats(),
+      events: loadEvents(),
+      assessmentLogs: (typeof loadAdminLogs==='function'?loadAdminLogs():[]),
+      recordingsMeta: (typeof loadAdminRecMeta==='function'?loadAdminRecMeta():[]),
+      users: registeredUsers(),
+      emails: emailsSeen()
+    };
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'w3me-admin-log-'+Date.now()+'.json';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  }
+  function init(){
+    trackVisit();
+  }
+  return { track, trackVisit, visitStats, countByType, emailsSeen, registeredUsers, exportJSON, loadEvents, init };
+})();
+
+/* IndexedDB store for video/audio session recordings (admin training archive) */
+const RecStore = (() => {
+  const DB_NAME = 'w3m_rec_db';
+  const STORE = 'recordings';
+  function open(){
+    return new Promise((resolve, reject)=>{
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = function(){
+        const db = req.result;
+        if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath:'id' });
+      };
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
+  }
+  async function put(rec){
+    const db = await open();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(rec);
+      tx.oncomplete = ()=> resolve(rec.id);
+      tx.onerror = ()=> reject(tx.error);
+    });
+  }
+  async function all(){
+    const db = await open();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = ()=> resolve(req.result||[]);
+      req.onerror = ()=> reject(req.error);
+    });
+  }
+  async function get(id){
+    const db = await open();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).get(id);
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
+  }
+  return { put, all, get };
+})();
+
+/* Session recorder for coach / video interview — stores video+audio blob for admin */
+const SessionRecorder = (() => {
+  let mediaRec = null, chunks = [], startedAt = 0, meta = {};
+  function start(stream, info){
+    stop();
+    if(!stream || typeof MediaRecorder === 'undefined') return false;
+    try{
+      chunks = [];
+      meta = info || {};
+      startedAt = Date.now();
+      const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ? 'video/webm;codecs=vp8,opus'
+        : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '');
+      mediaRec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      mediaRec.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+      mediaRec.start(1000);
+      try{ Analytics.track('recording_start', { summary: meta.label || 'session' }); }catch(e){}
+      return true;
+    }catch(e){ mediaRec = null; return false; }
+  }
+  function stop(){
+    return new Promise(function(resolve){
+      if(!mediaRec){ resolve(null); return; }
+      const rec = mediaRec;
+      mediaRec = null;
+      rec.onstop = async function(){
+        try{
+          const blob = new Blob(chunks, { type: rec.mimeType || 'video/webm' });
+          chunks = [];
+          const id = 'rec_'+startedAt+'_'+Math.random().toString(36).slice(2,7);
+          const user = (typeof currentUser !== 'undefined' && currentUser) ? {
+            username: currentUser.username, name: currentUser.name, email: currentUser.email||''
+          } : { username:'guest', name:'Guest', email:'' };
+          const record = {
+            id, ts: startedAt, endedAt: Date.now(),
+            iso: new Date(startedAt).toISOString(),
+            durationSec: Math.round((Date.now()-startedAt)/1000),
+            user, meta, mime: blob.type, size: blob.size, blob
+          };
+          await RecStore.put(record);
+          try{
+            const list = (typeof loadAdminRecMeta==='function'?loadAdminRecMeta():[]);
+            list.push({ id, ts: startedAt, iso: record.iso, durationSec: record.durationSec, user, meta, mime: blob.type, size: blob.size });
+            if(typeof saveAdminRecMeta==='function') saveAdminRecMeta(list.slice(-100));
+          }catch(e){}
+          try{ Analytics.track('recording_saved', { id, summary: (meta.label||'session')+' '+record.durationSec+'s', size: blob.size }); }catch(e){}
+          resolve(record);
+        }catch(e){ resolve(null); }
+      };
+      try{ rec.stop(); }catch(e){ resolve(null); }
+    });
+  }
+  async function download(id){
+    const rec = await RecStore.get(id);
+    if(!rec || !rec.blob) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(rec.blob);
+    a.download = (rec.id||'session')+'.webm';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  }
+  return { start, stop, download };
+})();
 
 /* ---- MediaRecorder for video interview documentation ---- */
 let assessRecorder = null;
@@ -3714,47 +3961,132 @@ function renderAdminConsole(){
     if(typeof renderBioAdminSection === 'function') renderBioAdminSection();
   }catch(e){}
 
-  const logs = loadAdminLogs();
-  const recs = loadAdminRecMeta();
+  const logs = (typeof loadAdminLogs==='function') ? loadAdminLogs() : [];
+  const recs = (typeof loadAdminRecMeta==='function') ? loadAdminRecMeta() : [];
+  const events = (typeof Analytics!=='undefined') ? Analytics.loadEvents() : [];
+  const visits = (typeof Analytics!=='undefined') ? Analytics.visitStats() : { views:0, uniqueVisitors:0, days:0 };
+  const emails = (typeof Analytics!=='undefined') ? Analytics.emailsSeen() : {};
+  const usersReg = (typeof Analytics!=='undefined') ? Analytics.registeredUsers() : [];
+  const c = (t)=> (typeof Analytics!=='undefined' ? Analytics.countByType(t) : 0);
+
+  const nLogin = c('login');
+  const nDemo = c('demo_start');
+  const nCoach = c('coach_start');
+  const nVisit = c('visit');
+  const nScreen = c('screen_view');
+  const nQA = c('coach_qa');
+  const nAssess = logs.filter(l=>l.type==='diagnostic'||l.type==='assessment_complete'||l.type==='mcq_complete').length
+    + c('assessment_complete') + c('mcq_complete') + c('video_interview');
+  const nSignup = c('signup') + usersReg.filter(u=>!u.isAdmin).length;
+
   const usersMap = {};
   logs.forEach(l=>{
-    const u = (l.user && l.user.username) || 'guest';
-    if(!usersMap[u]) usersMap[u] = { username:u, name:(l.user&&l.user.name)||u, logs:[], diag:0, coach:0, last:0 };
+    const u = (l.user && (l.user.username||l.user.email)) || 'guest';
+    if(!usersMap[u]) usersMap[u] = { username:u, name:(l.user&&l.user.name)||u, email:(l.user&&l.user.email)||'', logs:[], diag:0, coach:0, last:0 };
     usersMap[u].logs.push(l);
-    if(l.type === 'diagnostic') usersMap[u].diag++;
-    if(l.type === 'coach') usersMap[u].coach++;
+    if(l.type === 'diagnostic' || l.type==='assessment_complete') usersMap[u].diag++;
+    if(l.type === 'coach' || l.type==='coach_start') usersMap[u].coach++;
     if(l.ts > usersMap[u].last) usersMap[u].last = l.ts;
   });
+  events.forEach(e=>{
+    const u = (e.user && (e.user.username||e.user.email||e.user.visitorId)) || 'guest';
+    if(!usersMap[u]) usersMap[u] = { username:u, name:(e.user&&e.user.name)||u, email:(e.user&&e.user.email)||'', logs:[], diag:0, coach:0, last:0 };
+    if(e.ts > usersMap[u].last) usersMap[u].last = e.ts;
+    if(e.user && e.user.email) usersMap[u].email = e.user.email;
+  });
   const userList = Object.values(usersMap).sort((a,b)=>b.last-a.last);
-  document.getElementById('adminStats').innerHTML = `
-    <div class="admin-stat"><div class="av">${logs.length}</div><div class="al">Assessment logs</div></div>
-    <div class="admin-stat"><div class="av">${userList.length}</div><div class="al">Users with reviews</div></div>
-    <div class="admin-stat"><div class="av">${recs.length}</div><div class="al">Recording sessions</div></div>
-    <div class="admin-stat"><div class="av">${logs.filter(l=>l.type==='diagnostic').length}</div><div class="al">Diagnostics</div></div>`;
-  document.getElementById('adminUserList').innerHTML = userList.length ? userList.map(u=>`
-    <div class="admin-user-card" onclick="openAdminUser('${u.username.replace(/'/g,"\\'")}')">
-      <h4>${escapeAdmin(u.name)} <span class="admin-badge">${u.username}</span></h4>
-      <div class="meta">${u.diag} diagnostic · ${u.coach} coach · last ${u.last ? new Date(u.last).toLocaleString() : '—'}</div>
-    </div>`).join('') : '<p style="font-size:12.5px;color:var(--ink-soft);">No assessment logs yet. When users finish a diagnostic or coach session, they appear here.</p>';
 
-  document.getElementById('adminLogList').innerHTML = logs.slice().reverse().slice(0,40).map(l=>`
-    <div class="admin-log-item">
-      <div class="ts">${l.iso || new Date(l.ts).toISOString()}</div>
-      <div><span class="admin-badge ${l.type==='coach'?'coach':'diag'}">${l.type||'event'}</span> <b>${escapeAdmin((l.user&&l.user.name)||'Guest')}</b> · ${escapeAdmin(l.summary||'')}</div>
-      ${l.overallDelivery!=null?`<div style="margin-top:3px;color:var(--ink-soft);">Delivery readiness: ${l.overallDelivery}/100 · track: ${escapeAdmin(l.track||'—')}</div>`:''}
-    </div>`).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No logs yet.</p>';
+  const emailRows = Object.keys(emails).sort().map(em=>
+    '<div class="admin-log-item"><b>'+escapeAdmin(em)+'</b> · '+emails[em]+' event(s)</div>'
+  ).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No emails captured yet.</p>';
 
-  document.getElementById('adminRecList').innerHTML = recs.slice().reverse().map(r=>`
+  const recentEvents = events.slice().reverse().slice(0,50).map(e=>`
     <div class="admin-log-item">
-      <div class="ts">${r.iso || new Date(r.ts).toISOString()}</div>
-      <div><b>${escapeAdmin(r.name||r.user)}</b> · ${(r.bytes/1024).toFixed(0)} KB · ${escapeAdmin(r.kind||'video')}</div>
-      <button class="btn btn-outline coach-btn-sm" style="margin-top:6px;width:auto;padding:6px 12px;font-size:11px;" type="button" onclick="downloadRecording('${r.id}')">Download recording</button>
-    </div>`).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No recordings in this browser yet. Video-mode diagnostics are recorded automatically when the browser supports MediaRecorder.</p>';
+      <div class="ts">${e.iso || new Date(e.ts).toISOString()}</div>
+      <div><span class="admin-badge">${escapeAdmin(e.type)}</span>
+      ${escapeAdmin((e.user&&e.user.email)||(e.user&&e.user.name)||'anon')} —
+      ${escapeAdmin((e.detail&&e.detail.summary)||e.screen||'')}</div>
+    </div>`).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No activity yet. Open the app, try demo, coach, or login to generate logs.</p>';
+
+  if(document.getElementById('adminStats')){
+    document.getElementById('adminStats').innerHTML = `
+      <div class="admin-stat"><div class="av">${visits.views||nVisit}</div><div class="al">Page views</div></div>
+      <div class="admin-stat"><div class="av">${visits.uniqueVisitors||0}</div><div class="al">Unique visitors</div></div>
+      <div class="admin-stat"><div class="av">${nLogin}</div><div class="al">Logins</div></div>
+      <div class="admin-stat"><div class="av">${nSignup||usersReg.length}</div><div class="al">Accounts</div></div>
+      <div class="admin-stat"><div class="av">${nDemo}</div><div class="al">Demo trials</div></div>
+      <div class="admin-stat"><div class="av">${nCoach}</div><div class="al">Coach sessions</div></div>
+      <div class="admin-stat"><div class="av">${nAssess}</div><div class="al">Assessments</div></div>
+      <div class="admin-stat"><div class="av">${recs.length}</div><div class="al">AV recordings</div></div>`;
+  }
+
+  if(document.getElementById('adminUserList')){
+    document.getElementById('adminUserList').innerHTML = `
+      <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-navy" style="width:auto;padding:8px 12px;font-size:12px;" onclick="Analytics.exportJSON()">Download full log (JSON)</button>
+        <button type="button" class="btn btn-outline" style="width:auto;padding:8px 12px;font-size:12px;" onclick="renderAdminConsole()">Refresh</button>
+      </div>
+      <div class="section-title"><h2>Registered accounts</h2></div>
+      ${usersReg.map(u=>`<div class="admin-user-card"><h4>${escapeAdmin(u.name)} <span class="admin-badge">${escapeAdmin(u.username)}</span></h4>
+        <div class="meta">${escapeAdmin(u.email||'no email')}${u.isAdmin?' · admin':''}</div></div>`).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No accounts in local DB.</p>'}
+      <div class="section-title"><h2>Activity by user / visitor</h2></div>
+      ${userList.length ? userList.map(u=>`
+        <div class="admin-user-card" onclick="openAdminUser('${String(u.username).replace(/'/g,"\\'")}')">
+          <h4>${escapeAdmin(u.name)} <span class="admin-badge">${escapeAdmin(u.username)}</span></h4>
+          <div class="meta">${escapeAdmin(u.email||'')} · ${u.diag} assess · ${u.coach} coach · last ${u.last ? new Date(u.last).toLocaleString() : '—'}</div>
+        </div>`).join('') : '<p style="font-size:12.5px;color:var(--ink-soft);">No user activity yet.</p>'}`;
+  }
+
+  if(document.getElementById('adminLogList')){
+    document.getElementById('adminLogList').innerHTML = `
+      <div class="section-title"><h2>Emails seen</h2></div>
+      ${emailRows}
+      <div class="section-title"><h2>Recordings (video/audio)</h2></div>
+      <p style="font-size:11.5px;color:var(--ink-soft);">Coach/video sessions are stored on this device (IndexedDB) as WebM. Download for training archive.</p>
+      <div id="adminRecListLive">Loading recordings…</div>
+      <div class="section-title"><h2>Recent activity feed</h2></div>
+      ${recentEvents}
+      <div class="section-title"><h2>Assessment / coach logs</h2></div>
+      ${logs.slice().reverse().slice(0,40).map(l=>`
+        <div class="admin-log-item">
+          <div class="ts">${l.iso || new Date(l.ts).toISOString()}</div>
+          <div><span class="admin-badge ${l.type==='coach'||l.type==='coach_start'?'coach':'diag'}">${escapeAdmin(l.type||'event')}</span>
+          <b>${escapeAdmin((l.user&&l.user.name)||'Guest')}</b>
+          ${escapeAdmin((l.user&&l.user.email)||'')} — ${escapeAdmin(l.summary||'')}</div>
+        </div>`).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No assessment logs yet.</p>'}`;
+  }
+
+  // async fill recordings list with download buttons
+  (async function(){
+    const host = document.getElementById('adminRecListLive');
+    if(!host || typeof RecStore==='undefined'){ if(host) host.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Recorder not available.</p>'; return; }
+    try{
+      const all = await RecStore.all();
+      if(!all.length){
+        const metaOnly = recs.slice().reverse();
+        host.innerHTML = metaOnly.length ? metaOnly.map(r=>`
+          <div class="admin-log-item"><div class="ts">${r.iso||''}</div>
+          <div>${escapeAdmin((r.user&&r.user.email)||(r.user&&r.user.name)||'guest')} · ${r.durationSec||0}s · ${escapeAdmin((r.meta&&r.meta.label)||'session')}
+          <span style="color:var(--ink-soft);font-size:11px;"> (metadata only)</span></div></div>`).join('')
+          : '<p style="font-size:12px;color:var(--ink-soft);">No recordings yet. Start a Coach session with camera to capture video+audio.</p>';
+        return;
+      }
+      host.innerHTML = all.slice().reverse().map(r=>`
+        <div class="admin-log-item">
+          <div class="ts">${r.iso||new Date(r.ts).toISOString()}</div>
+          <div><b>${escapeAdmin((r.user&&r.user.name)||'Guest')}</b> ${escapeAdmin((r.user&&r.user.email)||'')}
+          · ${r.durationSec||0}s · ${Math.round((r.size||0)/1024)} KB
+          <button type="button" class="btn btn-outline" style="width:auto;display:inline-flex;padding:4px 10px;font-size:11px;margin-left:8px;"
+            onclick="SessionRecorder.download('${r.id}')">Download video</button>
+          </div>
+          <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Q&amp;A is in activity feed (coach_qa / coach_answer). Video file includes audio track.</div>
+        </div>`).join('');
+    }catch(e){
+      host.innerHTML = '<p style="font-size:12px;color:var(--ink-soft);">Could not read recordings.</p>';
+    }
+  })();
 }
 
-function escapeAdmin(s){
-  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
 
 function openAdminUser(username){
   const logs = loadAdminLogs().filter(l => (l.user && l.user.username) === username);
@@ -4051,7 +4383,7 @@ function finalizeAnswer(followUp){
   stepIndex++;
   if(stepIndex >= workingCategories.length){ finishAssessment(); } else { renderQuestion(); }
 }
-function finishAssessment(){
+function finishAssessment(){ try{ if(typeof Analytics!=='undefined') Analytics.track('assessment_complete', { summary:'Assessment completed' }); }catch(e){}
   clearInterval(timerInterval);
   if(recognizer){ try{ recognizer.stop(); }catch(e){} }
   hideCoach();
@@ -5093,7 +5425,7 @@ async function runAutoDemoSequence(){
   }
   if(demoActive) finishAutoDemo();
 }
-function startAutoDemo(){
+function startAutoDemo(){ try{ if(typeof Analytics!=='undefined') Analytics.track('demo_start', { summary:'Auto demo started' }); }catch(e){} 
   if(demoActive) return;
   demoActive = true;
   demoCurrentStep = 0;
@@ -5681,6 +6013,7 @@ const CoachModule = (() => {
     ADAPT.active = true; ADAPT.turns = []; ADAPT.phase = 'greet';
     ADAPT.listening = false; ADAPT.thinking = false; ADAPT.interim = '';
     window.__w3mQuietCoachUI = true; // video+voice call: no floating transcript popups
+    try{ if(typeof Analytics!=='undefined') Analytics.track('coach_start', { summary:'Coach session started' }); }catch(e){}
     try{
       const bubble=document.getElementById('coachBubble'); if(bubble) bubble.style.display='none';
       const va=document.getElementById('vaPanel'); if(va) va.style.display='none';
@@ -5699,6 +6032,7 @@ const CoachModule = (() => {
 
     renderAdaptiveUI('Connecting camera & mic…');
     const ok = await ensureMediaOnce();
+    try{ if(ok && ADAPT.stream && typeof SessionRecorder!=='undefined') SessionRecorder.start(ADAPT.stream, { label:'coach_adaptive', type:'coach' }); }catch(e){}
     const name = userFirstName();
     let greet = timeGreeting() + (name ? ', ' + name : '') + '. How can I help you today?';
     ADAPT.turns.push({ role:'coach', text: greet });
@@ -6014,6 +6348,7 @@ Behaviour:
     ADAPT.listening = false;
 
     ADAPT.turns.push({ role:'you', text: text });
+    try{ if(typeof Analytics!=='undefined') Analytics.track('coach_qa', { summary: text.slice(0,120), question: text.slice(0,500) }); }catch(e){}
     ADAPT.thinking = true;
     renderAdaptiveUI('Thinking through your message…');
 
@@ -6061,6 +6396,7 @@ Behaviour:
         if(!ADAPT.active) return;
         ADAPT.thinking = false;
         ADAPT.turns.push({ role:'coach', text: reply });
+        try{ if(typeof Analytics!=='undefined') Analytics.track('coach_answer', { summary: String(reply).slice(0,120), answer: String(reply).slice(0,800) }); }catch(e){}
         renderAdaptiveUI('Your turn when you are ready');
         speakAdaptive(reply, function(){
           setTimeout(function(){ if(ADAPT.active) listenAdaptive(true); }, 700);
@@ -6081,6 +6417,8 @@ Behaviour:
     ADAPT.active = false;
     ADAPT.thinking = false;
     window.__w3mQuietCoachUI = false;
+    try{ if(typeof SessionRecorder!=='undefined') SessionRecorder.stop(); }catch(e){}
+    try{ if(typeof Analytics!=='undefined') Analytics.track('coach_end', { summary:'Coach session ended' }); }catch(e){}
     try{ if(ADAPT.silenceTimer) clearInterval(ADAPT.silenceTimer); }catch(e){}
     try{ if(ADAPT.rec){ ADAPT.rec.onresult=null; ADAPT.rec.stop(); } }catch(e){}
     try{ if(typeof speechSynthesis!=='undefined') speechSynthesis.cancel(); }catch(e){}
@@ -6099,6 +6437,8 @@ Behaviour:
 
 })();
 
+
+try{ if(typeof Analytics!=='undefined') Analytics.init(); }catch(e){}
 </script>
 <div class="tabbar" id="tabbar" style="display:none;">
   <div class="tab" data-tab="home" onclick="go(&#39;home&#39;)"><span>🏠</span><span>Home</span><div class="tdot"></div></div>
