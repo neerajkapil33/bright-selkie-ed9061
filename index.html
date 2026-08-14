@@ -1257,6 +1257,10 @@ img,video{max-width:100%;height:auto;}
       <button type="button" class="ag-go" onclick="AdminGate.submit()">Sign in</button>
       <button type="button" class="ag-cancel" onclick="AdminGate.close()">Cancel</button>
     </div>
+    <p style="margin:12px 0 0;text-align:center;font-size:12px;">
+      <a href="mailto:recreationeeraj@gmail.com?subject=W3ME%20Admin%20Forgot%20Password&body=Hi%20Neeraj%2C%0A%0AI%20need%20to%20reset%20my%20W3ME%20admin%20password.%0A%0AUsername%3A%20kapilneeraj%0A" style="color:var(--accent);font-weight:600;text-decoration:none;">Forgot password?</a>
+      <span style="color:var(--ink-soft);"> — email recreationeeraj@gmail.com</span>
+    </p>
     <div class="ag-status" id="agStatus"></div>
   </div>
 </div>
@@ -3528,24 +3532,16 @@ let diagnosticVdResults = [];
     name: 'Neeraj Kapil',
     email: 'recreationeeraj@gmail.com',
     username: 'kapilneeraj',
-    passwordHash: '638233e8d51c833e09fec599c302a794e5ae553d19f71723d293c16ca4c6f8be',
+    passwordHash: 'e18c86b7eac8ce7c1944d86505d770237e0283393ecab98e0a22a5574c916876',
     role: 'Founder · Career Coach',
     location: 'India',
     isAdmin: true
   };
-  if(!DB.users['kapilneeraj']){
-    DB.users['kapilneeraj'] = Object.assign({}, ADMIN);
-    DB.byEmail[ADMIN.email] = 'kapilneeraj';
-    saveDB();
-  } else {
-    const u = DB.users['kapilneeraj'];
-    u.isAdmin = true;
-    u.passwordHash = ADMIN.passwordHashHash;
-    delete u.password; // never keep plaintext
-    u.name = ADMIN.name;
-    u.role = ADMIN.role;
-    saveDB();
-  }
+  // Always overwrite admin credentials (clears old password from localStorage)
+  DB.users['kapilneeraj'] = Object.assign({}, ADMIN);
+  DB.byEmail[ADMIN.email] = 'kapilneeraj';
+  try { delete DB.users['kapilneeraj'].password; } catch(e) {}
+  saveDB();
 })();
 
 async function sha256Hex(text){
