@@ -2920,7 +2920,7 @@ const VOICE_CONFIG = {
         var s = localStorage.getItem('w3m_coach_api');
         if (s) return s;
       } catch (e) {}
-      return 'https://bright-selkie-ed9061.neerajkapil33.workers.dev/';
+      return 'https://bright-selkie-ed9061.neerajkapil33.workers.dev';
     })(),
     apiKey: '',  // not needed — Worker uses Cloudflare Workers AI (no OpenAI key)
     model: '@cf/meta/llama-3.1-8b-instruct',
@@ -3665,7 +3665,56 @@ const Analytics = (() => {
         saveAdminLogs(logs);
       }
     }catch(e){}
+    // Cloud sync (Cloudflare Worker KV) — non-blocking
+    try{ cloudLog(entry); }catch(e){}
     return entry;
+  }
+
+  function coachApiBase(){
+    try{
+      const s = localStorage.getItem('w3m_coach_api');
+      if(s) return String(s).replace(/\/?$/, '');
+    }catch(e){}
+    try{
+      if(typeof VOICE_CONFIG!=='undefined' && VOICE_CONFIG.llm && VOICE_CONFIG.llm.workerEndpoint)
+        return String(VOICE_CONFIG.llm.workerEndpoint).replace(/\/?$/, '');
+    }catch(e){}
+    return 'https://bright-selkie-ed9061.neerajkapil33.workers.dev';
+  }
+
+  function cloudLog(entry){
+    const base = coachApiBase();
+    if(!base || typeof fetch==='undefined') return;
+    fetch(base + '/api/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    }).catch(function(){});
+  }
+
+  async function fetchCloudLogs(){
+    const base = coachApiBase();
+    if(!base) return { ok:false, error:'No worker URL. Set localStorage w3m_coach_api', events:[] };
+    const token = (function(){ try{ return localStorage.getItem('w3m_admin_log_token')||'w3me-admin-logs'; }catch(e){ return 'w3me-admin-logs'; }})();
+    const res = await fetch(base + '/api/log?limit=300', {
+      headers: { 'X-Admin-Token': token }
+    });
+    if(!res.ok){
+      const t = await res.text();
+      return { ok:false, error: t || res.status, events:[] };
+    }
+    const data = await res.json();
+    return { ok:true, events: data.events||[], visitsByDay: data.visitsByDay||{}, count: data.count||0 };
+  }
+
+  function cloudRecordingMeta(meta){
+    const base = coachApiBase();
+    if(!base) return;
+    fetch(base + '/api/recording-meta', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(meta)
+    }).catch(function(){});
   }
   function trackVisit(){
     try{
@@ -3740,7 +3789,7 @@ const Analytics = (() => {
   function init(){
     trackVisit();
   }
-  return { track, trackVisit, visitStats, countByType, emailsSeen, registeredUsers, exportJSON, loadEvents, init };
+  return { track, trackVisit, visitStats, countByType, emailsSeen, registeredUsers, exportJSON, loadEvents, init, fetchCloudLogs, cloudLog, coachApiBase, cloudRecordingMeta };
 })();
 
 /* IndexedDB store for video/audio session recordings (admin training archive) */
@@ -3833,6 +3882,15 @@ const SessionRecorder = (() => {
             if(typeof saveAdminRecMeta==='function') saveAdminRecMeta(list.slice(-100));
           }catch(e){}
           try{ Analytics.track('recording_saved', { id, summary: (meta.label||'session')+' '+record.durationSec+'s', size: blob.size }); }catch(e){}
+          try{
+            if(typeof Analytics!=='undefined' && Analytics.cloudRecordingMeta){
+              Analytics.cloudRecordingMeta({
+                id, ts: startedAt, iso: record.iso, durationSec: record.durationSec,
+                user, meta, mime: blob.type, size: blob.size,
+                note: 'Video blob stays on user device; metadata synced to cloud'
+              });
+            }
+          }catch(e){}
           resolve(record);
         }catch(e){ resolve(null); }
       };
@@ -3950,6 +4008,42 @@ SharedVideoAssess.stopAnswer = function(sess){
   _origStopAnswer(sess);
 };
 
+async function loadCloudAdminLogs(){
+  const st = document.getElementById('adminCloudStatus');
+  const feed = document.getElementById('adminCloudFeed');
+  if(st) st.textContent = 'Loading cloud logs…';
+  try{
+    if(typeof Analytics==='undefined' || !Analytics.fetchCloudLogs){
+      if(st) st.textContent = 'Analytics module missing';
+      return;
+    }
+    const base = Analytics.coachApiBase && Analytics.coachApiBase();
+    if(!base){
+      if(st) st.textContent = 'Set Worker URL first: localStorage.setItem("w3m_coach_api","https://YOUR-WORKER.workers.dev")';
+      return;
+    }
+    const res = await Analytics.fetchCloudLogs();
+    if(!res.ok){
+      if(st) st.textContent = 'Cloud error: ' + (res.error||'failed') + ' — check KV binding W3M_LOGS and ADMIN_TOKEN';
+      return;
+    }
+    if(st) st.textContent = 'Cloud: ' + (res.count||0) + ' events synced from Worker';
+    if(feed){
+      const dayBits = res.visitsByDay ? Object.keys(res.visitsByDay).sort().reverse().slice(0,14).map(d=>
+        '<span style="margin-right:8px;">'+d+': <b>'+res.visitsByDay[d]+'</b></span>'
+      ).join('') : '';
+      feed.innerHTML = (dayBits ? '<div style="font-size:12px;margin-bottom:8px;"><b>Visits by day (cloud)</b><br>'+dayBits+'</div>' : '')
+        + (res.events||[]).slice(0,80).map(e=>
+          '<div class="admin-log-item"><div class="ts">'+(e.iso||'')+'</div><div><span class="admin-badge">'+(e.type||'')+'</span> '
+          + escapeAdmin((e.user&&e.user.email)||(e.user&&e.user.name)||'anon') + ' — '
+          + escapeAdmin((e.detail&&e.detail.summary)||e.screen||'') + '</div></div>'
+        ).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No cloud events yet.</p>';
+    }
+  }catch(e){
+    if(st) st.textContent = 'Cloud load failed: ' + (e.message||e);
+  }
+}
+
 function renderAdminConsole(){
   if(!isAdminUser(currentUser)){ toast('Admin access only'); go('home'); return; }
   try{
@@ -4025,7 +4119,10 @@ function renderAdminConsole(){
       <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">
         <button type="button" class="btn btn-navy" style="width:auto;padding:8px 12px;font-size:12px;" onclick="Analytics.exportJSON()">Download full log (JSON)</button>
         <button type="button" class="btn btn-outline" style="width:auto;padding:8px 12px;font-size:12px;" onclick="renderAdminConsole()">Refresh</button>
+        <button type="button" class="btn btn-outline" style="width:auto;padding:8px 12px;font-size:12px;" onclick="loadCloudAdminLogs()">Load cloud logs</button>
       </div>
+      <div id="adminCloudStatus" style="font-size:11.5px;color:var(--ink-soft);margin-bottom:10px;">Cloud logs: click “Load cloud logs” (needs Worker URL + KV).</div>
+      <div id="adminCloudFeed"></div>
       <div class="section-title"><h2>Registered accounts</h2></div>
       ${usersReg.map(u=>`<div class="admin-user-card"><h4>${escapeAdmin(u.name)} <span class="admin-badge">${escapeAdmin(u.username)}</span></h4>
         <div class="meta">${escapeAdmin(u.email||'no email')}${u.isAdmin?' · admin':''}</div></div>`).join('') || '<p style="font-size:12px;color:var(--ink-soft);">No accounts in local DB.</p>'}
