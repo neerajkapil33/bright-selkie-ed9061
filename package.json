@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "sh -c \"vite build || (mkdir -p dist && cp -R index.html css js assets public dist/ || true)\"",
+    "build": "sh -c \"vite build || (mkdir -p dist && cp -R index.html css js assets public dist/ || true)\" && node scripts/seo-build.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
