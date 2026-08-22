@@ -1,11 +1,21 @@
-name: Build site, publish Cloudflare Worker, deploy to GitHub Pages
+name: Build site, validate SEO, publish Cloudflare Worker, deploy to GitHub Pages
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 env:
   WORKER_NAME: w3me.in-neerajkapil
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   build-and-publish:
@@ -18,27 +28,49 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
-      - name: Build site
+      - name: Production build
         run: npm run build
+
+      - name: Validate production output
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/neeraj-kapil/index.html
+          test -s dist/robots.txt
+          test -s dist/sitemap.xml
+          grep -q 'rel="canonical"' dist/index.html
+          grep -q '"@type":"Person"' dist/index.html
+          grep -q '"@type":"ProfilePage"' dist/index.html
+          grep -q 'https://www.linkedin.com/in/neeraj-kapil' dist/neeraj-kapil/index.html
+          grep -q 'https://github.com/neerajkapil33' dist/neeraj-kapil/index.html
+          grep -q '<loc>https://w3me.in/neeraj-kapil/</loc>' dist/sitemap.xml
+          grep -q 'Sitemap: https://w3me.in/sitemap.xml' dist/robots.txt
+          echo "Production SEO validation passed."
 
       - name: Write runtime API config for frontend
         run: |
           echo "window.__API_BASE__ = 'https://${{ env.WORKER_NAME }}.workers.dev';" > dist/api-config.js
           ls -la dist
+
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
   publish-worker:
-    needs: build-and-publish
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -50,11 +82,11 @@ jobs:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           WORKER_NAME: ${{ env.WORKER_NAME }}
         run: |
+          set -euo pipefail
           echo "Publishing worker ${WORKER_NAME} to Cloudflare account ${CF_ACCOUNT_ID}..."
-          # upload the worker script file
-          curl -s -X PUT "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/workers/scripts/${WORKER_NAME}" \
+          curl --fail-with-body -sS -X PUT "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/workers/scripts/${WORKER_NAME}" \
             -H "Authorization: Bearer ${CF_API_TOKEN}" \
             -H "Content-Type: application/javascript" \
             --data-binary @worker/index.js \
-            | jq -r '.errors, .messages // empty, .success'
-          echo "Worker publish completed (check Cloudflare dashboard)."
+            | jq -e '.success == true'
+          echo "Worker publish completed."
