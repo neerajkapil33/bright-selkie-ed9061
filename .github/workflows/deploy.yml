@@ -1,12 +1,9 @@
-name: Build site, validate SEO, publish Cloudflare Worker, deploy to GitHub Pages
+name: Build site, validate SEO, and deploy Pages
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
-env:
-  WORKER_NAME: w3me.in-neerajkapil
 
 permissions:
   contents: read
@@ -18,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-publish:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -30,7 +27,7 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund
 
       - name: Production build
         run: npm run build
@@ -54,8 +51,7 @@ jobs:
 
       - name: Write runtime API config for frontend
         run: |
-          echo "window.__API_BASE__ = 'https://${{ env.WORKER_NAME }}.workers.dev';" > dist/api-config.js
-          ls -la dist
+          echo "window.__API_BASE__ = 'https://w3me.in';" > dist/api-config.js
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -68,25 +64,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-  publish-worker:
-    if: ${{ secrets.CF_API_TOKEN != '' && secrets.CF_ACCOUNT_ID != '' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Publish Cloudflare Worker via API
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          WORKER_NAME: ${{ env.WORKER_NAME }}
-        run: |
-          set -euo pipefail
-          echo "Publishing worker ${WORKER_NAME} to Cloudflare account ${CF_ACCOUNT_ID}..."
-          curl --fail-with-body -sS -X PUT "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/workers/scripts/${WORKER_NAME}" \
-            -H "Authorization: Bearer ${CF_API_TOKEN}" \
-            -H "Content-Type: application/javascript" \
-            --data-binary @worker/index.js \
-            | jq -e '.success == true'
-          echo "Worker publish completed."
